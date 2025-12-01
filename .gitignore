@@ -1,0 +1,7 @@
+simulation/work/**
+modelsim.ini
+transcript
+
+*.wlf
+wlft*
+.vscode
