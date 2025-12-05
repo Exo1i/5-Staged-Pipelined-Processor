@@ -11,7 +11,7 @@ import sys
 import re
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
-from isa_constants import ISA
+from .isa import ISA
 
 
 @dataclass
