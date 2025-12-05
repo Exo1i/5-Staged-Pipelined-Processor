@@ -253,7 +253,7 @@ When generating the **Second Word**, these values are **Sign Extended** to 32 bi
 - **Data Bus**: 32 bits.
 - **Registers**: 8 general purpose (R0-R7), 32-bit wide.
 - **Pipeline**: 5-stage (Fetch, Decode, Execute, Memory, Write Back).
-- **Stack**: Initial value `(2^20 - 1)`.
+- **Stack**: Initial value `(2^18 - 1) = 0x3FFFF = 262143`.
 
 ## Example Program Trace
 
