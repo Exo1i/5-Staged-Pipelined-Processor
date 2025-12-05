@@ -5,3 +5,57 @@ transcript
 *.wlf
 wlft*
 .vscode
+# ==========================================
+# Python Standard
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+venv/
+.venv/
+env/
+.env
+
+# ==========================================
+# Distribution / Packaging (pyproject.toml)
+# ==========================================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================================
+# Project Specific Artifacts
+# ==========================================
+# Ignore default output files generated during manual testing
+output.mem
+output.hex
+output.bin
+
+# Ignore generated test results (current run)
+tests/machine_code/*
+# But keep the directory itself (if you use a .gitkeep file)
+!tests/machine_code/.gitkeep
+
+# Note: We purposely do NOT ignore 'tests/expected_outputs/'
+# as those serve as the "Golden Reference" for verification.
+
+# ==========================================
+# IDE & OS Settings
+# ==========================================
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# JetBrains (PyCharm)
+.idea/
+
+# Windows
+Thumbs.db
+ehthumbs.db
