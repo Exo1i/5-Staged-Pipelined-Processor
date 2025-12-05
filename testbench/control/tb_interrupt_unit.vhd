@@ -11,15 +11,19 @@ architecture Behavioral of tb_interrupt_unit is
     component interrupt_unit
         Port (
             IsInterrupt_DE      : in  std_logic;
+            IsHardwareInt_DE    : in  std_logic;
             IsCall_DE           : in  std_logic;
             IsReturn_DE         : in  std_logic;
             IsReti_DE           : in  std_logic;
             IsInterrupt_EX      : in  std_logic;
+            IsHardwareInt_EX    : in  std_logic;
             IsReti_EX           : in  std_logic;
+            IsHardwareInt_MEM   : in  std_logic;
             HardwareInterrupt   : in  std_logic;
             Stall               : out std_logic;
             PassPC_NotPCPlus1   : out std_logic;
             TakeInterrupt       : out std_logic;
+            IsHardwareIntMEM_Out: out std_logic;
             OverrideOperation   : out std_logic;
             OverrideType        : out std_logic_vector(1 downto 0)
         );
@@ -31,15 +35,19 @@ architecture Behavioral of tb_interrupt_unit is
     
     -- Signals
     signal IsInterrupt_DE     : std_logic := '0';
+    signal IsHardwareInt_DE   : std_logic := '0';
     signal IsCall_DE          : std_logic := '0';
     signal IsReturn_DE        : std_logic := '0';
     signal IsReti_DE          : std_logic := '0';
     signal IsInterrupt_EX     : std_logic := '0';
+    signal IsHardwareInt_EX   : std_logic := '0';
     signal IsReti_EX          : std_logic := '0';
+    signal IsHardwareInt_MEM  : std_logic := '0';
     signal HardwareInterrupt  : std_logic := '0';
     signal Stall              : std_logic;
     signal PassPC_NotPCPlus1  : std_logic;
     signal TakeInterrupt      : std_logic;
+    signal IsHardwareIntMEM_Out: std_logic;
     signal OverrideOperation  : std_logic;
     signal OverrideType       : std_logic_vector(1 downto 0);
     
@@ -57,18 +65,22 @@ begin
     -- Instantiate the Unit Under Test (UUT)
     uut: interrupt_unit
         port map (
-            IsInterrupt_DE    => IsInterrupt_DE,
-            IsCall_DE         => IsCall_DE,
-            IsReturn_DE       => IsReturn_DE,
-            IsReti_DE         => IsReti_DE,
-            IsInterrupt_EX    => IsInterrupt_EX,
-            IsReti_EX         => IsReti_EX,
-            HardwareInterrupt => HardwareInterrupt,
-            Stall             => Stall,
-            PassPC_NotPCPlus1 => PassPC_NotPCPlus1,
-            TakeInterrupt     => TakeInterrupt,
-            OverrideOperation => OverrideOperation,
-            OverrideType      => OverrideType
+            IsInterrupt_DE       => IsInterrupt_DE,
+            IsHardwareInt_DE     => IsHardwareInt_DE,
+            IsCall_DE            => IsCall_DE,
+            IsReturn_DE          => IsReturn_DE,
+            IsReti_DE            => IsReti_DE,
+            IsInterrupt_EX       => IsInterrupt_EX,
+            IsHardwareInt_EX     => IsHardwareInt_EX,
+            IsReti_EX            => IsReti_EX,
+            IsHardwareInt_MEM    => IsHardwareInt_MEM,
+            HardwareInterrupt    => HardwareInterrupt,
+            Stall                => Stall,
+            PassPC_NotPCPlus1    => PassPC_NotPCPlus1,
+            TakeInterrupt        => TakeInterrupt,
+            IsHardwareIntMEM_Out => IsHardwareIntMEM_Out,
+            OverrideOperation    => OverrideOperation,
+            OverrideType         => OverrideType
         );
     
     -- Stimulus Process
