@@ -31,10 +31,6 @@ dist/
 # ==========================================
 # Project Specific Artifacts
 # ==========================================
-# Ignore default output files generated during manual testing
-output.mem
-output.hex
-output.bin
 
 # Ignore generated test results (current run)
 tests/machine_code/*

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "risc-assembler"
 version = "0.1.0"
-description = "Assembler and Simulator for 5-Stage RISC Processor"
+description = "Assembler for 5-Stage RISC Processor"
 authors = [{name = "Youssef Noser"}]
 requires-python = ">=3.7"
 
