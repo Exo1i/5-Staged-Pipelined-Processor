@@ -1,0 +1,328 @@
+Reading pref.tcl
+
+# 2025.1
+
+# do run_all_control_tests.do
+# >>> Compiling Package Files...
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:15 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/pkg_opcodes.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package pkg_opcodes
+# End time: 19:27:15 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:15 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/control_signals_pkg.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package control_signals_pkg
+# End time: 19:27:15 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# ========================================================================
+# TEST 1: Opcode Decoder
+# ========================================================================
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:15 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/opcode_decoder.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Compiling entity opcode_decoder
+# -- Compiling architecture Behavioral of opcode_decoder
+# End time: 19:27:15 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:15 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/testbench_decoder.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Compiling entity testbench_decoder
+# -- Compiling architecture Behavioral of testbench_decoder
+# End time: 19:27:15 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.testbench_decoder -do "run -all; quit -sim" 
+# Start time: 19:27:15 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# //  Questa Intel Starter FPGA Edition-64
+# //  Version 2025.1 linux_x86_64 Jan 18 2025
+# //
+# // Unpublished work. Copyright 2025 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.pkg_opcodes
+# Loading work.control_signals_pkg
+# Loading work.testbench_decoder(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Starting Opcode Decoder Tests
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing NOP
+#    Time: 15 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing HLT
+#    Time: 25 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SETC
+#    Time: 35 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing NOT
+#    Time: 45 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing INC
+#    Time: 55 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OUT
+#    Time: 65 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing IN
+#    Time: 75 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing MOV
+#    Time: 85 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SWAP - First Cycle
+#    Time: 95 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SWAP - Second Cycle Override
+#    Time: 105 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing ADD
+#    Time: 115 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SUB
+#    Time: 125 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing AND
+#    Time: 135 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing IADD
+#    Time: 145 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing PUSH
+#    Time: 155 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing POP
+#    Time: 165 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing LDM
+#    Time: 175 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing LDD
+#    Time: 185 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing STD
+#    Time: 195 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JZ
+#    Time: 205 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JN
+#    Time: 215 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JC
+#    Time: 225 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JMP
+#    Time: 235 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing CALL
+#    Time: 245 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing RET
+#    Time: 255 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing INT
+#    Time: 265 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing RTI
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing Override Operations
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_PUSH_PC
+#    Time: 285 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_PUSH_FLAGS
+#    Time: 295 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_POP_PC
+#    Time: 305 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_POP_FLAGS
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: All Tests Completed Successfully!
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+#  quit -sim
+# End time: 19:27:16 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# ========================================================================
+# TEST 2: Memory Hazard Unit
+# ========================================================================
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:16 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/memory-hazard-unit/memory_hazard_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity memory_hazard_unit
+# -- Compiling architecture Behavioral of memory_hazard_unit
+# End time: 19:27:16 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:16 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/memory-hazard-unit/tb_memory_hazard_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity tb_memory_hazard_unit
+# -- Compiling architecture Behavioral of tb_memory_hazard_unit
+# End time: 19:27:16 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_memory_hazard_unit -do "run -all; quit -sim" 
+# Start time: 19:27:16 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.tb_memory_hazard_unit(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Starting Memory Hazard Unit Tests
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 1: No memory operation
+#    Time: 10 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 1 PASSED: PassPC='1', Fetch allowed
+#    Time: 10 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 2: Memory stage reading
+#    Time: 20 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 2 PASSED: PassPC='0', Fetch blocked, MemRead propagated
+#    Time: 20 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 3: Memory stage writing
+#    Time: 30 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 3 PASSED: PassPC='0', Fetch blocked, MemWrite propagated
+#    Time: 30 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 4: Both Read and Write active
+#    Time: 40 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 4 PASSED: PassPC='0', Fetch blocked
+#    Time: 40 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 5: Return to idle
+#    Time: 50 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 5 PASSED: PassPC='1', Fetch allowed again
+#    Time: 50 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 6 PASSED: Rapid transitions handled correctly
+#    Time: 65 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: All Memory Hazard Unit Tests Completed Successfully!
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+#  quit -sim
+# End time: 19:27:17 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# ========================================================================
+# TEST 3: Freeze Control
+# ========================================================================
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:17 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/freeze-control/freeze_control.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity freeze_control
+# -- Compiling architecture Behavioral of freeze_control
+# End time: 19:27:17 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:17 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/freeze-control/tb_freeze_control.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity tb_freeze_control
+# -- Compiling architecture Behavioral of tb_freeze_control
+# End time: 19:27:17 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_freeze_control -do "run -all; quit -sim" 
+# Start time: 19:27:17 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.tb_freeze_control(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Starting Freeze Control Tests
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 1: No stalls - Normal operation
+#    Time: 10 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 1 PASSED: PC and IF/DE updating, no NOP insertion
+#    Time: 10 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 2: Memory hazard stall
+#    Time: 20 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 2 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 20 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 3: Interrupt stall
+#    Time: 30 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 3 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 30 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 4: Branch stall
+#    Time: 40 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 4 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 40 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 5: Multiple stalls (memory + interrupt)
+#    Time: 50 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 5 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 50 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 6: All stalls active
+#    Time: 60 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 6 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 60 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 7: Return to normal operation
+#    Time: 70 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 7 PASSED: Pipeline resumed normally
+#    Time: 70 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 8 PASSED: Rapid transitions handled correctly
+#    Time: 90 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 9: Interrupt + Branch stalls
+#    Time: 100 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 9 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 100 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: All Freeze Control Tests Completed Successfully!
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+#  quit -sim
+# End time: 19:27:18 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# ========================================================================
+# TEST 4: Interrupt Unit
+# ========================================================================
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:27:18 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/interrupt-unit/interrupt_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Compiling entity interrupt_unit
+# -- Compiling architecture Behavioral of interrupt_unit
+# ** Error: ../../rtl/control/interrupt-unit/interrupt_unit.vhd(68): (vcom-1136) Unknown identifier "OVERRIDE_NONE".
+# ** Note: ../../rtl/control/interrupt-unit/interrupt_unit.vhd(100): VHDL Compiler exiting
+# End time: 19:27:18 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
+# ** Error: /home/ahmedfathy0-0/altera_pro/25.1.1/questa_fse/linux_x86_64/vcom failed.
+# Error in macro ./run_all_control_tests.do line 39
+# /home/ahmedfathy0-0/altera_pro/25.1.1/questa_fse/linux_x86_64/vcom failed.
+#     while executing
+# "vcom -2008 -work work ../../rtl/control/interrupt-unit/interrupt_unit.vhd"
+Questa> 

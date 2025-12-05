@@ -64,8 +64,8 @@ begin
     process(IsInterrupt_DE, IsInterrupt_EX, IsReti_DE, IsReti_EX, 
             IsCall_DE, IsReturn_DE, HardwareInterrupt)
     begin
-        -- Default
-        OverrideType <= OVERRIDE_NONE;
+        -- Default to PUSH_PC (doesn't matter since OverrideOperation will be '0')
+        OverrideType <= OVERRIDE_PUSH_PC;
         
         -- Priority: Hardware interrupt during fetch doesn't override yet (it goes through TakeInterrupt)
         -- Once interrupt is in decode/execute, handle normally

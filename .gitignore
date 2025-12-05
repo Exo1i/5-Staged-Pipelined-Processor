@@ -5,3 +5,5 @@ transcript
 *.wlf
 wlft*
 .vscode
+
+simulation/scripts/work

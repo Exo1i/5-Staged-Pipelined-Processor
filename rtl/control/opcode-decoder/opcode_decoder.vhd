@@ -55,6 +55,14 @@ begin
                     memory_sig.MemWrite   := '1';
                     execute_sig.PassCCR   := '1';
                     
+                when OVERRIDE_POP_FLAGS =>
+                    -- POP FLAGS: FLAGS = MEM[SP], SP++
+                    memory_sig.SP_Enable  := '1';
+                    memory_sig.SP_Function:= '1';  -- Increment
+                    memory_sig.SPtoMem    := '1';
+                    memory_sig.MemRead    := '1';
+                    memory_sig.FlagFromMem:= '1';
+                    
                 when OVERRIDE_POP_PC =>
                     -- POP PC: PC = MEM[SP], SP++
                     memory_sig.SP_Enable  := '1';
@@ -63,14 +71,6 @@ begin
                     memory_sig.MemRead    := '1';
                     writeback_sig.MemToALU:= '1';
                     -- Branch logic handled by branch control
-                    
-                when OVERRIDE_POP_FLAGS =>
-                    -- POP FLAGS: FLAGS = MEM[SP], SP++
-                    memory_sig.SP_Enable  := '1';
-                    memory_sig.SP_Function:= '1';  -- Increment
-                    memory_sig.SPtoMem    := '1';
-                    memory_sig.MemRead    := '1';
-                    memory_sig.FlagFromMem:= '1';
                     
                 when others =>
                     null;

@@ -31,11 +31,10 @@ package pkg_opcodes is
     constant OP_RTI    : std_logic_vector(4 downto 0) := "11001";
     
     -- Override Operation Types (2-bit)
-    constant OVERRIDE_NONE       : std_logic_vector(1 downto 0) := "00";
-    constant OVERRIDE_PUSH_PC    : std_logic_vector(1 downto 0) := "01";
-    constant OVERRIDE_PUSH_FLAGS : std_logic_vector(1 downto 0) := "10";
+    constant OVERRIDE_PUSH_PC    : std_logic_vector(1 downto 0) := "00";
+    constant OVERRIDE_PUSH_FLAGS : std_logic_vector(1 downto 0) := "01";
+    constant OVERRIDE_POP_FLAGS  : std_logic_vector(1 downto 0) := "10";
     constant OVERRIDE_POP_PC     : std_logic_vector(1 downto 0) := "11";
-    constant OVERRIDE_POP_FLAGS  : std_logic_vector(1 downto 0) := "11"; -- Note: Can be distinguished by state
     
     -- ALU Operations (3-bit)
     constant ALU_ADD   : std_logic_vector(2 downto 0) := "000";

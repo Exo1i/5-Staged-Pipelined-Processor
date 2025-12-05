@@ -15,6 +15,8 @@ architecture Behavioral of testbench_decoder is
             override_operation  : in  std_logic;
             override_type       : in  std_logic_vector(1 downto 0);
             isSwap_from_execute : in  std_logic;
+            take_interrupt      : in  std_logic;
+            is_hardware_int_mem : in  std_logic;
             decode_ctrl         : out decode_control_t;
             execute_ctrl        : out execute_control_t;
             memory_ctrl         : out memory_control_t;
@@ -27,21 +29,12 @@ architecture Behavioral of testbench_decoder is
     signal override_operation  : std_logic := '0';
     signal override_type       : std_logic_vector(1 downto 0) := (others => '0');
     signal isSwap_from_execute : std_logic := '0';
+    signal take_interrupt      : std_logic := '0';
+    signal is_hardware_int_mem : std_logic := '0';
     signal decode_ctrl         : decode_control_t;
     signal execute_ctrl        : execute_control_t;
     signal memory_ctrl         : memory_control_t;
     signal writeback_ctrl      : writeback_control_t;
-    
-    -- Test procedure
-    procedure test_instruction(
-        constant test_opcode : in std_logic_vector(4 downto 0);
-        constant instruction_name : in string
-    ) is
-    begin
-        opcode <= test_opcode;
-        wait for 10 ns;
-        report "Testing " & instruction_name severity note;
-    end procedure;
     
 begin
     
@@ -52,6 +45,8 @@ begin
             override_operation  => override_operation,
             override_type       => override_type,
             isSwap_from_execute => isSwap_from_execute,
+            take_interrupt      => take_interrupt,
+            is_hardware_int_mem => is_hardware_int_mem,
             decode_ctrl         => decode_ctrl,
             execute_ctrl        => execute_ctrl,
             memory_ctrl         => memory_ctrl,
@@ -60,6 +55,16 @@ begin
     
     -- Stimulus Process
     stim_proc: process
+        -- Test procedure
+        procedure test_instruction(
+            constant test_opcode : in std_logic_vector(4 downto 0);
+            constant instruction_name : in string
+        ) is
+        begin
+            opcode <= test_opcode;
+            wait for 10 ns;
+            report "Testing " & instruction_name severity note;
+        end procedure;
     begin
         -- Wait for global reset
         wait for 5 ns;
@@ -219,7 +224,7 @@ begin
         test_instruction(OP_INT, "INT");
         assert decode_ctrl.IsInterrupt = '1' and
                execute_ctrl.PassImm = '1' and
-               memory_ctrl.PassInterrupt = '1'
+               memory_ctrl.PassInterrupt = PASS_INT_SOFTWARE
             report "INT failed" severity error;
         
         test_instruction(OP_RTI, "RTI");
