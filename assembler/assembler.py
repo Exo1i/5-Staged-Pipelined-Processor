@@ -54,20 +54,24 @@ class Assembler:
                 pass
         return None
 
-    def parse_immediate(self, imm_str: str) -> Optional[int]:
-        """Parse immediate value (supports hex, binary, decimal)"""
-        imm_str = imm_str.strip()
+    def parse_number(self, num_str: str) -> Optional[int]:
+        """
+        Parses a number string into a raw integer. 
+        Supports Hex (0x, h), Binary (0b, b), and Decimal.
+        Does NOT apply masking or width validation here.
+        """
+        num_str = num_str.strip()
         try:
-            if imm_str.startswith('0x') or imm_str.startswith('0X'):
-                return int(imm_str, 16)
-            elif imm_str.lower().endswith('h'):
-                return int(imm_str[:-1], 16)
-            elif imm_str.startswith('0b') or imm_str.startswith('0B'):
-                return int(imm_str, 2)
-            elif imm_str.lower().endswith('b'):
-                return int(imm_str[:-1], 2)
+            if num_str.startswith('0x') or num_str.startswith('0X'):
+                return int(num_str, 16)
+            elif num_str.lower().endswith('h'):
+                return int(num_str[:-1], 16)
+            elif num_str.startswith('0b') or num_str.startswith('0B'):
+                return int(num_str, 2)
+            elif num_str.lower().endswith('b'):
+                return int(num_str[:-1], 2)
             else:
-                return int(imm_str)
+                return int(num_str)
         except ValueError:
             return None
 
@@ -75,8 +79,12 @@ class Assembler:
         """
         Interprets the lower 16 bits of 'value' as a signed integer
         and extends the sign to 32 bits.
+        Value must be passed as a raw 16-bit pattern (0 to 65535).
         """
+        # Ensure we are looking at just the 16 bits
         val_16 = value & 0xFFFF
+
+        # Check sign bit (Bit 15)
         if val_16 & 0x8000:
             return val_16 | 0xFFFF0000
         return val_16
@@ -86,7 +94,7 @@ class Assembler:
         match = re.match(r'([^(]+)\s*\(\s*R(\d)\s*\)',
                          operand.strip(), re.IGNORECASE)
         if match:
-            offset = self.parse_immediate(match.group(1))
+            offset = self.parse_number(match.group(1))
             reg = int(match.group(2))
             if offset is not None and 0 <= reg <= 7:
                 return (offset, reg)
@@ -121,13 +129,19 @@ class Assembler:
             if len(operands) < 1:
                 self.error(".ORG requires an address operand", line_num)
                 return True
-            new_address = self.parse_immediate(operands[0])
+            new_address = self.parse_number(operands[0])
             if new_address is None:
                 self.error(
                     f"Invalid address for .ORG: '{operands[0]}'", line_num)
                 return True
 
-            # Check 18-bit limit
+            # Validation: Non-negative
+            if new_address < 0:
+                self.error(
+                    f".ORG address cannot be negative: {new_address}", line_num)
+                return True
+
+            # Validation: 18-bit Limit
             if new_address >= ISA.MEMORY_WORDS:
                 self.error(
                     f".ORG address {new_address:05X} exceeds memory size (18-bit limit: {ISA.MEMORY_WORDS:05X})", line_num)
@@ -184,7 +198,6 @@ class Assembler:
                 )
                 self.instructions.append(instr)
 
-                # Log parsed instruction
                 ops_str = ", ".join(operands)
                 self.log(f"Parsed {instr.address:05X}: {mnemonic} {ops_str}")
 
@@ -253,6 +266,20 @@ class Assembler:
         opcode = ISA.OPCODES[instr.mnemonic]
         return [self.pack_header(opcode, r1=rdst, r2=rsrc1, r3=rsrc2)]
 
+    def _validate_and_mask_16bit(self, val: int, line_num: int) -> int:
+        """
+        Validates that val fits in 16 bits (signed or unsigned)
+        and returns the 16-bit mask for processing.
+        Range: -32768 to 65535
+        """
+        if not (-32768 <= val <= 65535):
+            self.error(f"Immediate value {val} out of 16-bit range", line_num)
+            return 0
+
+        # Mask to 16 bits to handle negative numbers correctly for sign extension
+        # e.g., -5 (Python) -> ...11111011 & 0xFFFF -> 0xFFFB
+        return val & 0xFFFF
+
     def encode_immediate_instruction(self, instr: Instruction) -> List[int]:
         opcode = ISA.OPCODES[instr.mnemonic]
 
@@ -262,14 +289,16 @@ class Assembler:
                 return [0, 0]
             rdst = self.parse_register(instr.operands[0])
             rsrc = self.parse_register(instr.operands[1])
-            imm = self.parse_immediate(instr.operands[2])
+            imm = self.parse_number(instr.operands[2])
 
             if rdst is None or rsrc is None or imm is None:
                 self.error("Invalid operands for IADD", instr.line_num)
                 return [0, 0]
 
+            imm_masked = self._validate_and_mask_16bit(imm, instr.line_num)
+
             w1 = self.pack_header(opcode, r1=rdst, r2=rsrc)
-            w2 = self.sign_extend_16bit(imm) & 0xFFFFFFFF
+            w2 = self.sign_extend_16bit(imm_masked) & 0xFFFFFFFF
             return [w1, w2]
 
         elif instr.mnemonic == 'LDM':
@@ -277,14 +306,16 @@ class Assembler:
                 self.error(f"LDM requires 2 operands", instr.line_num)
                 return [0, 0]
             rdst = self.parse_register(instr.operands[0])
-            imm = self.parse_immediate(instr.operands[1])
+            imm = self.parse_number(instr.operands[1])
 
             if rdst is None or imm is None:
                 self.error("Invalid operands for LDM", instr.line_num)
                 return [0, 0]
 
+            imm_masked = self._validate_and_mask_16bit(imm, instr.line_num)
+
             w1 = self.pack_header(opcode, r1=rdst)
-            w2 = self.sign_extend_16bit(imm) & 0xFFFFFFFF
+            w2 = self.sign_extend_16bit(imm_masked) & 0xFFFFFFFF
             return [w1, w2]
 
         return [0, 0]
@@ -304,8 +335,11 @@ class Assembler:
                 return [0, 0]
             offset, rsrc = offset_reg
 
+            offset_masked = self._validate_and_mask_16bit(
+                offset, instr.line_num)
+
             w1 = self.pack_header(opcode, r1=rdst, r2=rsrc)
-            w2 = self.sign_extend_16bit(offset) & 0xFFFFFFFF
+            w2 = self.sign_extend_16bit(offset_masked) & 0xFFFFFFFF
             return [w1, w2]
 
         elif instr.mnemonic == 'STD':
@@ -316,8 +350,11 @@ class Assembler:
                 return [0, 0]
             offset, rsrc2 = offset_reg
 
+            offset_masked = self._validate_and_mask_16bit(
+                offset, instr.line_num)
+
             w1 = self.pack_header(opcode, r1=rsrc1, r2=rsrc2)
-            w2 = self.sign_extend_16bit(offset) & 0xFFFFFFFF
+            w2 = self.sign_extend_16bit(offset_masked) & 0xFFFFFFFF
             return [w1, w2]
 
         return [0, 0]
@@ -331,13 +368,13 @@ class Assembler:
         if target in self.symbol_table:
             imm = self.symbol_table[target]
         else:
-            imm = self.parse_immediate(target)
+            imm = self.parse_number(target)
             if imm is None:
                 self.error(f"Invalid target '{target}'", instr.line_num)
                 return [0, 0]
 
-        # Check for address bit width validity
-        if imm > ISA.MEMORY_WORDS:
+        # Check for address bit width validity (18-bit)
+        if imm >= ISA.MEMORY_WORDS or imm < 0:
             self.error(
                 f"Branch target {imm:X} exceeds 18-bit memory space", instr.line_num)
 
@@ -351,11 +388,7 @@ class Assembler:
             self.error(f"INT requires 1 operand", instr.line_num)
             return [0]
 
-        index = self.parse_immediate(instr.operands[0])
-        if index is None or index not in [0, 1]:
-            self.error(f"INT index must be 0 or 1", instr.line_num)
-            return [0]
-
+        index = self.parse_number(instr.operands[0])
         opcode = ISA.OPCODES['INT']
         return [self.pack_header(opcode, r1=index)]
 
@@ -386,10 +419,9 @@ class Assembler:
             machine_code = self.encode_instruction(instr)
             instr.machine_code = machine_code
 
-            # Format output: Mnemonic, Operands -> Machine Code
+            # Format output
             hex_codes = " ".join([f"{w:08X}" for w in machine_code])
             ops_str = ", ".join(instr.operands)
-
             self.log(
                 f"Addr {instr.address:05X}: {instr.mnemonic:5s} {ops_str:15s} -> {hex_codes}")
 
@@ -421,7 +453,6 @@ class Assembler:
         with open(output_file, 'w') as f:
             if format_type == 'hex':
                 for addr in sorted(memory.keys()):
-                    # 5 hex digits for 18-bit addr
                     f.write(f"{addr:05X}: {memory[addr]:08X}\n")
 
             elif format_type == 'bin':
