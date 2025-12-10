@@ -1,0 +1,463 @@
+Reading pref.tcl
+
+# 2025.1
+
+# do run_all_control_tests.do
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:02 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/pkg_opcodes.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package pkg_opcodes
+# End time: 19:40:02 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:02 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/control_signals_pkg.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package control_signals_pkg
+# End time: 19:40:02 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:02 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/opcode-decoder/opcode_decoder.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Compiling entity opcode_decoder
+# -- Compiling architecture Behavioral of opcode_decoder
+# End time: 19:40:02 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:02 on Dec 05,2025
+# vcom -2008 -work work ../../testbench/control/testbench_decoder.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Compiling entity testbench_decoder
+# -- Compiling architecture Behavioral of testbench_decoder
+# End time: 19:40:02 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.testbench_decoder -do "run -all; quit -sim" 
+# Start time: 19:40:02 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# //  Questa Intel Starter FPGA Edition-64
+# //  Version 2025.1 linux_x86_64 Jan 18 2025
+# //
+# // Unpublished work. Copyright 2025 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.pkg_opcodes
+# Loading work.control_signals_pkg
+# Loading work.testbench_decoder(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Starting Opcode Decoder Tests
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing NOP
+#    Time: 15 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing HLT
+#    Time: 25 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SETC
+#    Time: 35 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing NOT
+#    Time: 45 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing INC
+#    Time: 55 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OUT
+#    Time: 65 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing IN
+#    Time: 75 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing MOV
+#    Time: 85 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SWAP - First Cycle
+#    Time: 95 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SWAP - Second Cycle Override
+#    Time: 105 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing ADD
+#    Time: 115 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing SUB
+#    Time: 125 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing AND
+#    Time: 135 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing IADD
+#    Time: 145 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing PUSH
+#    Time: 155 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing POP
+#    Time: 165 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing LDM
+#    Time: 175 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing LDD
+#    Time: 185 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing STD
+#    Time: 195 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JZ
+#    Time: 205 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JN
+#    Time: 215 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JC
+#    Time: 225 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing JMP
+#    Time: 235 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing CALL
+#    Time: 245 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing RET
+#    Time: 255 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing INT
+#    Time: 265 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing RTI
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing Override Operations
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 275 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_PUSH_PC
+#    Time: 285 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_PUSH_FLAGS
+#    Time: 295 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_POP_PC
+#    Time: 305 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: Testing OVERRIDE_POP_FLAGS
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: All Tests Completed Successfully!
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+# ** Note: ====================================
+#    Time: 315 ns  Iteration: 0  Instance: /testbench_decoder
+#  quit -sim
+# End time: 19:40:04 on Dec 05,2025, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:04 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/memory-hazard-unit/memory_hazard_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity memory_hazard_unit
+# -- Compiling architecture Behavioral of memory_hazard_unit
+# End time: 19:40:04 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:04 on Dec 05,2025
+# vcom -2008 -work work ../../testbench/control/tb_memory_hazard_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity tb_memory_hazard_unit
+# -- Compiling architecture Behavioral of tb_memory_hazard_unit
+# End time: 19:40:04 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_memory_hazard_unit -do "run -all; quit -sim" 
+# Start time: 19:40:04 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.tb_memory_hazard_unit(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Starting Memory Hazard Unit Tests
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 1: No memory operation
+#    Time: 10 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 1 PASSED: PassPC='1', Fetch allowed
+#    Time: 10 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 2: Memory stage reading
+#    Time: 20 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 2 PASSED: PassPC='0', Fetch blocked, MemRead propagated
+#    Time: 20 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 3: Memory stage writing
+#    Time: 30 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 3 PASSED: PassPC='0', Fetch blocked, MemWrite propagated
+#    Time: 30 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 4: Both Read and Write active
+#    Time: 40 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 4 PASSED: PassPC='0', Fetch blocked
+#    Time: 40 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 5: Return to idle
+#    Time: 50 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 5 PASSED: PassPC='1', Fetch allowed again
+#    Time: 50 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: Test 6 PASSED: Rapid transitions handled correctly
+#    Time: 65 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: All Memory Hazard Unit Tests Completed Successfully!
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+# ** Note: ====================================
+#    Time: 75 ns  Iteration: 0  Instance: /tb_memory_hazard_unit
+#  quit -sim
+# End time: 19:40:05 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:05 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/freeze-control/freeze_control.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity freeze_control
+# -- Compiling architecture Behavioral of freeze_control
+# End time: 19:40:05 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:05 on Dec 05,2025
+# vcom -2008 -work work ../../testbench/control/tb_freeze_control.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity tb_freeze_control
+# -- Compiling architecture Behavioral of tb_freeze_control
+# End time: 19:40:05 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_freeze_control -do "run -all; quit -sim" 
+# Start time: 19:40:05 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.tb_freeze_control(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Starting Freeze Control Tests
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 1: No stalls - Normal operation
+#    Time: 10 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 1 PASSED: PC and IF/DE updating, no NOP insertion
+#    Time: 10 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 2: Memory hazard stall
+#    Time: 20 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 2 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 20 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 3: Interrupt stall
+#    Time: 30 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 3 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 30 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 4: Branch stall
+#    Time: 40 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 4 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 40 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 5: Multiple stalls (memory + interrupt)
+#    Time: 50 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 5 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 50 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 6: All stalls active
+#    Time: 60 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 6 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 60 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 7: Return to normal operation
+#    Time: 70 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 7 PASSED: Pipeline resumed normally
+#    Time: 70 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 8 PASSED: Rapid transitions handled correctly
+#    Time: 90 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 9: Interrupt + Branch stalls
+#    Time: 100 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: Test 9 PASSED: PC frozen, IF/DE frozen, NOP inserted
+#    Time: 100 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: All Freeze Control Tests Completed Successfully!
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+# ** Note: ====================================
+#    Time: 110 ns  Iteration: 0  Instance: /tb_freeze_control
+#  quit -sim
+# End time: 19:40:06 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:06 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/interrupt-unit/interrupt_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Compiling entity interrupt_unit
+# -- Compiling architecture Behavioral of interrupt_unit
+# End time: 19:40:06 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:06 on Dec 05,2025
+# vcom -2008 -work work ../../testbench/control/tb_interrupt_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Compiling entity tb_interrupt_unit
+# -- Compiling architecture Behavioral of tb_interrupt_unit
+# End time: 19:40:06 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_interrupt_unit -do "run -all; quit -sim" 
+# Start time: 19:40:06 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.pkg_opcodes
+# Loading work.tb_interrupt_unit(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Starting Interrupt Unit Tests
+#    Time: 5 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: ====================================
+#    Time: 5 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 1: Normal operation (no interrupts)
+#    Time: 5 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 1 PASSED
+#    Time: 15 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 2: Software Interrupt - First Cycle (PUSH_PC)
+#    Time: 15 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 2 PASSED: Stall='1', Override=PUSH_PC
+#    Time: 25 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 3: Software Interrupt - Second Cycle (PUSH_FLAGS)
+#    Time: 25 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 3 PASSED: Stall='1', Override=PUSH_FLAGS
+#    Time: 35 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 4: Hardware Interrupt
+#    Time: 45 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 4 PASSED: Hardware interrupt with PassPC_NotPCPlus1
+#    Time: 55 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 5: RTI - First Cycle (POP_FLAGS)
+#    Time: 65 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 5 PASSED: Stall='1', Override=POP_FLAGS
+#    Time: 75 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 6: RTI - Second Cycle (POP_PC)
+#    Time: 75 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 6 PASSED: Stall='1', Override=POP_PC
+#    Time: 85 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 7: CALL instruction
+#    Time: 95 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 7 PASSED: Stall='1', Override=PUSH_PC
+#    Time: 105 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 8: RET instruction
+#    Time: 115 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 8 PASSED: Stall='1', Override=POP_PC
+#    Time: 125 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 9: Priority - Hardware interrupt has highest priority
+#    Time: 135 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 9 PASSED: Hardware interrupt takes priority
+#    Time: 145 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 10: Complete INT sequence simulation
+#    Time: 155 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 1: INT in decode, PUSH_PC
+#    Time: 165 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 2: INT in execute, PUSH_FLAGS
+#    Time: 175 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 3: INT complete, no stall
+#    Time: 185 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 10 PASSED: Complete INT sequence
+#    Time: 185 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 11: Complete RTI sequence simulation
+#    Time: 185 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 1: RTI in decode, POP_FLAGS (reverse order)
+#    Time: 195 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 2: RTI in execute, POP_PC
+#    Time: 205 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note:   Cycle 3: RTI complete, no stall
+#    Time: 215 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: Test 11 PASSED: Complete RTI sequence (reverse order verified)
+#    Time: 215 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: ====================================
+#    Time: 225 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: All Interrupt Unit Tests Completed Successfully!
+#    Time: 225 ns  Iteration: 0  Instance: /tb_interrupt_unit
+# ** Note: ====================================
+#    Time: 225 ns  Iteration: 0  Instance: /tb_interrupt_unit
+#  quit -sim
+# End time: 19:40:07 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:07 on Dec 05,2025
+# vcom -2008 -work work ../../rtl/control/branch-control/branch-predictor/branch_predictor.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package pkg_opcodes
+# -- Compiling entity branch_predictor
+# -- Compiling architecture Behavioral of branch_predictor
+# End time: 19:40:07 on Dec 05,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Questa Intel Starter FPGA Edition-64 vcom 2025.1 Compiler 2025.01 Jan 18 2025
+# Start time: 19:40:07 on Dec 05,2025
+# vcom -2008 -work work ../../testbench/control/tb_branch_predictor.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Compiling entity tb_branch_predictor
+# -- Compiling architecture Behavioral of tb_branch_predictor
+# End time: 19:40:08 on Dec 05,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_branch_predictor -do "run -all; quit -sim" 
+# Start time: 19:40:08 on Dec 05,2025
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading work.pkg_opcodes
+# Loading ieee.numeric_std(body)
+# Loading work.tb_branch_predictor(behavioral)#1
+# run -all
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Starting Branch Predictor Tests
+#    Time: 0 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: ====================================
+#    Time: 0 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 1: Unconditional JMP - always taken
+#    Time: 30 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 1 PASSED
+#    Time: 40 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 2: Conditional branch - initial prediction
+#    Time: 50 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 2 PASSED: Predicted not taken
+#    Time: 60 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 3: Update predictor - branch was actually taken
+#    Time: 60 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 4: After update - should predict weakly taken
+#    Time: 80 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 4 PASSED: Now predicts taken
+#    Time: 90 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 5: Train predictor to strongly taken
+#    Time: 90 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 6: Should be strongly taken now
+#    Time: 110 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: Test 6 PASSED: Strongly taken prediction
+#    Time: 120 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: ====================================
+#    Time: 120 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: All Branch Predictor Tests Completed!
+#    Time: 120 ns  Iteration: 0  Instance: /tb_branch_predictor
+# ** Note: ====================================
+#    Time: 120 ns  Iteration: 0  Instance: /tb_branch_predictor
