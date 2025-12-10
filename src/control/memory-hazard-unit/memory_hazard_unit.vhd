@@ -15,15 +15,11 @@ entity memory_hazard_unit is
 end memory_hazard_unit;
 
 architecture Behavioral of memory_hazard_unit is
-    signal memory_stage_needs_mem : std_logic;
 begin
-    
-    -- Check if memory stage needs the memory resource
-    memory_stage_needs_mem <= MemRead_MEM or MemWrite_MEM;
     
     -- Priority Logic: Memory stage has higher priority than Fetch stage
     -- If memory stage needs memory, block fetch; otherwise allow fetch
-    PassPC <= not memory_stage_needs_mem;
+    PassPC <= not (MemRead_MEM or MemWrite_MEM);
     
     -- Pass memory stage signals to actual memory when needed
     MemRead_Out  <= MemRead_MEM;
