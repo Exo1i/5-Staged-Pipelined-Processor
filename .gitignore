@@ -7,3 +7,4 @@ wlft*
 .vscode
 
 simulation/scripts/work
+*.cf
