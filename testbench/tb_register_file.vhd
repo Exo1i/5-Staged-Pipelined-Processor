@@ -1,6 +1,7 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+USE std.env.ALL;
 
 ENTITY tb_register_file IS
 END tb_register_file;
@@ -17,7 +18,7 @@ ARCHITECTURE Behavioral OF tb_register_file IS
             ReadDataB : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             Rdst : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             WriteData : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            RegWrite : IN STD_LOGIC
+            WriteEnable : IN STD_LOGIC
         );
     END COMPONENT;
 
@@ -33,7 +34,7 @@ ARCHITECTURE Behavioral OF tb_register_file IS
     SIGNAL ReadDataB : STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL Rdst : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
     SIGNAL WriteData : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL RegWrite : STD_LOGIC := '0';
+    SIGNAL WriteEnable : STD_LOGIC := '0';
 
 BEGIN
 
@@ -46,7 +47,7 @@ BEGIN
         ReadDataB => ReadDataB,
         Rdst => Rdst,
         WriteData => WriteData,
-        RegWrite => RegWrite
+        WriteEnable => WriteEnable
     );
 
     -- Clock generation
@@ -81,9 +82,9 @@ BEGIN
         REPORT "Test 2: Write 0xDEADBEEF to R1";
         Rdst <= "001"; -- R1
         WriteData <= X"DEADBEEF";
-        RegWrite <= '1';
+        WriteEnable <= '1';
         WAIT FOR clk_period;
-        RegWrite <= '0';
+        WriteEnable <= '0';
 
         -- Read R1
         Ra <= "001";
@@ -95,15 +96,15 @@ BEGIN
         FOR i IN 0 TO 7 LOOP
             Rdst <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
             WriteData <= STD_LOGIC_VECTOR(to_unsigned(i * 100, 32));
-            RegWrite <= '1';
+            WriteEnable <= '1';
             WAIT FOR clk_period;
         END LOOP;
-        RegWrite <= '0';
+        WriteEnable <= '0';
 
         -- Verify all registers
         FOR i IN 0 TO 7 LOOP
             Ra <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
-            WAIT FOR 5 ns;
+            WAIT FOR clk_period;
             ASSERT ReadDataA = STD_LOGIC_VECTOR(to_unsigned(i * 100, 32))
             REPORT "Register " & INTEGER'image(i) & " value incorrect" SEVERITY error;
         END LOOP;
@@ -123,9 +124,9 @@ BEGIN
         Rdst <= "011"; -- R3
         WriteData <= X"CAFEBABE";
         Ra <= "011"; -- Read R3 on port A
-        RegWrite <= '1';
+        WriteEnable <= '1';
         WAIT FOR clk_period;
-        RegWrite <= '0';
+        WriteEnable <= '0';
         WAIT FOR 5 ns;
         ASSERT ReadDataA = X"CAFEBABE"
         REPORT "Read-after-write failed" SEVERITY error;
@@ -134,13 +135,13 @@ BEGIN
         REPORT "Test 6: Multiple sequential writes";
         Rdst <= "100"; -- R4
         WriteData <= X"11111111";
-        RegWrite <= '1';
+        WriteEnable <= '1';
         WAIT FOR clk_period;
 
         Rdst <= "110"; -- R6
         WriteData <= X"22222222";
         WAIT FOR clk_period;
-        RegWrite <= '0';
+        WriteEnable <= '0';
 
         -- Verify both writes
         Ra <= "100";
@@ -153,12 +154,12 @@ BEGIN
         REPORT "Test 7: Overwrite R7 multiple times";
         Rdst <= "111"; -- R7
         WriteData <= X"AAAA0000";
-        RegWrite <= '1';
+        WriteEnable <= '1';
         WAIT FOR clk_period;
 
         WriteData <= X"0000BBBB";
         WAIT FOR clk_period;
-        RegWrite <= '0';
+        WriteEnable <= '0';
 
         -- Read R7 (should have last written value)
         Ra <= "111";
@@ -167,10 +168,10 @@ BEGIN
         REPORT "Overwrite failed" SEVERITY error;
 
         -- Test 8: Write disabled
-        REPORT "Test 8: Write with RegWrite = 0";
+        REPORT "Test 8: Write with WriteEnable = 0";
         Rdst <= "010"; -- R2
         WriteData <= X"BADBAD00";
-        RegWrite <= '0'; -- Disabled
+        WriteEnable <= '0'; -- Disabled
         WAIT FOR clk_period;
 
         Ra <= "010";
@@ -179,7 +180,7 @@ BEGIN
         REPORT "Write occurred when disabled" SEVERITY error;
 
         REPORT "Register File Testbench Completed Successfully";
-        WAIT;
+        finish;
     END PROCESS;
 
 END Behavioral;
