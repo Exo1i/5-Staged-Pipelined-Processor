@@ -2,6 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use work.control_signals_pkg.ALL;
+use work.pipeline_data_pkg.ALL;
 
 entity WritebackStage is
     generic(
@@ -13,13 +14,9 @@ entity WritebackStage is
         clk             : in std_logic;
         rst             : in std_logic;
         
-        -- Control signals
-        wb_ctrl         : in writeback_control_t;
-        
-        -- Input data
-        MemoryData      : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        ALUData         : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        Rdst            : in std_logic_vector(RDST_WIDTH - 1 downto 0);
+        -- Pipeline inputs (MEM/WB bundle)
+        mem_wb_ctrl     : in pipeline_memory_writeback_ctrl_t;
+        mem_wb_data     : in pipeline_memory_writeback_t;
         
         -- Output data
         PortEnable      : out std_logic;
@@ -37,25 +34,25 @@ begin
     -- MemToALU mux selects between:
     -- 0: ALU result (ALUData)
     -- 1: Memory data (MemoryData)
-    process(wb_ctrl.MemToALU, MemoryData, ALUData)
+    process(mem_wb_ctrl.writeback_ctrl.MemToALU, mem_wb_data.memory_data, mem_wb_data.alu_data)
     begin
-        if wb_ctrl.MemToALU = '1' then
-            selected_data <= MemoryData;
+        if mem_wb_ctrl.writeback_ctrl.MemToALU = '1' then
+            selected_data <= mem_wb_data.memory_data;
         else
-            selected_data <= ALUData;
+            selected_data <= mem_wb_data.alu_data;
         end if;
     end process;
     
     -- Forward output port write enable
-    PortEnable <= wb_ctrl.OutPortWriteEn;
+    PortEnable <= mem_wb_ctrl.writeback_ctrl.OutPortWriteEn;
     
     -- Forward register write enable
-    RegWE <= wb_ctrl.RegWrite;
+    RegWE <= mem_wb_ctrl.writeback_ctrl.RegWrite;
     
     -- Assign selected data to output
     Data <= selected_data;
     
     -- Forward Rdst
-    RdstOut <= Rdst;
+    RdstOut <= mem_wb_data.rdst;
 
 end architecture rtl;

@@ -224,6 +224,14 @@ BEGIN
 
     -- Operand outputs
     operand_a_out <= rf_data_a;         -- Always from register file
+    operand_b_out <= operand_b;         -- After OutB mux
+    
+    -- Control signals to ID/EX Register (after stall handling)
+    decode_ctrl_out <= final_decode_ctrl;
+    execute_ctrl_out <= final_execute_ctrl;
+    memory_ctrl_out <= final_memory_ctrl;
+    writeback_ctrl_out <= final_writeback_ctrl;
+    
     -- Control feedback signals (to Control Unit at top level)
     opcode_out <= opcode;
     is_jmp_out <= is_jmp;
@@ -234,13 +242,5 @@ BEGIN
     is_hardware_int_out <= is_hardware_int;
     is_return_out <= is_return;
     is_reti_out <= is_reti;
-    -- Interrupt Unit signals
-    is_interrupt_out <= is_interrupt OR take_interrupt_in;  -- Software or hardware interrupt
-    is_hardware_int_out <= is_hardware_int;
-    is_return_out <= is_return;
-    is_reti_out <= is_reti;
-
-    -- Freeze Control signal
-    freeze_out <= '0';  -- No freeze request from decode (can be extended for load-use hazards)
 
 END ARCHITECTURE Behavioral;
