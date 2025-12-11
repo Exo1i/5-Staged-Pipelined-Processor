@@ -8,43 +8,49 @@ entity ex_mem_register is
         enable : in STD_LOGIC;  -- For stall handling
         flush  : in STD_LOGIC;  -- For control hazards
         
-        -- Inputs from Execute Stage
-        ALU_Result_in : in STD_LOGIC_VECTOR(31 downto 0);
-        RegB_Data_in  : in STD_LOGIC_VECTOR(31 downto 0);
-        CCR_in        : in STD_LOGIC_VECTOR(2 downto 0);
-        PC_in         : in STD_LOGIC_VECTOR(31 downto 0);
+        -- WB (Write Back) Control Signals - Input
+        WB_RegWrite_in   : in STD_LOGIC;
+        WB_MemToReg_in   : in STD_LOGIC;
         
-        -- Control signals from Execute Stage
-        MemRead_in    : in STD_LOGIC;
-        MemWrite_in   : in STD_LOGIC;
-        RegWrite_in   : in STD_LOGIC;
-        MemToReg_in   : in STD_LOGIC;
-        SpToMem_in    : in STD_LOGIC;
-        MemDataSel_in : in STD_LOGIC_VECTOR(1 downto 0);
+        -- M (Memory) Control Signals - Input
+        M_MemRead_in     : in STD_LOGIC;
+        M_MemWrite_in    : in STD_LOGIC;
+        M_SpToMem_in     : in STD_LOGIC;
+        M_PassInterrupt_in : in STD_LOGIC;
         
-        -- Destination register info
-        Rdst_in       : in STD_LOGIC_VECTOR(2 downto 0);
-        Rdst2_in      : in STD_LOGIC_VECTOR(2 downto 0);
-        RegWrite2_in  : in STD_LOGIC;
+        -- ALU Result / Memory Address - Input
+        ALU_Result_in    : in STD_LOGIC_VECTOR(31 downto 0);
         
-        -- Outputs to Memory Stage
-        ALU_Result_out : out STD_LOGIC_VECTOR(31 downto 0);
-        RegB_Data_out  : out STD_LOGIC_VECTOR(31 downto 0);
-        CCR_out        : out STD_LOGIC_VECTOR(2 downto 0);
-        PC_out         : out STD_LOGIC_VECTOR(31 downto 0);
+        -- Primary Data - Input
+        Primary_Data_in  : in STD_LOGIC_VECTOR(31 downto 0);
         
-        -- Control signals to Memory Stage
-        MemRead_out    : out STD_LOGIC;
-        MemWrite_out   : out STD_LOGIC;
-        RegWrite_out   : out STD_LOGIC;
-        MemToReg_out   : out STD_LOGIC;
-        SpToMem_out    : out STD_LOGIC;
-        MemDataSel_out : out STD_LOGIC_VECTOR(1 downto 0);
+        -- Secondary Data - Input
+        Secondary_Data_in : in STD_LOGIC_VECTOR(31 downto 0);
         
-        -- Destination register info
-        Rdst_out       : out STD_LOGIC_VECTOR(2 downto 0);
-        Rdst2_out      : out STD_LOGIC_VECTOR(2 downto 0);
-        RegWrite2_out  : out STD_LOGIC
+        -- Rdst1 - Input
+        Rdst1_in         : in STD_LOGIC_VECTOR(2 downto 0);
+        
+        -- WB (Write Back) Control Signals - Output
+        WB_RegWrite_out  : out STD_LOGIC;
+        WB_MemToReg_out  : out STD_LOGIC;
+        
+        -- M (Memory) Control Signals - Output
+        M_MemRead_out    : out STD_LOGIC;
+        M_MemWrite_out   : out STD_LOGIC;
+        M_SpToMem_out    : out STD_LOGIC;
+        M_PassInterrupt_out : out STD_LOGIC;
+        
+        -- ALU Result / Memory Address - Output
+        ALU_Result_out   : out STD_LOGIC_VECTOR(31 downto 0);
+        
+        -- Primary Data - Output
+        Primary_Data_out : out STD_LOGIC_VECTOR(31 downto 0);
+        
+        -- Secondary Data - Output
+        Secondary_Data_out : out STD_LOGIC_VECTOR(31 downto 0);
+        
+        -- Rdst1 - Output
+        Rdst1_out        : out STD_LOGIC_VECTOR(2 downto 0)
     );
 end ex_mem_register;
 
@@ -54,52 +60,52 @@ begin
     begin
         if reset = '1' then
             -- Reset all outputs
-            ALU_Result_out <= (others => '0');
-            RegB_Data_out  <= (others => '0');
-            CCR_out        <= (others => '0');
-            PC_out         <= (others => '0');
-            MemRead_out    <= '0';
-            MemWrite_out   <= '0';
-            RegWrite_out   <= '0';
-            MemToReg_out   <= '0';
-            SpToMem_out    <= '0';
-            MemDataSel_out <= (others => '0');
-            Rdst_out       <= (others => '0');
-            Rdst2_out      <= (others => '0');
-            RegWrite2_out  <= '0';
+            -- WB signals
+            WB_RegWrite_out     <= '0';
+            WB_MemToReg_out     <= '0';
+            -- M signals
+            M_MemRead_out       <= '0';
+            M_MemWrite_out      <= '0';
+            M_SpToMem_out       <= '0';
+            M_PassInterrupt_out <= '0';
+            -- Data signals
+            ALU_Result_out      <= (others => '0');
+            Primary_Data_out    <= (others => '0');
+            Secondary_Data_out  <= (others => '0');
+            Rdst1_out           <= (others => '0');
             
         elsif rising_edge(clk) then
             if flush = '1' then
                 -- Flush: Insert bubble (NOP)
-                ALU_Result_out <= (others => '0');
-                RegB_Data_out  <= (others => '0');
-                CCR_out        <= (others => '0');
-                PC_out         <= (others => '0');
-                MemRead_out    <= '0';
-                MemWrite_out   <= '0';
-                RegWrite_out   <= '0';  -- Critical: disable writes
-                MemToReg_out   <= '0';
-                SpToMem_out    <= '0';
-                MemDataSel_out <= (others => '0');
-                Rdst_out       <= (others => '0');
-                Rdst2_out      <= (others => '0');
-                RegWrite2_out  <= '0';
+                -- WB signals
+                WB_RegWrite_out     <= '0';
+                WB_MemToReg_out     <= '0';
+                -- M signals
+                M_MemRead_out       <= '0';
+                M_MemWrite_out      <= '0';
+                M_SpToMem_out       <= '0';
+                M_PassInterrupt_out <= '0';
+                -- Data signals
+                ALU_Result_out      <= (others => '0');
+                Primary_Data_out    <= (others => '0');
+                Secondary_Data_out  <= (others => '0');
+                Rdst1_out           <= (others => '0');
                 
             elsif enable = '1' then
                 -- Normal operation: latch inputs
-                ALU_Result_out <= ALU_Result_in;
-                RegB_Data_out  <= RegB_Data_in;
-                CCR_out        <= CCR_in;
-                PC_out         <= PC_in;
-                MemRead_out    <= MemRead_in;
-                MemWrite_out   <= MemWrite_in;
-                RegWrite_out   <= RegWrite_in;
-                MemToReg_out   <= MemToReg_in;
-                SpToMem_out    <= SpToMem_in;
-                MemDataSel_out <= MemDataSel_in;
-                Rdst_out       <= Rdst_in;
-                Rdst2_out      <= Rdst2_in;
-                RegWrite2_out  <= RegWrite2_in;
+                -- WB signals
+                WB_RegWrite_out     <= WB_RegWrite_in;
+                WB_MemToReg_out     <= WB_MemToReg_in;
+                -- M signals
+                M_MemRead_out       <= M_MemRead_in;
+                M_MemWrite_out      <= M_MemWrite_in;
+                M_SpToMem_out       <= M_SpToMem_in;
+                M_PassInterrupt_out <= M_PassInterrupt_in;
+                -- Data signals
+                ALU_Result_out      <= ALU_Result_in;
+                Primary_Data_out    <= Primary_Data_in;
+                Secondary_Data_out  <= Secondary_Data_in;
+                Rdst1_out           <= Rdst1_in;
             end if;
             -- If enable = '0', hold current values (stall)
         end if;
