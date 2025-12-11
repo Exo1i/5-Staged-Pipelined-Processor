@@ -1,5 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
+USE work.pipeline_data_pkg.ALL;
 
 ENTITY fetch_stage IS
     PORT (
@@ -11,18 +12,14 @@ ENTITY fetch_stage IS
         BranchSelect : IN STD_LOGIC;
         BranchTargetSelect : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
 
-        -- Branch Targets
-        target_decode : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        target_execute : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        target_memory : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        -- Branch Targets Bundle
+        branch_targets : IN branch_targets_t;
 
         -- Memory Interface
         mem_data : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- Instruction or Reset Vector
-        pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-        -- Pipeline Output (to Decode)
-        pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-        instruction_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+        -- Pipeline Output Bundle (to IF/ID register)
+        fetch_out : OUT fetch_outputs_t;
 
         -- Interrupt Input
         intr_in : IN STD_LOGIC;
@@ -57,15 +54,10 @@ BEGIN
     -- Enable PC update when not stalled
     pc_enable <= NOT stall;
 
-    -- Output current PC to memory
-    pc_out <= current_pc;
-
-    -- Pass instruction from memory to decode stage
-    instruction_out <= mem_data;
-
-    -- Mux for PushedPC selection (PC vs PC+1)
-    pushed_pc_out <= current_pc WHEN PushPCSelect = '0' ELSE
-        pc_plus_one;
+    -- Populate output record
+    fetch_out.pc <= current_pc;
+    fetch_out.instruction <= mem_data;
+    fetch_out.pushed_pc <= current_pc WHEN PushPCSelect = '0' ELSE pc_plus_one;
 
     -- Instantiate PC
     pc_inst : pc
@@ -75,9 +67,9 @@ BEGIN
         BranchSelect => BranchSelect,
         BranchTargetSelect => BranchTargetSelect,
         enable => pc_enable,
-        target_decode => target_decode,
-        target_execute => target_execute,
-        target_memory => target_memory,
+        target_decode => branch_targets.target_decode,
+        target_execute => branch_targets.target_execute,
+        target_memory => branch_targets.target_memory,
         target_reset => mem_data, -- Reset vector comes from memory (M[0])
         pc_out => current_pc,
         pc_plus_one => pc_plus_one

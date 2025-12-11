@@ -1,10 +1,10 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use work.control_signals_pkg.ALL;
-use work.pipeline_data_pkg.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE work.control_signals_pkg.ALL;
+USE work.pipeline_data_pkg.ALL;
 
-entity MemoryStage is
+ENTITY MemoryStage IS
     generic(
         DATA_WIDTH : integer := 32;
         ADDR_WIDTH : integer := 18;

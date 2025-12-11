@@ -106,4 +106,87 @@ PACKAGE pipeline_data_pkg IS
         writeback_ctrl => WRITEBACK_CTRL_DEFAULT
     );
     
+    -- ========== STAGE INTERFACE BUNDLES ==========
+    -- These records group related signals for cleaner stage interfaces
+    
+    -- Fetch Stage Output Bundle
+    TYPE fetch_outputs_t IS RECORD
+        pc          : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        pushed_pc   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        instruction : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    END RECORD;
+    
+    -- Decode Stage Outputs Bundle
+    TYPE decode_outputs_t IS RECORD
+        pc          : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        pushed_pc   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        operand_a   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        operand_b   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        immediate   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        rsrc1       : STD_LOGIC_VECTOR(2 DOWNTO 0);
+        rsrc2       : STD_LOGIC_VECTOR(2 DOWNTO 0);
+        rd          : STD_LOGIC_VECTOR(2 DOWNTO 0);
+        opcode      : STD_LOGIC_VECTOR(4 DOWNTO 0);
+    END RECORD;
+    
+    -- Decode Stage Control Outputs Bundle
+    TYPE decode_ctrl_outputs_t IS RECORD
+        decode_ctrl    : decode_control_t;
+        execute_ctrl   : execute_control_t;
+        memory_ctrl    : memory_control_t;
+        writeback_ctrl : writeback_control_t;
+    END RECORD;
+    
+    -- Decode Stage Flags Bundle
+    TYPE decode_flags_t IS RECORD
+        is_interrupt        : STD_LOGIC;
+        is_hardware_int     : STD_LOGIC;
+        is_call             : STD_LOGIC;
+        is_return           : STD_LOGIC;
+        is_reti             : STD_LOGIC;
+        is_jmp              : STD_LOGIC;
+        is_jmp_conditional  : STD_LOGIC;
+        conditional_type    : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    END RECORD;
+    
+    -- Execute Stage Outputs Bundle
+    TYPE execute_outputs_t IS RECORD
+        alu_result     : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        primary_data   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        secondary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        rdst           : STD_LOGIC_VECTOR(2 DOWNTO 0);
+        ccr_flags      : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    END RECORD;
+    
+    -- Execute Stage Control Pass-Through Bundle
+    TYPE execute_ctrl_outputs_t IS RECORD
+        wb_regwrite     : STD_LOGIC;
+        wb_memtoreg     : STD_LOGIC;
+        m_memread       : STD_LOGIC;
+        m_memwrite      : STD_LOGIC;
+        m_sptomem       : STD_LOGIC;
+        m_passinterrupt : STD_LOGIC;
+    END RECORD;
+    
+    -- Writeback Stage Outputs Bundle
+    TYPE writeback_outputs_t IS RECORD
+        data        : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        rdst        : STD_LOGIC_VECTOR(2 DOWNTO 0);
+        reg_we      : STD_LOGIC;
+        port_enable : STD_LOGIC;
+    END RECORD;
+    
+    -- Branch Targets Bundle
+    TYPE branch_targets_t IS RECORD
+        target_decode  : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        target_execute : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        target_memory  : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    END RECORD;
+    
+    -- Forwarding Control Bundle
+    TYPE forwarding_ctrl_t IS RECORD
+        forward_a : STD_LOGIC_VECTOR(1 DOWNTO 0);
+        forward_b : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    END RECORD;
+    
 END PACKAGE pipeline_data_pkg;
