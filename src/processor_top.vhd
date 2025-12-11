@@ -2,6 +2,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE work.pkg_opcodes.ALL;
 USE work.control_signals_pkg.ALL;
+USE work.pipeline_data_pkg.ALL;
 
 ENTITY processor_top IS
     PORT (
@@ -173,6 +174,121 @@ ARCHITECTURE Structural OF processor_top IS
             execute_ctrl_out : OUT execute_control_t;
             memory_ctrl_out : OUT memory_control_t;
             writeback_ctrl_out : OUT writeback_control_t
+        );
+    END COMPONENT;
+
+    -- Execute Stage
+    COMPONENT execute_stage IS
+        PORT (
+            clk   : IN STD_LOGIC;
+            reset : IN STD_LOGIC;
+            WB_RegWrite_in  : IN STD_LOGIC;
+            WB_MemToReg_in  : IN STD_LOGIC;
+            M_MemRead_in    : IN STD_LOGIC;
+            M_MemWrite_in   : IN STD_LOGIC;
+            M_SpToMem_in    : IN STD_LOGIC;
+            M_PassInterrupt_in : IN STD_LOGIC;
+            EX_ALU_Op       : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+            EX_PassImm      : IN STD_LOGIC;
+            EX_CCRWrEn      : IN STD_LOGIC;
+            EX_IsReturn     : IN STD_LOGIC;
+            EX_PassCCR      : IN STD_LOGIC;
+            OutA            : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            OutB            : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Immediate       : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            PC_in           : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Rsrc1           : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            Rsrc2           : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            Rdst1_in        : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            ForwardA        : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+            ForwardB        : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+            Forwarded_EXM   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Forwarded_MWB   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            StackFlags      : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            WB_RegWrite_out : OUT STD_LOGIC;
+            WB_MemToReg_out : OUT STD_LOGIC;
+            M_MemRead_out   : OUT STD_LOGIC;
+            M_MemWrite_out  : OUT STD_LOGIC;
+            M_SpToMem_out   : OUT STD_LOGIC;
+            M_PassInterrupt_out : OUT STD_LOGIC;
+            ALU_Result_out  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Primary_Data    : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Secondary_Data  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Rdst1_out       : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+            CCR_Flags       : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
+        );
+    END COMPONENT;
+
+    -- EX/MEM Pipeline Register
+    COMPONENT ex_mem_register IS
+        PORT (
+            clk : IN STD_LOGIC;
+            rst : IN STD_LOGIC;
+            enable : IN STD_LOGIC;
+            flush : IN STD_LOGIC;
+            data_in : IN pipeline_execute_memory_t;
+            ctrl_in : IN pipeline_execute_memory_ctrl_t;
+            data_out : OUT pipeline_execute_memory_t;
+            ctrl_out : OUT pipeline_execute_memory_ctrl_t
+        );
+    END COMPONENT;
+
+    -- Memory Stage
+    COMPONENT MemoryStage IS
+        GENERIC(
+            DATA_WIDTH : integer := 32;
+            ADDR_WIDTH : integer := 18;
+            RDST_WIDTH : integer := 3
+        );
+        PORT (
+            clk             : IN std_logic;
+            rst             : IN std_logic;
+            mem_ctrl        : IN memory_control_t;
+            PrimaryData     : IN std_logic_vector(DATA_WIDTH - 1 downto 0);
+            SecondaryData   : IN std_logic_vector(DATA_WIDTH - 1 downto 0);
+            RdstIN          : IN std_logic_vector(RDST_WIDTH - 1 downto 0);
+            MemoryData      : OUT std_logic_vector(DATA_WIDTH - 1 downto 0);
+            ALUData         : OUT std_logic_vector(DATA_WIDTH - 1 downto 0);
+            RdstOut         : OUT std_logic_vector(RDST_WIDTH - 1 downto 0);
+            MemReadData     : IN std_logic_vector(DATA_WIDTH - 1 downto 0);
+            MemRead         : OUT std_logic;
+            MemWrite        : OUT std_logic;
+            MemAddress      : OUT std_logic_vector(ADDR_WIDTH - 1 downto 0);
+            MemWriteData    : OUT std_logic_vector(DATA_WIDTH - 1 downto 0)
+        );
+    END COMPONENT;
+
+    -- MEM/WB Pipeline Register
+    COMPONENT mem_wb_register IS
+        PORT (
+            clk : IN STD_LOGIC;
+            rst : IN STD_LOGIC;
+            enable : IN STD_LOGIC;
+            flush : IN STD_LOGIC;
+            data_in : IN pipeline_memory_writeback_t;
+            ctrl_in : IN pipeline_memory_writeback_ctrl_t;
+            data_out : OUT pipeline_memory_writeback_t;
+            ctrl_out : OUT pipeline_memory_writeback_ctrl_t
+        );
+    END COMPONENT;
+
+    -- Writeback Stage
+    COMPONENT WritebackStage IS
+        GENERIC(
+            DATA_WIDTH : integer := 32;
+            RDST_WIDTH : integer := 3
+        );
+        PORT (
+            clk             : IN std_logic;
+            rst             : IN std_logic;
+            wb_ctrl         : IN writeback_control_t;
+            MemoryData      : IN std_logic_vector(DATA_WIDTH - 1 downto 0);
+            ALUData         : IN std_logic_vector(DATA_WIDTH - 1 downto 0);
+            Rdst            : IN std_logic_vector(RDST_WIDTH - 1 downto 0);
+            PortEnable      : OUT std_logic;
+            RegWE           : OUT std_logic;
+            Data            : OUT std_logic_vector(DATA_WIDTH - 1 downto 0);
+            RdstOut         : OUT std_logic_vector(RDST_WIDTH - 1 downto 0)
         );
     END COMPONENT;
 
@@ -384,6 +500,51 @@ ARCHITECTURE Structural OF processor_top IS
     SIGNAL is_return_ex : STD_LOGIC;
     SIGNAL is_call_ex : STD_LOGIC;
     SIGNAL conditional_branch_ex : STD_LOGIC;
+
+    -- Execute Stage outputs
+    SIGNAL ex_alu_result : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL ex_primary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL ex_secondary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL ex_rdst : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    SIGNAL ex_ccr_flags : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    SIGNAL ex_wb_regwrite : STD_LOGIC;
+    SIGNAL ex_wb_memtoreg : STD_LOGIC;
+    SIGNAL ex_m_memread : STD_LOGIC;
+    SIGNAL ex_m_memwrite : STD_LOGIC;
+    SIGNAL ex_m_sptomem : STD_LOGIC;
+    SIGNAL ex_m_passinterrupt : STD_LOGIC_VECTOR(1 DOWNTO 0);
+
+    -- EX/MEM Pipeline Register signals
+    SIGNAL exmem_data_in : pipeline_execute_memory_t;
+    SIGNAL exmem_ctrl_in : pipeline_execute_memory_ctrl_t;
+    SIGNAL exmem_data_out : pipeline_execute_memory_t;
+    SIGNAL exmem_ctrl_out : pipeline_execute_memory_ctrl_t;
+
+    -- Memory Stage outputs
+    SIGNAL mem_memory_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL mem_alu_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL mem_rdst : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    SIGNAL mem_memread : STD_LOGIC;
+    SIGNAL mem_memwrite : STD_LOGIC;
+    SIGNAL mem_address_internal : STD_LOGIC_VECTOR(17 DOWNTO 0);
+    SIGNAL mem_write_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+
+    -- MEM/WB Pipeline Register signals
+    SIGNAL memwb_data_in : pipeline_memory_writeback_t;
+    SIGNAL memwb_ctrl_in : pipeline_memory_writeback_ctrl_t;
+    SIGNAL memwb_data_out : pipeline_memory_writeback_t;
+    SIGNAL memwb_ctrl_out : pipeline_memory_writeback_ctrl_t;
+
+    -- Writeback Stage outputs
+    SIGNAL wb_port_enable : STD_LOGIC;
+    SIGNAL wb_reg_we : STD_LOGIC;
+    SIGNAL wb_data_out : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL wb_rdst_out : STD_LOGIC_VECTOR(2 DOWNTO 0);
+
+    -- Forwarding signals (placeholder - to be connected to forwarding unit)
+    SIGNAL forward_a : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL forward_b : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL stack_flags : STD_LOGIC_VECTOR(2 DOWNTO 0);
 
 BEGIN
 
@@ -622,6 +783,153 @@ BEGIN
             execute_ctrl_out => execute_ctrl_to_ex,
             memory_ctrl_out => memory_ctrl_to_ex,
             writeback_ctrl_out => writeback_ctrl_to_ex
+        );
+
+    -- ========== EXECUTE STAGE ==========
+    
+    -- Temporary forwarding placeholders (TODO: Connect to forwarding unit)
+    forward_a <= "00"; -- No forwarding
+    forward_b <= "00"; -- No forwarding
+    stack_flags <= "000";
+
+    execute_inst : execute_stage
+        PORT MAP (
+            clk => clk,
+            reset => rst,
+            -- Control inputs from ID/EX
+            WB_RegWrite_in => writeback_ctrl_to_ex.RegWrite,
+            WB_MemToReg_in => writeback_ctrl_to_ex.MemToALU,
+            M_MemRead_in => memory_ctrl_to_ex.MemRead,
+            M_MemWrite_in => memory_ctrl_to_ex.MemWrite,
+            M_SpToMem_in => memory_ctrl_to_ex.SPtoMem,
+            M_PassInterrupt_in => memory_ctrl_to_ex.PassInterrupt(0),
+            EX_ALU_Op => execute_ctrl_to_ex.ALU_Op,
+            EX_PassImm => execute_ctrl_to_ex.PassImm,
+            EX_CCRWrEn => execute_ctrl_to_ex.CCRWrEn,
+            EX_IsReturn => decode_ctrl_to_ex.IsReturn,
+            EX_PassCCR => execute_ctrl_to_ex.PassCCR,
+            -- Data inputs from ID/EX
+            OutA => operand_a_to_ex,
+            OutB => operand_b_to_ex,
+            Immediate => immediate_to_ex,
+            PC_in => pc_to_ex,
+            Rsrc1 => rsrc1_to_ex,
+            Rsrc2 => rsrc2_to_ex,
+            Rdst1_in => rd_to_ex,
+            -- Forwarding
+            ForwardA => forward_a,
+            ForwardB => forward_b,
+            Forwarded_EXM => exmem_data_out.primary_data,
+            Forwarded_MWB => wb_data_out,
+            StackFlags => stack_flags,
+            -- Outputs
+            WB_RegWrite_out => ex_wb_regwrite,
+            WB_MemToReg_out => ex_wb_memtoreg,
+            M_MemRead_out => ex_m_memread,
+            M_MemWrite_out => ex_m_memwrite,
+            M_SpToMem_out => ex_m_sptomem,
+            M_PassInterrupt_out => ex_m_passinterrupt(0),
+            ALU_Result_out => ex_alu_result,
+            Primary_Data => ex_primary_data,
+            Secondary_Data => ex_secondary_data,
+            Rdst1_out => ex_rdst,
+            CCR_Flags => ex_ccr_flags
+        );
+
+    -- ========== EX/MEM PIPELINE REGISTER ==========
+    
+    -- Pack Execute Stage outputs into pipeline records
+    exmem_data_in.primary_data <= ex_alu_result;
+    exmem_data_in.secondary_data <= ex_secondary_data;
+    exmem_data_in.rdst1 <= ex_rdst;
+    
+    exmem_ctrl_in.memory_ctrl.MemRead <= ex_m_memread;
+    exmem_ctrl_in.memory_ctrl.MemWrite <= ex_m_memwrite;
+    exmem_ctrl_in.memory_ctrl.SPtoMem <= ex_m_sptomem;
+    exmem_ctrl_in.memory_ctrl.PassInterrupt <= ex_m_passinterrupt;
+    exmem_ctrl_in.memory_ctrl.SP_Enable <= memory_ctrl_to_ex.SP_Enable;
+    exmem_ctrl_in.memory_ctrl.SP_Function <= memory_ctrl_to_ex.SP_Function;
+    
+    exmem_ctrl_in.writeback_ctrl.RegWrite <= ex_wb_regwrite;
+    exmem_ctrl_in.writeback_ctrl.MemToALU <= ex_wb_memtoreg;
+    exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= writeback_ctrl_to_ex.OutPortWriteEn;
+
+    exmem_reg : ex_mem_register
+        PORT MAP (
+            clk => clk,
+            rst => rst,
+            enable => '1', -- TODO: Connect to pipeline control
+            flush => '0',  -- TODO: Connect to flush logic
+            data_in => exmem_data_in,
+            ctrl_in => exmem_ctrl_in,
+            data_out => exmem_data_out,
+            ctrl_out => exmem_ctrl_out
+        );
+
+    -- ========== MEMORY STAGE ==========
+    
+    memory_inst : MemoryStage
+        GENERIC MAP (
+            DATA_WIDTH => 32,
+            ADDR_WIDTH => 18,
+            RDST_WIDTH => 3
+        )
+        PORT MAP (
+            clk => clk,
+            rst => rst,
+            mem_ctrl => exmem_ctrl_out.memory_ctrl,
+            PrimaryData => exmem_data_out.primary_data,
+            SecondaryData => exmem_data_out.secondary_data,
+            RdstIN => exmem_data_out.rdst1,
+            MemoryData => mem_memory_data,
+            ALUData => mem_alu_data,
+            RdstOut => mem_rdst,
+            MemReadData => mem_data_in,
+            MemRead => mem_memread,
+            MemWrite => mem_memwrite,
+            MemAddress => mem_address_internal,
+            MemWriteData => mem_write_data
+        );
+
+    -- ========== MEM/WB PIPELINE REGISTER ==========
+    
+    -- Pack Memory Stage outputs into pipeline records
+    memwb_data_in.memory_data <= mem_memory_data;
+    memwb_data_in.alu_data <= mem_alu_data;
+    memwb_data_in.rdst <= mem_rdst;
+    
+    memwb_ctrl_in.writeback_ctrl <= exmem_ctrl_out.writeback_ctrl;
+
+    memwb_reg : mem_wb_register
+        PORT MAP (
+            clk => clk,
+            rst => rst,
+            enable => '1', -- TODO: Connect to pipeline control
+            flush => '0',  -- TODO: Connect to flush logic
+            data_in => memwb_data_in,
+            ctrl_in => memwb_ctrl_in,
+            data_out => memwb_data_out,
+            ctrl_out => memwb_ctrl_out
+        );
+
+    -- ========== WRITEBACK STAGE ==========
+    
+    writeback_inst : WritebackStage
+        GENERIC MAP (
+            DATA_WIDTH => 32,
+            RDST_WIDTH => 3
+        )
+        PORT MAP (
+            clk => clk,
+            rst => rst,
+            wb_ctrl => memwb_ctrl_out.writeback_ctrl,
+            MemoryData => memwb_data_out.memory_data,
+            ALUData => memwb_data_out.alu_data,
+            Rdst => memwb_data_out.rdst,
+            PortEnable => wb_port_enable,
+            RegWE => wb_reg_we,
+            Data => wb_data_out,
+            RdstOut => wb_rdst_out
         );
 
     -- ========== FEEDBACK SIGNALS ==========
