@@ -46,6 +46,18 @@ PACKAGE pipeline_data_pkg IS
         writeback_ctrl : writeback_control_t;
     END RECORD;
     
+    -- Data bundle for MEM/WB pipeline register
+    TYPE pipeline_memory_writeback_t IS RECORD
+        memory_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        alu_data    : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        rdst        : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    END RECORD;
+    
+    -- Control bundle for MEM/WB pipeline register
+    TYPE pipeline_memory_writeback_ctrl_t IS RECORD
+        writeback_ctrl : writeback_control_t;
+    END RECORD;
+    
     -- Default/NOP values
     CONSTANT PIPELINE_FETCH_DECODE_RESET : pipeline_fetch_decode_t := (
         take_interrupt => '0',
@@ -56,7 +68,7 @@ PACKAGE pipeline_data_pkg IS
         instruction => (OTHERS => '0')
     );
     
-    CONSTANT PIPELINE_DECODE_EXCUTE_RESET : pipeline_data_t := (
+    CONSTANT PIPELINE_DECODE_EXCUTE_RESET : pipeline_decode_excute_t := (
         pc => (OTHERS => '0'),
         operand_a => (OTHERS => '0'),
         operand_b => (OTHERS => '0'),
@@ -66,7 +78,7 @@ PACKAGE pipeline_data_pkg IS
         rd => (OTHERS => '0')
     );
     
-    CONSTANT PIPELINE_DECODE_EXCUTE_CTRL_NOP : pipeline_ctrl_t := (
+    CONSTANT PIPELINE_DECODE_EXCUTE_CTRL_NOP : pipeline_decode_excute_ctrl_t := (
         decode_ctrl => DECODE_CTRL_DEFAULT,
         execute_ctrl => EXECUTE_CTRL_DEFAULT,
         memory_ctrl => MEMORY_CTRL_DEFAULT,
@@ -74,7 +86,6 @@ PACKAGE pipeline_data_pkg IS
     );
     
     CONSTANT PIPELINE_EXECUTE_MEMORY_RESET : pipeline_execute_memory_t := (
-        alu_result => (OTHERS => '0'),
         primary_data => (OTHERS => '0'),
         secondary_data => (OTHERS => '0'),
         rdst1 => (OTHERS => '0')
@@ -82,6 +93,16 @@ PACKAGE pipeline_data_pkg IS
     
     CONSTANT PIPELINE_EXECUTE_MEMORY_CTRL_NOP : pipeline_execute_memory_ctrl_t := (
         memory_ctrl => MEMORY_CTRL_DEFAULT,
+        writeback_ctrl => WRITEBACK_CTRL_DEFAULT
+    );
+    
+    CONSTANT PIPELINE_MEMORY_WRITEBACK_RESET : pipeline_memory_writeback_t := (
+        memory_data => (OTHERS => '0'),
+        alu_data => (OTHERS => '0'),
+        rdst => (OTHERS => '0')
+    );
+    
+    CONSTANT PIPELINE_MEMORY_WRITEBACK_CTRL_NOP : pipeline_memory_writeback_ctrl_t := (
         writeback_ctrl => WRITEBACK_CTRL_DEFAULT
     );
     
