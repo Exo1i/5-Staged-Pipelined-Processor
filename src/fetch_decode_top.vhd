@@ -47,16 +47,7 @@ ENTITY fetch_decode_top IS
         decode_ctrl_to_ex : OUT decode_control_t;
         execute_ctrl_to_ex : OUT execute_control_t;
         memory_ctrl_to_ex : OUT memory_control_t;
-        writeback_ctrl_to_ex : OUT writeback_control_t;
-
-        -- Instruction type outputs for Execute stage feedback
-        is_swap_to_ex : OUT STD_LOGIC;
-        is_interrupt_to_ex : OUT STD_LOGIC;
-        is_hardware_int_to_ex : OUT STD_LOGIC;
-        is_reti_to_ex : OUT STD_LOGIC;
-        is_return_to_ex : OUT STD_LOGIC;
-        is_call_to_ex : OUT STD_LOGIC;
-        conditional_branch_to_ex : OUT STD_LOGIC
+        writeback_ctrl_to_ex : OUT writeback_control_t
     );
 END ENTITY fetch_decode_top;
 
@@ -170,13 +161,6 @@ ARCHITECTURE Structural OF fetch_decode_top IS
             execute_ctrl_in : IN execute_control_t;
             memory_ctrl_in : IN memory_control_t;
             writeback_ctrl_in : IN writeback_control_t;
-            is_swap_in : IN STD_LOGIC;
-            is_interrupt_in : IN STD_LOGIC;
-            is_hardware_int_in : IN STD_LOGIC;
-            is_reti_in : IN STD_LOGIC;
-            is_return_in : IN STD_LOGIC;
-            is_call_in : IN STD_LOGIC;
-            conditional_branch_in : IN STD_LOGIC;
             pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             operand_a_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -188,14 +172,7 @@ ARCHITECTURE Structural OF fetch_decode_top IS
             decode_ctrl_out : OUT decode_control_t;
             execute_ctrl_out : OUT execute_control_t;
             memory_ctrl_out : OUT memory_control_t;
-            writeback_ctrl_out : OUT writeback_control_t;
-            is_swap_out : OUT STD_LOGIC;
-            is_interrupt_out : OUT STD_LOGIC;
-            is_hardware_int_out : OUT STD_LOGIC;
-            is_reti_out : OUT STD_LOGIC;
-            is_return_out : OUT STD_LOGIC;
-            is_call_out : OUT STD_LOGIC;
-            conditional_branch_out : OUT STD_LOGIC
+            writeback_ctrl_out : OUT writeback_control_t
         );
     END COMPONENT;
 
@@ -633,13 +610,6 @@ BEGIN
             execute_ctrl_in => decode_execute_ctrl,
             memory_ctrl_in => decode_memory_ctrl,
             writeback_ctrl_in => decode_writeback_ctrl,
-            is_swap_in => decoder_is_swap,
-            is_interrupt_in => decoder_is_interrupt,
-            is_hardware_int_in => ifid_take_interrupt,
-            is_reti_in => decoder_is_reti,
-            is_return_in => decoder_is_return,
-            is_call_in => decoder_is_call,
-            conditional_branch_in => decoder_is_jmp_conditional,
             pc_out => pc_to_ex,
             pushed_pc_out => pushed_pc_to_ex,
             operand_a_out => operand_a_to_ex,
@@ -651,27 +621,20 @@ BEGIN
             decode_ctrl_out => decode_ctrl_to_ex,
             execute_ctrl_out => execute_ctrl_to_ex,
             memory_ctrl_out => memory_ctrl_to_ex,
-            writeback_ctrl_out => writeback_ctrl_to_ex,
-            is_swap_out => is_swap_to_ex,
-            is_interrupt_out => is_interrupt_to_ex,
-            is_hardware_int_out => is_hardware_int_to_ex,
-            is_reti_out => is_reti_to_ex,
-            is_return_out => is_return_to_ex,
-            is_call_out => is_call_to_ex,
-            conditional_branch_out => conditional_branch_to_ex
+            writeback_ctrl_out => writeback_ctrl_to_ex
         );
 
     -- ========== FEEDBACK SIGNALS ==========
-    -- Connect ID/EX outputs back for control unit feedback
+    -- Connect ID/EX decode control outputs back for control unit feedback
     
     pc_ex <= pc_to_ex;
-    is_swap_ex <= is_swap_to_ex;
-    is_interrupt_ex <= is_interrupt_to_ex;
-    is_hardware_int_ex <= is_hardware_int_to_ex;
-    is_reti_ex <= is_reti_to_ex;
-    is_return_ex <= is_return_to_ex;
-    is_call_ex <= is_call_to_ex;
-    conditional_branch_ex <= conditional_branch_to_ex;
+    is_swap_ex <= decode_ctrl_to_ex.IsSwap;
+    is_interrupt_ex <= decode_ctrl_to_ex.IsInterrupt;
+    is_hardware_int_ex <= decode_ctrl_to_ex.IsHardwareInterrupt;
+    is_reti_ex <= decode_ctrl_to_ex.IsReti;
+    is_return_ex <= decode_ctrl_to_ex.IsReturn;
+    is_call_ex <= decode_ctrl_to_ex.IsCall;
+    conditional_branch_ex <= decode_ctrl_to_ex.IsJMPConditional;
 
     -- ========== MEMORY INTERFACE CONTROL ==========
     

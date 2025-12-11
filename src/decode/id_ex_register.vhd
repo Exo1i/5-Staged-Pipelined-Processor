@@ -25,15 +25,6 @@ ENTITY id_ex_register IS
         memory_ctrl_in : IN memory_control_t;
         writeback_ctrl_in : IN writeback_control_t;
 
-        -- Instruction type signals (for control unit feedback)
-        is_swap_in : IN STD_LOGIC;
-        is_interrupt_in : IN STD_LOGIC;
-        is_hardware_int_in : IN STD_LOGIC;
-        is_reti_in : IN STD_LOGIC;
-        is_return_in : IN STD_LOGIC;
-        is_call_in : IN STD_LOGIC;
-        conditional_branch_in : IN STD_LOGIC;
-
         -- Data outputs to Execute Stage
         pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
         pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -48,16 +39,7 @@ ENTITY id_ex_register IS
         decode_ctrl_out : OUT decode_control_t;
         execute_ctrl_out : OUT execute_control_t;
         memory_ctrl_out : OUT memory_control_t;
-        writeback_ctrl_out : OUT writeback_control_t;
-
-        -- Signals for Control Unit Feedback (from Execute Stage)
-        is_swap_out : OUT STD_LOGIC;
-        is_interrupt_out : OUT STD_LOGIC;
-        is_hardware_int_out : OUT STD_LOGIC;
-        is_reti_out : OUT STD_LOGIC;
-        is_return_out : OUT STD_LOGIC;
-        is_call_out : OUT STD_LOGIC;
-        conditional_branch_out : OUT STD_LOGIC
+        writeback_ctrl_out : OUT writeback_control_t
     );
 END ENTITY id_ex_register;
 
@@ -79,15 +61,6 @@ ARCHITECTURE rtl OF id_ex_register IS
     SIGNAL memory_ctrl_reg : memory_control_t;
     SIGNAL writeback_ctrl_reg : writeback_control_t;
 
-    -- Instruction type registers
-    SIGNAL is_swap_reg : STD_LOGIC;
-    SIGNAL is_interrupt_reg : STD_LOGIC;
-    SIGNAL is_hardware_int_reg : STD_LOGIC;
-    SIGNAL is_reti_reg : STD_LOGIC;
-    SIGNAL is_return_reg : STD_LOGIC;
-    SIGNAL is_call_reg : STD_LOGIC;
-    SIGNAL conditional_branch_reg : STD_LOGIC;
-
     -- Default/NOP control signals
     CONSTANT NOP_DECODE_CTRL : decode_control_t := (
         OutBSelect => (OTHERS => '0'),
@@ -98,7 +71,6 @@ ARCHITECTURE rtl OF id_ex_register IS
         IsReti => '0',
         IsJMP => '0',
         IsJMPConditional => '0',
-        ConditionalType => (OTHERS => '0'),
         IsSwap => '0'
     );
 
@@ -106,7 +78,8 @@ ARCHITECTURE rtl OF id_ex_register IS
         CCR_WriteEnable => '0',
         PassCCR => '0',
         PassImm => '0',
-        ALU_Operation => (OTHERS => '0')
+        ALU_Operation => (OTHERS => '0'),
+        ConditionalType => (OTHERS => '0')
     );
 
     CONSTANT NOP_MEMORY_CTRL : memory_control_t := (
@@ -144,13 +117,6 @@ BEGIN
             execute_ctrl_reg <= NOP_EXECUTE_CTRL;
             memory_ctrl_reg <= NOP_MEMORY_CTRL;
             writeback_ctrl_reg <= NOP_WRITEBACK_CTRL;
-            is_swap_reg <= '0';
-            is_interrupt_reg <= '0';
-            is_hardware_int_reg <= '0';
-            is_reti_reg <= '0';
-            is_return_reg <= '0';
-            is_call_reg <= '0';
-            conditional_branch_reg <= '0';
 
         ELSIF rising_edge(clk) THEN
             IF flush = '1' THEN
@@ -167,13 +133,6 @@ BEGIN
                 execute_ctrl_reg <= NOP_EXECUTE_CTRL;
                 memory_ctrl_reg <= NOP_MEMORY_CTRL;
                 writeback_ctrl_reg <= NOP_WRITEBACK_CTRL;
-                is_swap_reg <= '0';
-                is_interrupt_reg <= '0';
-                is_hardware_int_reg <= '0';
-                is_reti_reg <= '0';
-                is_return_reg <= '0';
-                is_call_reg <= '0';
-                conditional_branch_reg <= '0';
 
             ELSIF enable = '1' THEN
                 -- Update with new values
@@ -189,13 +148,6 @@ BEGIN
                 execute_ctrl_reg <= execute_ctrl_in;
                 memory_ctrl_reg <= memory_ctrl_in;
                 writeback_ctrl_reg <= writeback_ctrl_in;
-                is_swap_reg <= is_swap_in;
-                is_interrupt_reg <= is_interrupt_in;
-                is_hardware_int_reg <= is_hardware_int_in;
-                is_reti_reg <= is_reti_in;
-                is_return_reg <= is_return_in;
-                is_call_reg <= is_call_in;
-                conditional_branch_reg <= conditional_branch_in;
             END IF;
             -- If enable = '0', hold current values (stall)
         END IF;
@@ -214,12 +166,5 @@ BEGIN
     execute_ctrl_out <= execute_ctrl_reg;
     memory_ctrl_out <= memory_ctrl_reg;
     writeback_ctrl_out <= writeback_ctrl_reg;
-    is_swap_out <= is_swap_reg;
-    is_interrupt_out <= is_interrupt_reg;
-    is_hardware_int_out <= is_hardware_int_reg;
-    is_reti_out <= is_reti_reg;
-    is_return_out <= is_return_reg;
-    is_call_out <= is_call_reg;
-    conditional_branch_out <= conditional_branch_reg;
 
 END ARCHITECTURE rtl;
