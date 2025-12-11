@@ -122,6 +122,7 @@ ARCHITECTURE Structural OF fetch_decode_top IS
             writeback_ctrl : IN writeback_control_t;
             stall_control : IN STD_LOGIC;
             in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            immediate_from_fetch : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             is_swap_ex : IN STD_LOGIC;
             wb_rd : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             wb_data : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -212,7 +213,15 @@ ARCHITECTURE Structural OF fetch_decode_top IS
             decode_ctrl : OUT decode_control_t;
             execute_ctrl : OUT execute_control_t;
             memory_ctrl : OUT memory_control_t;
-            writeback_ctrl : OUT writeback_control_t
+            writeback_ctrl : OUT writeback_control_t;
+            -- Instruction Type Outputs
+            is_interrupt_out : OUT STD_LOGIC;
+            is_call_out : OUT STD_LOGIC;
+            is_return_out : OUT STD_LOGIC;
+            is_reti_out : OUT STD_LOGIC;
+            is_jmp_out : OUT STD_LOGIC;
+            is_jmp_conditional_out : OUT STD_LOGIC;
+            is_swap_out : OUT STD_LOGIC
         );
     END COMPONENT;
 
@@ -332,7 +341,6 @@ ARCHITECTURE Structural OF fetch_decode_top IS
     SIGNAL decode_is_jmp : STD_LOGIC;
     SIGNAL decode_is_jmp_conditional : STD_LOGIC;
     SIGNAL decode_conditional_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
-    SIGNAL decode_is_swap : STD_LOGIC;
     SIGNAL decode_decode_ctrl : decode_control_t;
     SIGNAL decode_execute_ctrl : execute_control_t;
     SIGNAL decode_memory_ctrl : memory_control_t;
@@ -343,6 +351,17 @@ ARCHITECTURE Structural OF fetch_decode_top IS
     SIGNAL decoder_execute_ctrl : execute_control_t;
     SIGNAL decoder_memory_ctrl : memory_control_t;
     SIGNAL decoder_writeback_ctrl : writeback_control_t;
+    -- Opcode Decoder instruction type outputs (directly from IF/ID instruction)
+    SIGNAL decoder_is_interrupt : STD_LOGIC;
+    SIGNAL decoder_is_call : STD_LOGIC;
+    SIGNAL decoder_is_return : STD_LOGIC;
+    SIGNAL decoder_is_reti : STD_LOGIC;
+    SIGNAL decoder_is_jmp : STD_LOGIC;
+    SIGNAL decoder_is_jmp_conditional : STD_LOGIC;
+    SIGNAL decoder_is_swap : STD_LOGIC;
+    
+    -- Opcode extracted from IF/ID instruction
+    SIGNAL ifid_opcode : STD_LOGIC_VECTOR(4 DOWNTO 0);
 
     -- Memory Hazard Unit signals
     SIGNAL passpc_mem : STD_LOGIC;
@@ -402,7 +421,7 @@ BEGIN
             stall => fetch_stall,
             BranchSelect => branch_select,
             BranchTargetSelect => branch_target_select,
-            target_decode => (OTHERS => '0'),
+            target_decode => decode_immediate,  -- Immediate from decode stage is branch target
             target_execute => branch_target_ex,
             target_memory => (OTHERS => '0'),
             mem_data => mem_data_in,
@@ -452,6 +471,7 @@ BEGIN
             writeback_ctrl => decoder_writeback_ctrl,
             stall_control => stall_branch,
             in_port => in_port,
+            immediate_from_fetch => fetch_instruction,
             is_swap_ex => is_swap_ex,
             wb_rd => wb_rd,
             wb_data => wb_data,
@@ -479,15 +499,15 @@ BEGIN
             conditional_type_out => decode_conditional_type
         );
 
-    -- Detect SWAP instruction
-    decode_is_swap <= '1' WHEN decode_opcode = OP_SWAP ELSE '0';
-
     -- ========== CONTROL UNIT SUB-MODULES ==========
 
-    -- Opcode Decoder: Generates control signals from opcode
+    -- Extract opcode from IF/ID instruction for opcode decoder
+    ifid_opcode <= ifid_instruction(31 DOWNTO 27);
+
+    -- Opcode Decoder: Generates control signals from IF/ID instruction opcode
     opcode_decoder_inst : opcode_decoder
         PORT MAP (
-            opcode => decode_opcode,
+            opcode => ifid_opcode,
             override_operation => ifid_override_operation,
             override_type => ifid_override_op,
             isSwap_from_execute => is_swap_ex,
@@ -496,7 +516,15 @@ BEGIN
             decode_ctrl => decoder_decode_ctrl,
             execute_ctrl => decoder_execute_ctrl,
             memory_ctrl => decoder_memory_ctrl,
-            writeback_ctrl => decoder_writeback_ctrl
+            writeback_ctrl => decoder_writeback_ctrl,
+            -- Instruction type outputs
+            is_interrupt_out => decoder_is_interrupt,
+            is_call_out => decoder_is_call,
+            is_return_out => decoder_is_return,
+            is_reti_out => decoder_is_reti,
+            is_jmp_out => decoder_is_jmp,
+            is_jmp_conditional_out => decoder_is_jmp_conditional,
+            is_swap_out => decoder_is_swap
         );
 
     -- Memory Hazard Unit: Handles Von Neumann memory conflicts
@@ -510,13 +538,14 @@ BEGIN
         );
 
     -- Interrupt Unit: Manages interrupts and override operations
+    -- Uses opcode decoder outputs for instruction type detection
     interrupt_inst : interrupt_unit
         PORT MAP (
-            IsInterrupt_DE => decode_is_interrupt,
-            IsHardwareInt_DE => decode_is_hardware_int,
-            IsCall_DE => decode_is_call,
-            IsReturn_DE => decode_is_return,
-            IsReti_DE => decode_is_reti,
+            IsInterrupt_DE => decoder_is_interrupt,
+            IsHardwareInt_DE => ifid_take_interrupt,  -- Hardware int from IF/ID register
+            IsCall_DE => decoder_is_call,
+            IsReturn_DE => decoder_is_return,
+            IsReti_DE => decoder_is_reti,
             IsInterrupt_EX => is_interrupt_ex,
             IsHardwareInt_EX => is_hardware_int_ex,
             IsReti_EX => is_reti_ex,
@@ -542,15 +571,17 @@ BEGIN
         );
 
     -- Branch Predictor: Predicts branch outcomes
+    -- Uses opcode decoder outputs for branch instruction detection
+    -- ConditionalType comes from Execute stage control signals (via ID/EX register)
     predictor_inst : branch_predictor
         PORT MAP (
             clk => clk,
             rst => rst,
-            IsJMP => decode_is_jmp,
-            IsCall => decode_is_call,
-            IsJMPConditional => decode_is_jmp_conditional,
-            ConditionalType => decode_conditional_type,
-            PC_DE => decode_pc,
+            IsJMP => decoder_is_jmp,
+            IsCall => decoder_is_call,
+            IsJMPConditional => decoder_is_jmp_conditional,
+            ConditionalType => execute_ctrl_to_ex.ConditionalType,  -- From execute control in EX stage
+            PC_DE => ifid_pc,  -- PC from IF/ID register (decode stage PC)
             CCR_Flags => ccr_flags_ex,
             ActualTaken => actual_branch_taken_ex,
             UpdatePredictor => update_predictor,
@@ -576,10 +607,10 @@ BEGIN
             Stall_Branch => stall_branch
         );
 
-    -- Control logic signals
-    unconditional_branch <= decode_is_jmp OR decode_is_call;
-    software_interrupt <= decode_is_interrupt AND NOT decode_is_hardware_int;
-    hardware_interrupt_active <= decode_is_hardware_int OR is_hardware_int_ex OR is_hardware_int_mem;
+    -- Control logic signals (use opcode decoder outputs)
+    unconditional_branch <= decoder_is_jmp OR decoder_is_call;
+    software_interrupt <= decoder_is_interrupt AND NOT ifid_take_interrupt;
+    hardware_interrupt_active <= ifid_take_interrupt OR is_hardware_int_ex OR is_hardware_int_mem;
     update_predictor <= conditional_branch_ex;
 
     -- ========== ID/EX PIPELINE REGISTER ==========
@@ -602,13 +633,13 @@ BEGIN
             execute_ctrl_in => decode_execute_ctrl,
             memory_ctrl_in => decode_memory_ctrl,
             writeback_ctrl_in => decode_writeback_ctrl,
-            is_swap_in => decode_is_swap,
-            is_interrupt_in => decode_is_interrupt,
-            is_hardware_int_in => decode_is_hardware_int,
-            is_reti_in => decode_is_reti,
-            is_return_in => decode_is_return,
-            is_call_in => decode_is_call,
-            conditional_branch_in => decode_is_jmp_conditional,
+            is_swap_in => decoder_is_swap,
+            is_interrupt_in => decoder_is_interrupt,
+            is_hardware_int_in => ifid_take_interrupt,
+            is_reti_in => decoder_is_reti,
+            is_return_in => decoder_is_return,
+            is_call_in => decoder_is_call,
+            conditional_branch_in => decoder_is_jmp_conditional,
             pc_out => pc_to_ex,
             pushed_pc_out => pushed_pc_to_ex,
             operand_a_out => operand_a_to_ex,

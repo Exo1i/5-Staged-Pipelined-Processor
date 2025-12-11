@@ -28,6 +28,9 @@ ENTITY decode_stage IS
         -- Input port data
         in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
 
+        -- Immediate value from Fetch stage (fetched cycle after opcode)
+        immediate_from_fetch : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+
         -- SWAP feedback from Execute stage
         is_swap_ex : IN STD_LOGIC;
 
@@ -103,8 +106,7 @@ ARCHITECTURE Behavioral OF decode_stage IS
     SIGNAL ra_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
     SIGNAL rb_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
     SIGNAL rd_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL immediate : STD_LOGIC_VECTOR(15 DOWNTO 0);
-    SIGNAL immediate_extended : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    -- Note: Immediate comes from immediate_from_fetch port (next fetch cycle)
 
     -- Instruction type detection
     SIGNAL is_interrupt : STD_LOGIC;
@@ -125,10 +127,7 @@ BEGIN
     ra_addr <= instruction_in(26 DOWNTO 24);  -- Source register A
     rb_addr <= instruction_in(23 DOWNTO 21);  -- Source register B
     rd_addr <= instruction_in(20 DOWNTO 18);  -- Destination register
-    immediate <= instruction_in(15 DOWNTO 0); -- Immediate value
-
-    -- Sign-extend immediate to 32 bits
-    immediate_extended <= (31 DOWNTO 16 => immediate(15)) & immediate;
+    -- Note: Immediate value comes from immediate_from_fetch (fetched in cycle after opcode)
 
     -- ========== INSTRUCTION TYPE DETECTION ==========
     
@@ -169,7 +168,7 @@ BEGIN
     -- ========== OPERAND B MULTIPLEXER ==========
     -- Select source for Operand B based on OutBSelect from control unit
     
-    PROCESS (decode_ctrl, rf_data_b, pushed_pc_in, immediate_extended, in_port)
+    PROCESS (decode_ctrl, rf_data_b, pushed_pc_in, immediate_from_fetch, in_port)
     BEGIN
         CASE decode_ctrl.OutBSelect IS
             WHEN OUTB_REGFILE =>
@@ -177,7 +176,7 @@ BEGIN
             WHEN OUTB_PUSHED_PC =>
                 operand_b <= pushed_pc_in;
             WHEN OUTB_IMMEDIATE =>
-                operand_b <= immediate_extended;
+                operand_b <= immediate_from_fetch;  -- Full 32-bit immediate from fetch
             WHEN OUTB_INPUT_PORT =>
                 operand_b <= in_port;
             WHEN OTHERS =>
@@ -216,7 +215,7 @@ BEGIN
     -- Pass-through signals
     pc_out <= pc_in;
     pushed_pc_out <= pushed_pc_in;
-    immediate_out <= immediate_extended;
+    immediate_out <= immediate_from_fetch;  -- 32-bit immediate from fetch stage
 
     -- Register addresses
     rsrc1_out <= ra_addr;
