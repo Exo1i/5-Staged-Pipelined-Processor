@@ -33,6 +33,19 @@ PACKAGE pipeline_data_pkg IS
         writeback_ctrl: writeback_control_t;
     END RECORD;
     
+    -- Data bundle for EX/MEM pipeline register
+    TYPE pipeline_execute_memory_t IS RECORD
+        primary_data   : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        secondary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
+        rdst1          : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    END RECORD;
+    
+    -- Control bundle for EX/MEM pipeline register
+    TYPE pipeline_execute_memory_ctrl_t IS RECORD
+        memory_ctrl    : memory_control_t;
+        writeback_ctrl : writeback_control_t;
+    END RECORD;
+    
     -- Default/NOP values
     CONSTANT PIPELINE_FETCH_DECODE_RESET : pipeline_fetch_decode_t := (
         take_interrupt => '0',
@@ -56,6 +69,18 @@ PACKAGE pipeline_data_pkg IS
     CONSTANT PIPELINE_DECODE_EXCUTE_CTRL_NOP : pipeline_ctrl_t := (
         decode_ctrl => DECODE_CTRL_DEFAULT,
         execute_ctrl => EXECUTE_CTRL_DEFAULT,
+        memory_ctrl => MEMORY_CTRL_DEFAULT,
+        writeback_ctrl => WRITEBACK_CTRL_DEFAULT
+    );
+    
+    CONSTANT PIPELINE_EXECUTE_MEMORY_RESET : pipeline_execute_memory_t := (
+        alu_result => (OTHERS => '0'),
+        primary_data => (OTHERS => '0'),
+        secondary_data => (OTHERS => '0'),
+        rdst1 => (OTHERS => '0')
+    );
+    
+    CONSTANT PIPELINE_EXECUTE_MEMORY_CTRL_NOP : pipeline_execute_memory_ctrl_t := (
         memory_ctrl => MEMORY_CTRL_DEFAULT,
         writeback_ctrl => WRITEBACK_CTRL_DEFAULT
     );
