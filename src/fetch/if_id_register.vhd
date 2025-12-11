@@ -1,5 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
+USE work.pipeline_data_pkg.ALL;
 
 ENTITY if_id_register IS
     PORT (
@@ -9,34 +10,16 @@ ENTITY if_id_register IS
         flush : IN STD_LOGIC; -- Flush control (for branches/interrupts) -- inserts NOP
 
         -- Inputs from Fetch Stage
-        pc_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        pushed_pc_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- PushedPC (PC or PC+1)
-        instruction_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        take_interrupt_in : IN STD_LOGIC;
-        override_op_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0); -- Override Operation (e.g. for INT/RTI)
-        override_operation_in : IN STD_LOGIC; -- Override enable signal
+        data_in : IN pipeline_fetch_decode_t;
 
         -- Outputs to Decode Stage
-        pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-        pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0); -- PushedPC
-        instruction_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-        take_interrupt_out : OUT STD_LOGIC;
-        override_op_out : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-        override_operation_out : OUT STD_LOGIC
+        data_out : OUT pipeline_fetch_decode_t
     );
 END ENTITY if_id_register;
 
 ARCHITECTURE rtl OF if_id_register IS
-    -- Internal registers
-    SIGNAL pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL pushed_pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL instruction_reg : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL take_interrupt_reg : STD_LOGIC;
-    SIGNAL override_op_reg : STD_LOGIC_VECTOR(1 DOWNTO 0);
-    SIGNAL override_operation_reg : STD_LOGIC;
-
-    -- NOP Instruction Constant (Assuming all zeros is NOP, adjust if different)
-    CONSTANT NOP_INSTRUCTION : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
+    -- Internal register
+    SIGNAL data_reg : pipeline_fetch_decode_t;
 
 BEGIN
 
@@ -44,42 +27,22 @@ BEGIN
     BEGIN
         IF rst = '1' THEN
             -- Reset all registers
-            pc_reg <= (OTHERS => '0');
-            pushed_pc_reg <= (OTHERS => '0');
-            instruction_reg <= NOP_INSTRUCTION;
-            take_interrupt_reg <= '0';
-            override_op_reg <= (OTHERS => '0');
-            override_operation_reg <= '0';
+            data_reg <= PIPELINE_FETCH_DECODE_RESET;
 
         ELSIF rising_edge(clk) THEN
             IF flush = '1' THEN
                 -- Flush pipeline register (insert bubble/NOP)
-                pc_reg <= (OTHERS => '0');
-                pushed_pc_reg <= (OTHERS => '0');
-                instruction_reg <= NOP_INSTRUCTION;
-                take_interrupt_reg <= '0';
-                override_op_reg <= (OTHERS => '0');
-                override_operation_reg <= '0';
+                data_reg <= PIPELINE_FETCH_DECODE_RESET;
 
             ELSIF enable = '1' THEN
                 -- Update registers with new values
-                pc_reg <= pc_in;
-                pushed_pc_reg <= pushed_pc_in;
-                instruction_reg <= instruction_in;
-                take_interrupt_reg <= take_interrupt_in;
-                override_op_reg <= override_op_in;
-                override_operation_reg <= override_operation_in;
+                data_reg <= data_in;
             END IF;
             -- If enable = '0', hold current values (stall)
         END IF;
     END PROCESS;
 
-    -- Output assignments
-    pc_out <= pc_reg;
-    pushed_pc_out <= pushed_pc_reg;
-    instruction_out <= instruction_reg;
-    take_interrupt_out <= take_interrupt_reg;
-    override_op_out <= override_op_reg;
-    override_operation_out <= override_operation_reg;
+    -- Output assignment
+    data_out <= data_reg;
 
 END ARCHITECTURE rtl;
