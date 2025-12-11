@@ -3,7 +3,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE work.pkg_opcodes.ALL;
 USE work.control_signals_pkg.ALL;
 
-ENTITY fetch_decode_top IS
+ENTITY processor_top IS
     PORT (
         clk : IN STD_LOGIC;
         rst : IN STD_LOGIC;
@@ -49,9 +49,9 @@ ENTITY fetch_decode_top IS
         memory_ctrl_to_ex : OUT memory_control_t;
         writeback_ctrl_to_ex : OUT writeback_control_t
     );
-END ENTITY fetch_decode_top;
+END ENTITY processor_top;
 
-ARCHITECTURE Structural OF fetch_decode_top IS
+ARCHITECTURE Structural OF processor_top IS
 
     -- ========== COMPONENT DECLARATIONS ==========
 
