@@ -14,13 +14,15 @@ ENTITY if_id_register IS
         instruction_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
         take_interrupt_in : IN STD_LOGIC;
         override_op_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0); -- Override Operation (e.g. for INT/RTI)
+        override_operation_in : IN STD_LOGIC; -- Override enable signal
 
         -- Outputs to Decode Stage
         pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
         pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0); -- PushedPC
         instruction_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
         take_interrupt_out : OUT STD_LOGIC;
-        override_op_out : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
+        override_op_out : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        override_operation_out : OUT STD_LOGIC
     );
 END ENTITY if_id_register;
 
@@ -31,6 +33,7 @@ ARCHITECTURE rtl OF if_id_register IS
     SIGNAL instruction_reg : STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL take_interrupt_reg : STD_LOGIC;
     SIGNAL override_op_reg : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL override_operation_reg : STD_LOGIC;
 
     -- NOP Instruction Constant (Assuming all zeros is NOP, adjust if different)
     CONSTANT NOP_INSTRUCTION : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
@@ -46,6 +49,7 @@ BEGIN
             instruction_reg <= NOP_INSTRUCTION;
             take_interrupt_reg <= '0';
             override_op_reg <= (OTHERS => '0');
+            override_operation_reg <= '0';
 
         ELSIF rising_edge(clk) THEN
             IF flush = '1' THEN
@@ -55,6 +59,7 @@ BEGIN
                 instruction_reg <= NOP_INSTRUCTION;
                 take_interrupt_reg <= '0';
                 override_op_reg <= (OTHERS => '0');
+                override_operation_reg <= '0';
 
             ELSIF enable = '1' THEN
                 -- Update registers with new values
@@ -63,6 +68,7 @@ BEGIN
                 instruction_reg <= instruction_in;
                 take_interrupt_reg <= take_interrupt_in;
                 override_op_reg <= override_op_in;
+                override_operation_reg <= override_operation_in;
             END IF;
             -- If enable = '0', hold current values (stall)
         END IF;
@@ -74,5 +80,6 @@ BEGIN
     instruction_out <= instruction_reg;
     take_interrupt_out <= take_interrupt_reg;
     override_op_out <= override_op_reg;
+    override_operation_out <= override_operation_reg;
 
 END ARCHITECTURE rtl;
