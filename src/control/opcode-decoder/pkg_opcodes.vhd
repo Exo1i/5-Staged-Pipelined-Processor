@@ -64,4 +64,16 @@ package pkg_opcodes is
     constant PASS_INT_SOFTWARE  : std_logic_vector(1 downto 0) := "10"; -- Software interrupt (from immediate) Immediate + 2
     constant PASS_INT_HARDWARE  : std_logic_vector(1 downto 0) := "11"; -- Hardware interrupt (fixed position 1)
     
+    -- Branch Target Select Values (2-bit)
+    constant TARGET_DECODE  : std_logic_vector(1 downto 0) := "00";  -- Immediate from decode
+    constant TARGET_EXECUTE : std_logic_vector(1 downto 0) := "01";  -- Immediate from execute
+    constant TARGET_MEMORY  : std_logic_vector(1 downto 0) := "10";  -- Interrupt address from memory
+    constant TARGET_RESET   : std_logic_vector(1 downto 0) := "11";  -- Reset address (0)
+    
+    -- Branch Predictor States (2-bit saturating counter)
+    constant STRONGLY_NOT_TAKEN : std_logic_vector(1 downto 0) := "00";
+    constant WEAKLY_NOT_TAKEN   : std_logic_vector(1 downto 0) := "01";
+    constant WEAKLY_TAKEN       : std_logic_vector(1 downto 0) := "10";
+    constant STRONGLY_TAKEN     : std_logic_vector(1 downto 0) := "11";
+    
 end package pkg_opcodes;

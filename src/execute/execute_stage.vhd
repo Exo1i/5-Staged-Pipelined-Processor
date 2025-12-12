@@ -32,26 +32,6 @@ END execute_stage;
 
 ARCHITECTURE Behavioral OF execute_stage IS
 
-    -- Internal signals extracted from records
-    SIGNAL WB_RegWrite_in : STD_LOGIC;
-    SIGNAL WB_MemToReg_in : STD_LOGIC;
-    SIGNAL M_MemRead_in : STD_LOGIC;
-    SIGNAL M_MemWrite_in : STD_LOGIC;
-    SIGNAL M_SpToMem_in : STD_LOGIC;
-    SIGNAL M_PassInterrupt_in : STD_LOGIC;
-    SIGNAL EX_ALU_Op : STD_LOGIC_VECTOR(3 DOWNTO 0);
-    SIGNAL EX_PassImm : STD_LOGIC;
-    SIGNAL EX_CCRWrEn : STD_LOGIC;
-    SIGNAL EX_IsReturn : STD_LOGIC;
-    SIGNAL EX_PassCCR : STD_LOGIC;
-    SIGNAL OutA : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL OutB : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL Immediate : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL PC_in : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL Rsrc1 : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL Rsrc2 : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL Rdst1_in : STD_LOGIC_VECTOR(2 DOWNTO 0);
-
     -- =====================================================
     -- Component Declarations
     -- =====================================================
@@ -97,76 +77,46 @@ ARCHITECTURE Behavioral OF execute_stage IS
 
     -- XOR gate output (for IsReturn logic)
     SIGNAL ccr_write_enable : STD_LOGIC;
-
+    SIGNAL alu_op_extended : STD_LOGIC_VECTOR(3 DOWNTO 0);
 BEGIN
 
-    -- =====================================================
-    -- Extract signals from input records
-    -- =====================================================
-    WB_RegWrite_in <= idex_ctrl_in.writeback_ctrl.RegWrite;
-    WB_MemToReg_in <= idex_ctrl_in.writeback_ctrl.MemToALU;
-    M_MemRead_in <= idex_ctrl_in.memory_ctrl.MemRead;
-    M_MemWrite_in <= idex_ctrl_in.memory_ctrl.MemWrite;
-    M_SpToMem_in <= idex_ctrl_in.memory_ctrl.SPtoMem;
-    M_PassInterrupt_in <= idex_ctrl_in.memory_ctrl.PassInterrupt(0);
-    EX_ALU_Op <= idex_ctrl_in.execute_ctrl.ALU_Operation & '0';
-    EX_PassImm <= idex_ctrl_in.execute_ctrl.PassImm;
-    EX_CCRWrEn <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable;
-    EX_IsReturn <= idex_ctrl_in.decode_ctrl.IsReturn;
-    EX_PassCCR <= idex_ctrl_in.execute_ctrl.PassCCR;
-    OutA <= idex_data_in.operand_a;
-    OutB <= idex_data_in.operand_b;
-    Immediate <= idex_data_in.immediate;
-    PC_in <= idex_data_in.pc;
-    Rsrc1 <= idex_data_in.rsrc1;
-    Rsrc2 <= idex_data_in.rsrc2;
-    Rdst1_in <= idex_data_in.rd;
+    -- Extend ALU operation to 4 bits (add a '0' at the end)
+    alu_op_extended <= idex_ctrl_in.execute_ctrl.ALU_Operation & '0';
+
+    -- CCR write enable logic (XOR with IsReturn)
+    ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable XOR idex_ctrl_in.decode_ctrl.IsReturn;
 
     -- =====================================================
     -- Operand A MUX (3:1) - Forwarding for In_A
     -- =====================================================
-    -- ForwardA: 00 = OutA (no forwarding), 10 = EX/MEM, 01 = MEM/WB
-    PROCESS (forwarding.forward_a, OutA, Forwarded_EXM, Forwarded_MWB)
+    PROCESS (forwarding.forward_a, idex_data_in.operand_a, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_a IS
-            WHEN "00" => In_A <= OutA; -- No forwarding
-            WHEN "10" => In_A <= Forwarded_EXM; -- Forward from EX/MEM
-            WHEN "01" => In_A <= Forwarded_MWB; -- Forward from MEM/WB
-            WHEN OTHERS => In_A <= OutA;
+            WHEN FORWARD_NONE => In_A <= idex_data_in.operand_a;
+            WHEN FORWARD_EX_MEM => In_A <= Forwarded_EXM;
+            WHEN FORWARD_MEM_WB => In_A <= Forwarded_MWB;
+            WHEN OTHERS => In_A <= idex_data_in.operand_a;
         END CASE;
     END PROCESS;
 
     -- =====================================================
     -- Operand B MUX (3:1) - Forwarding for In_B (before PassImm)
     -- =====================================================
-    -- ForwardB: 00 = OutB (no forwarding), 10 = EX/MEM, 01 = MEM/WB
-    PROCESS (forwarding.forward_b, OutB, Forwarded_EXM, Forwarded_MWB)
+    PROCESS (forwarding.forward_b, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_b IS
-            WHEN "00" => forwarded_B <= OutB; -- No forwarding
-            WHEN "10" => forwarded_B <= Forwarded_EXM; -- Forward from EX/MEM
-            WHEN "01" => forwarded_B <= Forwarded_MWB; -- Forward from MEM/WB
-            WHEN OTHERS => forwarded_B <= OutB;
+            WHEN FORWARD_NONE => forwarded_B <= idex_data_in.operand_b;
+            WHEN FORWARD_EX_MEM => forwarded_B <= Forwarded_EXM;
+            WHEN FORWARD_MEM_WB => forwarded_B <= Forwarded_MWB;
+            WHEN OTHERS => forwarded_B <= idex_data_in.operand_b;
         END CASE;
     END PROCESS;
 
     -- =====================================================
     -- PassImm MUX (2:1) - Select between forwarded_B and Immediate
     -- =====================================================
-    PROCESS (EX_PassImm, forwarded_B, Immediate)
-    BEGIN
-        IF EX_PassImm = '1' THEN
-            In_B <= Immediate;
-        ELSE
-            In_B <= forwarded_B;
-        END IF;
-    END PROCESS;
-
-    -- =====================================================
-    -- XOR Gate for CCR Write Enable
-    -- =====================================================
-    -- CCRWrEn is XORed with IsReturn for proper CCR control
-    ccr_write_enable <= EX_CCRWrEn XOR EX_IsReturn;
+    In_B <= idex_data_in.immediate WHEN idex_ctrl_in.execute_ctrl.PassImm = '1' ELSE
+        forwarded_B;
 
     -- =====================================================
     -- ALU Instantiation
@@ -174,7 +124,7 @@ BEGIN
     ALU_UNIT : alu PORT MAP(
         OperandA => In_A,
         OperandB => In_B,
-        ALU_Op => EX_ALU_Op,
+        ALU_Op => alu_op_extended,
         Result => alu_result_int,
         Zero => alu_zero,
         Negative => alu_neg,
@@ -191,7 +141,7 @@ BEGIN
         ALU_Negative => alu_neg,
         ALU_Carry => alu_carry,
         CCRWrEn => ccr_write_enable,
-        PassCCR => EX_PassCCR,
+        PassCCR => idex_ctrl_in.execute_ctrl.PassCCR,
         StackFlags => StackFlags,
         CCR_Out => ccr_out_int
     );
@@ -199,19 +149,17 @@ BEGIN
     -- =====================================================
     -- Output Assignments
     -- =====================================================
-    -- Populate execute_outputs_t record
     execute_out.alu_result <= alu_result_int;
     execute_out.primary_data <= forwarded_B;
     execute_out.secondary_data <= In_A;
-    execute_out.rdst <= Rdst1_in;
+    execute_out.rdst <= idex_data_in.rd;
     execute_out.ccr_flags <= ccr_out_int;
 
-    -- Populate execute_ctrl_outputs_t record (pass-through control signals)
-    ctrl_out.wb_regwrite <= WB_RegWrite_in;
-    ctrl_out.wb_memtoreg <= WB_MemToReg_in;
-    ctrl_out.m_memread <= M_MemRead_in;
-    ctrl_out.m_memwrite <= M_MemWrite_in;
-    ctrl_out.m_sptomem <= M_SpToMem_in;
-    ctrl_out.m_passinterrupt <= M_PassInterrupt_in;
+    ctrl_out.wb_regwrite <= idex_ctrl_in.writeback_ctrl.RegWrite;
+    ctrl_out.wb_memtoreg <= idex_ctrl_in.writeback_ctrl.MemToALU;
+    ctrl_out.m_memread <= idex_ctrl_in.memory_ctrl.MemRead;
+    ctrl_out.m_memwrite <= idex_ctrl_in.memory_ctrl.MemWrite;
+    ctrl_out.m_sptomem <= idex_ctrl_in.memory_ctrl.SPtoMem;
+    ctrl_out.m_passinterrupt <= idex_ctrl_in.memory_ctrl.PassInterrupt(0);
 
 END Behavioral;

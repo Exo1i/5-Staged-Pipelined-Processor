@@ -1,5 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use work.pkg_opcodes.ALL;
 
 entity branch_decision_unit is
     Port (
@@ -22,12 +23,6 @@ entity branch_decision_unit is
 end branch_decision_unit;
 
 architecture Behavioral of branch_decision_unit is
-    
-    -- Branch target select encoding
-    constant TARGET_DECODE  : std_logic_vector(1 downto 0) := "00";  -- Immediate from decode
-    constant TARGET_EXECUTE : std_logic_vector(1 downto 0) := "01";  -- Immediate from execute
-    constant TARGET_MEMORY  : std_logic_vector(1 downto 0) := "10";  -- Interrupt address from memory
-    constant TARGET_RESET   : std_logic_vector(1 downto 0) := "11";  -- Reset address (0)
     
     signal misprediction : std_logic;
     signal take_branch   : std_logic;

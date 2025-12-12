@@ -29,12 +29,6 @@ end branch_predictor;
 
 architecture Behavioral of branch_predictor is
     
-    -- 2-bit saturating counter states
-    constant STRONGLY_NOT_TAKEN : std_logic_vector(1 downto 0) := "00";
-    constant WEAKLY_NOT_TAKEN   : std_logic_vector(1 downto 0) := "01";
-    constant WEAKLY_TAKEN       : std_logic_vector(1 downto 0) := "10";
-    constant STRONGLY_TAKEN     : std_logic_vector(1 downto 0) := "11";
-    
     -- Simple prediction table (4 entries for demonstration)
     -- In a real implementation, this would be indexed by PC bits
     type prediction_table_t is array (0 to 3) of std_logic_vector(1 downto 0);

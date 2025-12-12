@@ -191,4 +191,9 @@ PACKAGE pipeline_data_pkg IS
         forward_b : STD_LOGIC_VECTOR(1 DOWNTO 0);
     END RECORD;
 
+    -- Forwarding Mux Select Values (2-bit)
+    CONSTANT FORWARD_NONE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- No forwarding (use pipeline register)
+    CONSTANT FORWARD_MEM_WB : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01"; -- Forward from MEM/WB stage
+    CONSTANT FORWARD_EX_MEM : STD_LOGIC_VECTOR(1 DOWNTO 0) := "10"; -- Forward from EX/MEM stage
+
 END PACKAGE pipeline_data_pkg;

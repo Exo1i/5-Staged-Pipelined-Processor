@@ -1,6 +1,7 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+USE work.pipeline_data_pkg.ALL;
 
 ENTITY forwarding_unit IS
     PORT (
@@ -29,16 +30,15 @@ BEGIN
     -- ForwardA mux control
     PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, Rsrc1)
     BEGIN
-
         IF MemRegWrite = '1' AND MemRdst = Rsrc1 AND MemIsSwap = '0' THEN
-            -- Forward from Memory stage
-            ForwardA <= "01";
+            -- Forward from EX/MEM stage (higher priority)
+            ForwardA <= FORWARD_EX_MEM;
         ELSIF WBRegWrite = '1' AND WBRdst = Rsrc1 THEN
-            -- Forward from Writeback stage
-            ForwardA <= "10";
+            -- Forward from MEM/WB stage
+            ForwardA <= FORWARD_MEM_WB;
         ELSE
             -- No forwarding needed
-            ForwardA <= "00";
+            ForwardA <= FORWARD_NONE;
         END IF;
     END PROCESS;
 
@@ -46,14 +46,14 @@ BEGIN
     PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, Rsrc2)
     BEGIN
         IF MemRegWrite = '1' AND MemRdst = Rsrc2 AND MemIsSwap = '0' THEN
-            -- Forward from Memory stage
-            ForwardB <= "01";
+            -- Forward from EX/MEM stage (higher priority)
+            ForwardB <= FORWARD_EX_MEM;
         ELSIF WBRegWrite = '1' AND WBRdst = Rsrc2 THEN
-            -- Forward from Writeback stage
-            ForwardB <= "10";
+            -- Forward from MEM/WB stage
+            ForwardB <= FORWARD_MEM_WB;
         ELSE
             -- No forwarding needed
-            ForwardB <= "00";
+            ForwardB <= FORWARD_NONE;
         END IF;
     END PROCESS;
 
