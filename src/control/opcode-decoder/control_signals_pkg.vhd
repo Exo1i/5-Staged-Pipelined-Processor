@@ -13,7 +13,6 @@ package control_signals_pkg is
         IsReti              : std_logic;                      -- RTI instruction
         IsJMP               : std_logic;                      -- Unconditional jump
         IsJMPConditional    : std_logic;                      -- Conditional jump
-        ConditionalType     : std_logic_vector(1 downto 0);   -- Type of condition (Z/N/C)
         IsSwap              : std_logic;                      -- SWAP instruction (first cycle)
     end record;
     
@@ -23,6 +22,7 @@ package control_signals_pkg is
         PassCCR             : std_logic;                      -- Pass CCR to memory (PUSH FLAGS)
         PassImm             : std_logic;                      -- Pass immediate value to ALU
         ALU_Operation       : std_logic_vector(2 downto 0);   -- ALU operation code
+        ConditionalType     : std_logic_vector(1 downto 0);   -- Type of condition (Z/N/C) for branch predictor
     end record;
     
     -- MEMORY Stage Control Signals
@@ -54,7 +54,6 @@ package control_signals_pkg is
         IsReti              => '0',
         IsJMP               => '0',
         IsJMPConditional    => '0',
-        ConditionalType     => "11",
         IsSwap              => '0'
     );
     
@@ -62,7 +61,8 @@ package control_signals_pkg is
         CCR_WriteEnable     => '0',
         PassCCR             => '0',
         PassImm             => '0',
-        ALU_Operation       => "000"
+        ALU_Operation       => "000",
+        ConditionalType     => "00"
     );
     
     constant MEMORY_CTRL_DEFAULT : memory_control_t := (

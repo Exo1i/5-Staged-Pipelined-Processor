@@ -61,7 +61,7 @@ package pkg_opcodes is
     -- PassInterrupt Values (2-bit)
     constant PASS_INT_NORMAL    : std_logic_vector(1 downto 0) := "00"; -- Normal address from EX/MEM
     constant PASS_INT_RESET     : std_logic_vector(1 downto 0) := "01"; -- Reset vector (position 0)
-    constant PASS_INT_SOFTWARE  : std_logic_vector(1 downto 0) := "10"; -- Software interrupt (from immediate)
+    constant PASS_INT_SOFTWARE  : std_logic_vector(1 downto 0) := "10"; -- Software interrupt (from immediate) Immediate + 2
     constant PASS_INT_HARDWARE  : std_logic_vector(1 downto 0) := "11"; -- Hardware interrupt (fixed position 1)
     
 end package pkg_opcodes;
