@@ -4,10 +4,6 @@ USE ieee.numeric_std.ALL;
 USE ieee.math_real.ALL;
 
 ENTITY stack_pointer IS
-    GENERIC (
-        DATA_WIDTH : INTEGER := 32;
-        ADDR_WIDTH : INTEGER := 18
-    );
     PORT (
         clk : IN STD_LOGIC;
         rst : IN STD_LOGIC;
@@ -16,12 +12,12 @@ ENTITY stack_pointer IS
         Increment : IN STD_LOGIC;
         Decrement : IN STD_LOGIC;
 
-        Data : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0)
+        Data : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
     );
 END stack_pointer;
 
 ARCHITECTURE rtl OF stack_pointer IS
-    CONSTANT STACK_TOP : INTEGER := (2 ** ADDR_WIDTH) - 1;
+    CONSTANT STACK_TOP : INTEGER := (2 ** 18) - 1;
 
     SIGNAL sp : INTEGER RANGE 0 TO STACK_TOP := STACK_TOP;
 BEGIN

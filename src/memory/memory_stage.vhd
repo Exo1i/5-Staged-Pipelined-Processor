@@ -6,11 +6,6 @@ USE work.pipeline_data_pkg.ALL;
 USE work.pkg_opcodes.ALL;
 
 ENTITY MemoryStage IS
-    GENERIC (
-        DATA_WIDTH : INTEGER := 32;
-        ADDR_WIDTH : INTEGER := 18;
-        RDST_WIDTH : INTEGER := 3
-    );
     PORT (
         -- Clock and reset
         clk : IN STD_LOGIC;
@@ -26,27 +21,23 @@ ENTITY MemoryStage IS
 
         -- Memory interface ports
         --  input
-        MemReadData : IN STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+        MemReadData : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
 
         -- outputs
         MemRead : OUT STD_LOGIC;
         MemWrite : OUT STD_LOGIC;
-        MemAddress : OUT STD_LOGIC_VECTOR(ADDR_WIDTH - 1 DOWNTO 0);
-        MemWriteData : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0)
+        MemAddress : OUT STD_LOGIC_VECTOR(17 DOWNTO 0);
+        MemWriteData : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
     );
 END MemoryStage;
 
 ARCHITECTURE rtl OF MemoryStage IS
-    SIGNAL sp_data : STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+    SIGNAL sp_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
 BEGIN
 
     -- Stack Pointer Unit Instantiation
     sp_unit : ENTITY work.stack_pointer
-        GENERIC MAP(
-            DATA_WIDTH => DATA_WIDTH,
-            ADDR_WIDTH => ADDR_WIDTH
-        )
         PORT MAP(
             clk => clk,
             rst => rst,
@@ -60,17 +51,17 @@ BEGIN
     PROCESS (ex_mem_ctrl_in.memory_ctrl.PassInterrupt, ex_mem_ctrl_in.memory_ctrl.SPtoMem, ex_mem_data_in.primary_data, sp_data)
     BEGIN
         IF ex_mem_ctrl_in.memory_ctrl.SPtoMem = '1' THEN
-            MemAddress <= sp_data(ADDR_WIDTH - 1 DOWNTO 0);
+            MemAddress <= sp_data(17 DOWNTO 0);
         ELSE
             CASE ex_mem_ctrl_in.memory_ctrl.PassInterrupt IS
                 WHEN PASS_INT_NORMAL =>
-                    MemAddress <= ex_mem_data_in.alu_result(ADDR_WIDTH - 1 DOWNTO 0);
+                    MemAddress <= ex_mem_data_in.alu_result(17 DOWNTO 0);
                 WHEN PASS_INT_RESET =>
                     MemAddress <= (OTHERS => '0');
                 WHEN PASS_INT_SOFTWARE =>
-                    MemAddress <= STD_LOGIC_VECTOR(unsigned(ex_mem_data_in.primary_data(ADDR_WIDTH - 1 DOWNTO 0)) + 2);
+                    MemAddress <= STD_LOGIC_VECTOR(unsigned(ex_mem_data_in.primary_data(17 DOWNTO 0)) + 2);
                 WHEN PASS_INT_HARDWARE =>
-                    MemAddress <= STD_LOGIC_VECTOR(to_unsigned(1, ADDR_WIDTH));
+                    MemAddress <= STD_LOGIC_VECTOR(to_unsigned(1, 18));
                 WHEN OTHERS =>
                     MemAddress <= (OTHERS => '0');
             END CASE;
