@@ -80,6 +80,16 @@ add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_out.rsrc1
 add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_out.rsrc2
 add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_out.rd
 
+add wave -divider "Register File"
+add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/Ra
+add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/Rb
+add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/ReadDataA
+add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/ReadDataB
+add wave -radix unsigned sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/Rdst
+add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/WriteData
+add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/WriteEnable
+add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/decode_inst/reg_file_inst/registers
+
 add wave -divider "Decode Ctrl"
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.decode_ctrl.OutBSelect
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.decode_ctrl.IsInterrupt

@@ -85,7 +85,7 @@ BEGIN
     alu_op_extended <= '0' & idex_ctrl_in.execute_ctrl.ALU_Operation;
 
     -- CCR write enable logic (XOR with IsReturn)
-    ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable XOR idex_ctrl_in.decode_ctrl.IsReturn;
+    ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable OR idex_ctrl_in.decode_ctrl.IsReturn;
 
     -- =====================================================
     -- Operand A MUX (3:1) - Forwarding for In_A

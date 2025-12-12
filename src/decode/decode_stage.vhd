@@ -82,7 +82,7 @@ ARCHITECTURE Behavioral OF decode_stage IS
     SIGNAL opcode : STD_LOGIC_VECTOR(4 DOWNTO 0);
     SIGNAL ra_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
     SIGNAL rb_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
-    SIGNAL rd_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
+    SIGNAL rc_addr : STD_LOGIC_VECTOR(2 DOWNTO 0);
     -- Note: Immediate comes from immediate_from_fetch port (next fetch cycle)
 
     -- Instruction type detection
@@ -103,7 +103,7 @@ BEGIN
     opcode <= instruction_in(31 DOWNTO 27);
     ra_addr <= instruction_in(26 DOWNTO 24); -- Source register A
     rb_addr <= instruction_in(23 DOWNTO 21); -- Source register B
-    rd_addr <= instruction_in(20 DOWNTO 18); -- Destination register
+    rc_addr <= instruction_in(20 DOWNTO 18); -- Destination register
     -- Note: Immediate value comes from immediate_from_fetch (fetched in cycle after opcode)
 
     -- ========== INSTRUCTION TYPE DETECTION ==========
@@ -171,8 +171,8 @@ BEGIN
     -- For SWAP instruction: 2nd cycle uses Rsrc2 as destination
     -- Normal instructions: use Rdst field
 
-    rd_selected <= rb_addr WHEN is_swap_ex = '1' ELSE
-        rd_addr;
+    rd_selected <= rc_addr WHEN is_swap_ex = '1' ELSE
+        ra_addr;
 
     -- ========== STALL CONTROL LOGIC ==========
     -- When stall_control = '1', insert NOPs in all control signals
