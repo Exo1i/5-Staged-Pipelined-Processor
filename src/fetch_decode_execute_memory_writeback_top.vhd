@@ -209,7 +209,6 @@ BEGIN
   idex_data_in.pc <= decode_out.pc;
   idex_data_in.operand_a <= decode_out.operand_a;
   idex_data_in.operand_b <= decode_out.operand_b;
-  idex_data_in.immediate <= decode_out.immediate;
   idex_data_in.rsrc1 <= decode_out.rsrc1;
   idex_data_in.rsrc2 <= decode_out.rsrc2;
   idex_data_in.rd <= decode_out.rd;
@@ -238,6 +237,7 @@ BEGIN
       reset => rst,
       idex_ctrl_in => idex_ctrl_out,
       idex_data_in => idex_data_out,
+      immediate => ifid_out.instruction,
       forwarding => forwarding,
       Forwarded_EXM => (OTHERS => '0'),
       Forwarded_MWB => (OTHERS => '0'),

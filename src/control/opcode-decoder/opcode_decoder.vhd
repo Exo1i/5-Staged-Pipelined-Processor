@@ -124,14 +124,14 @@ begin
                 when OP_IN =>
                     -- IN Rdst: Rdst = Input Port
                     decode_sig.OutBSelect       := OUTB_INPUT_PORT;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_A;
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.MemToALU      := '0';
                     
                 when OP_MOV =>
                     -- MOV Rsrc1, Rdst: Rdst = Rsrc1
                     decode_sig.OutBSelect       := OUTB_REGFILE;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_A;
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.MemToALU      := '0';
                     
@@ -140,7 +140,7 @@ begin
                     -- Second cycle will be overridden by isSwap_from_execute
                     decode_sig.OutBSelect       := OUTB_REGFILE;
                     decode_sig.IsSwap           := '1';  -- Mark as SWAP for pipeline
-                    execute_sig.ALU_Operation   := ALU_PASS;  -- First move operation
+                    execute_sig.ALU_Operation   := ALU_PASS_A;  -- First move operation
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.MemToALU      := '0';
                     
@@ -197,7 +197,7 @@ begin
                 when OP_LDM =>
                     -- LDM Rdst, Imm: Rdst = Imm
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_B;
                     execute_sig.PassImm         := '1';
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.MemToALU      := '0';
@@ -291,7 +291,7 @@ begin
             if isSwap_from_execute = '1' then
                 -- Second cycle of SWAP: Complete the exchange with another MOV
                 decode_sig.OutBSelect       := OUTB_REGFILE;
-                execute_sig.ALU_Operation   := ALU_PASS;
+                execute_sig.ALU_Operation   := ALU_PASS_A;
                 writeback_sig.RegWrite      := '1';
                 writeback_sig.MemToALU      := '0';
                 -- Note: Register addresses need to be swapped by datapath logic

@@ -19,7 +19,6 @@ PACKAGE pipeline_data_pkg IS
         pc : STD_LOGIC_VECTOR(31 DOWNTO 0);
         operand_a : STD_LOGIC_VECTOR(31 DOWNTO 0);
         operand_b : STD_LOGIC_VECTOR(31 DOWNTO 0);
-        immediate : STD_LOGIC_VECTOR(31 DOWNTO 0);
         rsrc1 : STD_LOGIC_VECTOR(2 DOWNTO 0);
         rsrc2 : STD_LOGIC_VECTOR(2 DOWNTO 0);
         rd : STD_LOGIC_VECTOR(2 DOWNTO 0);
@@ -72,7 +71,6 @@ PACKAGE pipeline_data_pkg IS
         pc => (OTHERS => '0'),
         operand_a => (OTHERS => '0'),
         operand_b => (OTHERS => '0'),
-        immediate => (OTHERS => '0'),
         rsrc1 => (OTHERS => '0'),
         rsrc2 => (OTHERS => '0'),
         rd => (OTHERS => '0')
