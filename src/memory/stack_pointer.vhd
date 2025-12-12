@@ -3,7 +3,7 @@ USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 USE ieee.math_real.ALL;
 
-ENTITY StackPointer IS
+ENTITY stack_pointer IS
     GENERIC (
         DATA_WIDTH : INTEGER := 32;
         ADDR_WIDTH : INTEGER := 18
@@ -18,9 +18,9 @@ ENTITY StackPointer IS
 
         Data : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0)
     );
-END StackPointer;
+END stack_pointer;
 
-ARCHITECTURE rtl OF StackPointer IS
+ARCHITECTURE rtl OF stack_pointer IS
     CONSTANT STACK_TOP : INTEGER := (2 ** ADDR_WIDTH) - 1;
 
     SIGNAL sp : INTEGER RANGE 0 TO STACK_TOP := STACK_TOP;
