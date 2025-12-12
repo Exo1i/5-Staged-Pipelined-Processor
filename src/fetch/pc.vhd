@@ -1,6 +1,7 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+USE work.pkg_opcodes.ALL;
 
 ENTITY pc IS
     PORT (
@@ -35,24 +36,18 @@ ARCHITECTURE rtl OF pc IS
     -- Branch target based on BranchTargetSelect
     SIGNAL selected_branch_target : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-    -- Branch target select encoding (matching branch_decision_unit)
-    CONSTANT SEL_DECODE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- Immediate from decode
-    CONSTANT SEL_EXECUTE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01"; -- Immediate from execute
-    CONSTANT SEL_MEMORY : STD_LOGIC_VECTOR(1 DOWNTO 0) := "10"; -- Interrupt addr   ess from memory
-    CONSTANT SEL_RESET : STD_LOGIC_VECTOR(1 DOWNTO 0) := "11"; -- Reset address (0)
-
 BEGIN
     -- Multiplexer for branch target selection
     PROCESS (BranchTargetSelect, target_decode, target_execute, target_memory, target_reset)
     BEGIN
         CASE BranchTargetSelect IS
-            WHEN SEL_DECODE =>
+            WHEN TARGET_DECODE =>
                 selected_branch_target <= target_decode;
-            WHEN SEL_EXECUTE =>
+            WHEN TARGET_EXECUTE =>
                 selected_branch_target <= target_execute;
-            WHEN SEL_MEMORY =>
+            WHEN TARGET_MEMORY =>
                 selected_branch_target <= target_memory;
-            WHEN SEL_RESET =>
+            WHEN TARGET_RESET =>
                 selected_branch_target <= target_reset;
             WHEN OTHERS =>
                 selected_branch_target <= (OTHERS => '0');

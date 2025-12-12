@@ -1,6 +1,7 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+USE work.pkg_opcodes.ALL;
 
 ENTITY tb_pc IS
 END ENTITY tb_pc;
@@ -35,12 +36,6 @@ ARCHITECTURE behavior OF tb_pc IS
     SIGNAL target_reset : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
     SIGNAL pc_out : STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL pc_plus_one : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
-    -- Branch target select encoding (matching branch_decision_unit)
-    CONSTANT SEL_DECODE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00";
-    CONSTANT SEL_EXECUTE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01";
-    CONSTANT SEL_MEMORY : STD_LOGIC_VECTOR(1 DOWNTO 0) := "10";
-    CONSTANT SEL_RESET : STD_LOGIC_VECTOR(1 DOWNTO 0) := "11";
 
     -- Clock period
     CONSTANT clk_period : TIME := 10 ns;
@@ -92,7 +87,7 @@ BEGIN
         REPORT "Test 2: Load reset vector from memory" SEVERITY NOTE;
         target_reset <= X"00000100"; -- Reset vector address
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_RESET; -- Load from memory (reset vector)
+        BranchTargetSelect <= TARGET_RESET; -- Load from memory (reset vector)
         enable <= '1';
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000100"
@@ -119,7 +114,7 @@ BEGIN
         REPORT "Test 5: Unconditional branch from decode (JMP/CALL)" SEVERITY NOTE;
         target_decode <= X"00000200";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_DECODE; -- Branch from decode stage
+        BranchTargetSelect <= TARGET_DECODE; -- Branch from decode stage
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000200"
         REPORT "Branch from decode failed" SEVERITY ERROR;
@@ -128,7 +123,7 @@ BEGIN
         REPORT "Test 6: Conditional branch from execute (JZ/JN/JC)" SEVERITY NOTE;
         target_execute <= X"00000300";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_EXECUTE; -- Branch from execute stage
+        BranchTargetSelect <= TARGET_EXECUTE; -- Branch from execute stage
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000300"
         REPORT "Branch from execute failed" SEVERITY ERROR;
@@ -137,7 +132,7 @@ BEGIN
         REPORT "Test 7: Interrupt - Load PC from memory" SEVERITY NOTE;
         target_memory <= X"00000400";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_MEMORY; -- Interrupt vector
+        BranchTargetSelect <= TARGET_MEMORY; -- Interrupt vector
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000400"
         REPORT "Interrupt vector load failed" SEVERITY ERROR;
@@ -165,7 +160,7 @@ BEGIN
         rst <= '0';
         target_reset <= X"00000000";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_RESET; -- Load reset vector
+        BranchTargetSelect <= TARGET_RESET; -- Load reset vector
         WAIT FOR clk_period;
         BranchSelect <= '0'; -- Normal increment mode
         FOR i IN 1 TO 10 LOOP
@@ -178,7 +173,7 @@ BEGIN
         REPORT "Test 11: Misprediction recovery from execute stage" SEVERITY NOTE;
         target_execute <= X"00000500";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_EXECUTE; -- Corrected branch target
+        BranchTargetSelect <= TARGET_EXECUTE; -- Corrected branch target
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000500"
         REPORT "Misprediction recovery failed" SEVERITY ERROR;
@@ -187,7 +182,7 @@ BEGIN
         REPORT "Test 12: CALL - Check PC+1 output for saving" SEVERITY NOTE;
         target_decode <= X"00000600";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_DECODE; -- Jump to subroutine
+        BranchTargetSelect <= TARGET_DECODE; -- Jump to subroutine
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000600"
         REPORT "CALL jump failed" SEVERITY ERROR;
