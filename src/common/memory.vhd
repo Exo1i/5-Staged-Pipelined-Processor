@@ -1,21 +1,21 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use std.textio.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
+USE std.textio.ALL;
 
-entity memory is
-    generic (
-        DATA_WIDTH : integer := 32;
-        ADDR_WIDTH : integer := 18
+ENTITY memory IS
+    GENERIC (
+        DATA_WIDTH : INTEGER := 32;
+        ADDR_WIDTH : INTEGER := 18
     );
-    port (
-        clk              : in  std_logic;
-        rst              : in  std_logic;
+    PORT (
+        clk : IN STD_LOGIC;
+        rst : IN STD_LOGIC;
 
-        Address          : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
-        WriteData        : in  std_logic_vector(DATA_WIDTH-1 downto 0);
-        ReadData         : out std_logic_vector(DATA_WIDTH-1 downto 0);
-        MemRead          : in  std_logic;
-        MemWrite         : in  std_logic
+        Address : IN STD_LOGIC_VECTOR(ADDR_WIDTH - 1 DOWNTO 0);
+        WriteData : IN STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+        ReadData : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+        MemRead : IN STD_LOGIC;
+        MemWrite : IN STD_LOGIC
     );
-end entity;
+END ENTITY;

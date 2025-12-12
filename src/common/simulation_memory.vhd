@@ -1,38 +1,48 @@
-architecture simulation_memory of memory is
-    constant MEM_FILENAME : string := "memory_data.mem";
-    constant DEPTH      : integer := 2 ** ADDR_WIDTH; -- 262,144 words
+ARCHITECTURE simulation_memory OF memory IS
+    CONSTANT MEM_FILENAME : STRING := "memory_data.mem";
+    CONSTANT DEPTH : INTEGER := 2 ** ADDR_WIDTH; -- 262,144 words
 
-    type mem_array_t is array(0 to DEPTH-1) of std_logic_vector(DATA_WIDTH-1 downto 0);
-    signal mem : mem_array_t := ((others => ((others => '0') )));
-    
-begin
+    TYPE mem_array_t IS ARRAY(0 TO DEPTH - 1) OF STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+    SIGNAL mem : mem_array_t := (OTHERS => (OTHERS => '0'));
 
-    process (clk, rst)
-        file f : text;
-        variable l : line;
-        variable tmp : std_logic_vector(DATA_WIDTH-1 downto 0);
-        variable i : integer := 0;
-    begin
-        if rst = '1' then
-            file_open(f, MEM_FILENAME, read_mode);
-            while not endfile(f) loop
-                readline(f, l);
-                hread(l, tmp);
-                mem(i) <= tmp;
-                i := i + 1;
-            end loop;
-            file_close(f);
+    -- Procedure to load memory from file
+    IMPURE FUNCTION load_mem_from_file(filename : STRING) RETURN mem_array_t IS
+        FILE f : text;
+        VARIABLE l : line;
+        VARIABLE tmp : STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+        VARIABLE i : INTEGER := 0;
+        VARIABLE result : mem_array_t := (OTHERS => (OTHERS => '0'));
+    BEGIN
+        file_open(f, filename, read_mode);
+        WHILE NOT endfile(f) AND i < DEPTH LOOP
+            readline(f, l);
+            hread(l, tmp);
+            result(i) := tmp;
+            i := i + 1;
+        END LOOP;
+        file_close(f);
+        RETURN result;
+    END FUNCTION;
 
-        elsif rising_edge(clk) then
-            if MemWrite = '1' then
+    -- Store initial memory state
+    CONSTANT initial_mem : mem_array_t := load_mem_from_file(MEM_FILENAME);
+
+BEGIN
+
+    -- Memory read/write process with reset
+    PROCESS (clk, rst)
+    BEGIN
+        IF rst = '1' THEN
+            mem <= initial_mem;
+        ELSIF rising_edge(clk) THEN
+            IF MemWrite = '1' THEN
                 mem(to_integer(unsigned(Address))) <= WriteData;
-            end if;
-        end if;
+            END IF;
+        END IF;
+    END PROCESS;
 
+    ReadData <= mem(to_integer(unsigned(Address))) WHEN (MemRead = '1' AND MemWrite = '0')
+        ELSE
+        (OTHERS => 'Z');
 
-    end process;
-
-    ReadData <= mem(to_integer(unsigned(Address))) when (MemRead = '1' and MemWrite = '0')
-                else (others => 'Z');
-
-end architecture simulation_memory;
+END ARCHITECTURE simulation_memory;

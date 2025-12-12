@@ -42,7 +42,7 @@ ARCHITECTURE rtl OF MemoryStage IS
 BEGIN
 
     -- Stack Pointer Unit Instantiation
-    sp_unit : ENTITY work.StackPointer
+    sp_unit : ENTITY work.stack_pointer
         GENERIC MAP(
             DATA_WIDTH => DATA_WIDTH,
             ADDR_WIDTH => ADDR_WIDTH
