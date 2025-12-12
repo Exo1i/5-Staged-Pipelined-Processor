@@ -80,8 +80,9 @@ ARCHITECTURE Behavioral OF execute_stage IS
     SIGNAL alu_op_extended : STD_LOGIC_VECTOR(3 DOWNTO 0);
 BEGIN
 
-    -- Extend ALU operation to 4 bits (add a '0' at the end)
-    alu_op_extended <= idex_ctrl_in.execute_ctrl.ALU_Operation & '0';
+    -- Extend ALU operation to 4 bits (add a '0' as MSB)
+    -- NOTE: the ALU expects the original 3-bit opcode in the LSBs.
+    alu_op_extended <= '0' & idex_ctrl_in.execute_ctrl.ALU_Operation;
 
     -- CCR write enable logic (XOR with IsReturn)
     ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable XOR idex_ctrl_in.decode_ctrl.IsReturn;
@@ -100,12 +101,18 @@ BEGIN
     END PROCESS;
 
     -- =====================================================
+    -- PassImm MUX (2:1) - Select between forwarded_B and Immediate
+    -- =====================================================
+    In_B <= idex_data_in.immediate WHEN idex_ctrl_in.execute_ctrl.PassImm = '1' ELSE
+        forwarded_B;
+
+    -- =====================================================
     -- Operand B MUX (3:1) - Forwarding for In_B (before PassImm)
     -- =====================================================
     PROCESS (forwarding.forward_b, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_b IS
-            WHEN FORWARD_NONE => forwarded_B <= idex_data_in.operand_b;
+            WHEN FORWARD_NONE => forwarded_B <= In_B;
             WHEN FORWARD_EX_MEM => forwarded_B <= Forwarded_EXM;
             WHEN FORWARD_MEM_WB => forwarded_B <= Forwarded_MWB;
             WHEN OTHERS => forwarded_B <= idex_data_in.operand_b;
@@ -113,17 +120,11 @@ BEGIN
     END PROCESS;
 
     -- =====================================================
-    -- PassImm MUX (2:1) - Select between forwarded_B and Immediate
-    -- =====================================================
-    In_B <= idex_data_in.immediate WHEN idex_ctrl_in.execute_ctrl.PassImm = '1' ELSE
-        forwarded_B;
-
-    -- =====================================================
     -- ALU Instantiation
     -- =====================================================
     ALU_UNIT : alu PORT MAP(
         OperandA => In_A,
-        OperandB => In_B,
+        OperandB => forwarded_B,
         ALU_Op => alu_op_extended,
         Result => alu_result_int,
         Zero => alu_zero,
@@ -149,9 +150,9 @@ BEGIN
     -- =====================================================
     -- Output Assignments
     -- =====================================================
-    execute_out.alu_result <= alu_result_int;
-    execute_out.primary_data <= forwarded_B;
-    execute_out.secondary_data <= In_A;
+    execute_out.primary_data <= alu_result_int;
+    execute_out.secondary_data <= ccr_out_int WHEN idex_ctrl_in.execute_ctrl.PassCCR = '1' ELSE
+    idex_data_in.operand_b;
     execute_out.rdst <= idex_data_in.rd;
     execute_out.ccr_flags <= ccr_out_int;
 

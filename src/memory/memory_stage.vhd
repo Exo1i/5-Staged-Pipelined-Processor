@@ -54,7 +54,7 @@ BEGIN
         ELSE
             CASE ex_mem_ctrl_in.memory_ctrl.PassInterrupt IS
                 WHEN PASS_INT_NORMAL =>
-                    MemAddress <= ex_mem_data_in.alu_result(17 DOWNTO 0);
+                    MemAddress <= ex_mem_data_in.primary_data(17 DOWNTO 0);
                 WHEN PASS_INT_RESET =>
                     MemAddress <= (OTHERS => '0');
                 WHEN PASS_INT_SOFTWARE =>

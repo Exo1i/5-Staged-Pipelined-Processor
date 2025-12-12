@@ -128,7 +128,6 @@ add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/idex_ctrl_
 add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/idex_ctrl_out.writeback_ctrl.MemToALU
 
 add wave -divider "Execute"
-add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/execute_out.alu_result
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/execute_out.primary_data
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/execute_out.secondary_data
 add wave -radix unsigned sim:/fetch_decode_execute_memory_writeback_top/execute_out.rdst
@@ -143,7 +142,6 @@ add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/execute_ct
 add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/execute_ctrl_out.m_passinterrupt
 
 add wave -divider "EX/MEM"
-add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/exmem_data_out.alu_result
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/exmem_data_out.primary_data
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/exmem_data_out.secondary_data
 add wave -radix unsigned sim:/fetch_decode_execute_memory_writeback_top/exmem_data_out.rdst1

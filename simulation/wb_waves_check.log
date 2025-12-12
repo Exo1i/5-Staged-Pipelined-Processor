@@ -1,0 +1,315 @@
+# do ./simulation/scripts/run_fetch_decode_execute_memory_writeback_top.do
+# ** Warning: (vlib-34) Library already exists at "./simulation/work".
+# Model Technology ModelSim - Intel FPGA Edition vmap 10.5b Lib Mapping Utility 2016.10 Oct  5 2016
+# vmap work ./simulation/work 
+# Modifying modelsim.ini
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/common/control_signals_pkg.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package control_signals_pkg
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/common/pipeline_data_pkg.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Compiling package pipeline_data_pkg
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/common/pkg_opcodes.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling package pkg_opcodes
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/common/memory.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Compiling entity memory
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/common/simulation_memory.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package std_logic_textio
+# -- Compiling architecture simulation_memory of memory
+# -- Loading entity memory
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/fetch/pc.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package pkg_opcodes
+# -- Compiling entity pc
+# -- Compiling architecture rtl of pc
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/fetch/fetch_stage.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity fetch_stage
+# -- Compiling architecture Behavioral of fetch_stage
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/fetch/if_id_register.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity if_id_register
+# -- Compiling architecture rtl of if_id_register
+# End time: 16:54:47 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:47 on Dec 12,2025
+# vcom -2008 ./src/decode/register_file.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Compiling entity register_file
+# -- Compiling architecture Behavioral of register_file
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/decode/decode_stage.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity decode_stage
+# -- Compiling architecture Behavioral of decode_stage
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/control/opcode-decoder/opcode_decoder.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package pkg_opcodes
+# -- Loading package control_signals_pkg
+# -- Compiling entity opcode_decoder
+# -- Compiling architecture Behavioral of opcode_decoder
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/decode/id_ex_register.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity id_ex_register
+# -- Compiling architecture rtl of id_ex_register
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/execute/alu.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Compiling entity alu
+# -- Compiling architecture Behavioral of alu
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/execute/ccr.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity ccr
+# -- Compiling architecture Behavioral of ccr
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/execute/execute_stage.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity execute_stage
+# -- Compiling architecture Behavioral of execute_stage
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/execute/ex_mem_register.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity ex_mem_register
+# -- Compiling architecture rtl of ex_mem_register
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/memory/stack_pointer.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package MATH_REAL
+# -- Compiling entity stack_pointer
+# -- Compiling architecture rtl of stack_pointer
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/memory/memory_stage.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Loading package pkg_opcodes
+# -- Compiling entity memory_stage
+# -- Compiling architecture rtl of memory_stage
+# -- Loading package MATH_REAL
+# -- Loading entity stack_pointer
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/memory/mem_wb_register.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity mem_wb_register
+# -- Compiling architecture rtl of mem_wb_register
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/writeback/writeback_stage.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity writeback_stage
+# -- Compiling architecture rtl of writeback_stage
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:48 on Dec 12,2025
+# vcom -2008 ./src/control/memory-hazard-unit/memory_hazard_unit.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Compiling entity memory_hazard_unit
+# -- Compiling architecture Behavioral of memory_hazard_unit
+# End time: 16:54:48 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vcom 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 16:54:49 on Dec 12,2025
+# vcom -2008 ./src/fetch_decode_execute_memory_writeback_top.vhd 
+# -- Loading package STANDARD
+# -- Loading package TEXTIO
+# -- Loading package std_logic_1164
+# -- Loading package NUMERIC_STD
+# -- Loading package control_signals_pkg
+# -- Loading package pipeline_data_pkg
+# -- Compiling entity fetch_decode_execute_memory_writeback_top
+# -- Compiling architecture Structural of fetch_decode_execute_memory_writeback_top
+# -- Loading entity memory_hazard_unit
+# -- Loading entity memory
+# -- Loading entity fetch_stage
+# -- Loading entity if_id_register
+# -- Loading package pkg_opcodes
+# -- Loading entity decode_stage
+# -- Loading entity opcode_decoder
+# -- Loading entity id_ex_register
+# -- Loading entity execute_stage
+# -- Loading entity ex_mem_register
+# -- Loading entity memory_stage
+# -- Loading entity mem_wb_register
+# -- Loading entity writeback_stage
+# End time: 16:54:49 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim work.fetch_decode_execute_memory_writeback_top -voptargs="+acc" 
+# Start time: 16:54:49 on Dec 12,2025
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading work.control_signals_pkg
+# Loading work.pipeline_data_pkg
+# Loading work.pkg_opcodes
+# Loading work.fetch_decode_execute_memory_writeback_top(structural)
+# Loading work.memory_hazard_unit(behavioral)
+# Loading ieee.std_logic_textio(body)
+# Loading work.memory(simulation_memory)
+# Loading work.fetch_stage(behavioral)
+# Loading work.pc(rtl)
+# Loading work.if_id_register(rtl)
+# Loading work.decode_stage(behavioral)
+# Loading work.register_file(behavioral)
+# Loading work.opcode_decoder(behavioral)
+# Loading work.id_ex_register(rtl)
+# Loading work.execute_stage(behavioral)
+# Loading work.alu(behavioral)
+# Loading work.ccr(behavioral)
+# Loading work.ex_mem_register(rtl)
+# Loading ieee.math_real(body)
+# Loading work.memory_stage(rtl)
+# Loading work.stack_pointer(rtl)
+# Loading work.mem_wb_register(rtl)
+# Loading work.writeback_stage(rtl)
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /fetch_decode_execute_memory_writeback_top/decode_inst/reg_file_inst
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /fetch_decode_execute_memory_writeback_top/decode_inst/reg_file_inst
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 300 ps  Iteration: 3  Instance: /fetch_decode_execute_memory_writeback_top/decode_inst/reg_file_inst
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 300 ps  Iteration: 3  Instance: /fetch_decode_execute_memory_writeback_top/decode_inst/reg_file_inst
+#  quit -f
+# End time: 16:54:49 on Dec 12,2025, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 4

@@ -247,11 +247,7 @@ BEGIN
     );
 
   -- ===== EX/MEM pack =====
-  -- Keep both alu_result and primary_data driven by the ALU result
-  -- (matches the existing processor_top convention), while secondary_data
-  -- carries store data.
-  exmem_data_in.alu_result <= execute_out.alu_result;
-  exmem_data_in.primary_data <= execute_out.alu_result;
+  exmem_data_in.primary_data <= execute_out.primary_data;
   exmem_data_in.secondary_data <= execute_out.secondary_data;
   exmem_data_in.rdst1 <= execute_out.rdst;
 

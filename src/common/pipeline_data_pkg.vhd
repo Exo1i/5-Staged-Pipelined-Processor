@@ -35,7 +35,6 @@ PACKAGE pipeline_data_pkg IS
 
     -- Data bundle for EX/MEM pipeline register
     TYPE pipeline_execute_memory_t IS RECORD
-        alu_result : STD_LOGIC_VECTOR(31 DOWNTO 0);
         primary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
         secondary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
         rdst1 : STD_LOGIC_VECTOR(2 DOWNTO 0);
@@ -87,7 +86,6 @@ PACKAGE pipeline_data_pkg IS
     );
 
     CONSTANT PIPELINE_EXECUTE_MEMORY_RESET : pipeline_execute_memory_t := (
-        alu_result => (OTHERS => '0'),
         primary_data => (OTHERS => '0'),
         secondary_data => (OTHERS => '0'),
         rdst1 => (OTHERS => '0')
@@ -153,7 +151,6 @@ PACKAGE pipeline_data_pkg IS
 
     -- Execute Stage Outputs Bundle
     TYPE execute_outputs_t IS RECORD
-        alu_result : STD_LOGIC_VECTOR(31 DOWNTO 0);
         primary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
         secondary_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
         rdst : STD_LOGIC_VECTOR(2 DOWNTO 0);

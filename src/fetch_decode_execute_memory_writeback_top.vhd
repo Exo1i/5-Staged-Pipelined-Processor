@@ -247,8 +247,7 @@ BEGIN
     );
 
   -- ===== EX/MEM pack =====
-  exmem_data_in.alu_result <= execute_out.alu_result;
-  exmem_data_in.primary_data <= execute_out.alu_result;
+  exmem_data_in.primary_data <= execute_out.primary_data;
   exmem_data_in.secondary_data <= execute_out.secondary_data;
   exmem_data_in.rdst1 <= execute_out.rdst;
 

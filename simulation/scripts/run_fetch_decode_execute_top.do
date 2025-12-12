@@ -64,7 +64,6 @@ add wave -radix hexadecimal sim:/fetch_decode_execute_top/idex_data_out.immediat
 add wave -radix unsigned sim:/fetch_decode_execute_top/idex_data_out.rd
 
 add wave -divider "Execute"
-add wave -radix hexadecimal sim:/fetch_decode_execute_top/execute_out.alu_result
 add wave -radix hexadecimal sim:/fetch_decode_execute_top/execute_out.primary_data
 add wave -radix hexadecimal sim:/fetch_decode_execute_top/execute_out.secondary_data
 add wave -radix unsigned sim:/fetch_decode_execute_top/execute_out.rdst
