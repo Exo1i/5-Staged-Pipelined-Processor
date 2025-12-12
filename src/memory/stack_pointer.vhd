@@ -1,44 +1,44 @@
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.math_real.all;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
+USE ieee.math_real.ALL;
 
-entity StackPointer is
-    generic(
-        DATA_WIDTH : integer := 32;
-        ADDR_WIDTH : integer := 18
+ENTITY StackPointer IS
+    GENERIC (
+        DATA_WIDTH : INTEGER := 32;
+        ADDR_WIDTH : INTEGER := 18
     );
-    port (
-        clk : in std_logic;
-        rst : in std_logic;
-        enb : in std_logic;
+    PORT (
+        clk : IN STD_LOGIC;
+        rst : IN STD_LOGIC;
+        enb : IN STD_LOGIC;
 
-        Increment : in std_logic;
-        Decrement : in std_logic;
+        Increment : IN STD_LOGIC;
+        Decrement : IN STD_LOGIC;
 
-        Data : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0)
+        Data : OUT STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0)
     );
-end StackPointer;
+END StackPointer;
 
-architecture rtl of StackPointer is
-    constant STACK_TOP : INTEGER := (2 ** ADDR_WIDTH) - 1;
-    
-    signal sp : integer range 0 to STACK_TOP := STACK_TOP;
-begin
+ARCHITECTURE rtl OF StackPointer IS
+    CONSTANT STACK_TOP : INTEGER := (2 ** ADDR_WIDTH) - 1;
 
-    process (clk, rst)
-    begin
-        if rst = '1' then
+    SIGNAL sp : INTEGER RANGE 0 TO STACK_TOP := STACK_TOP;
+BEGIN
+
+    PROCESS (clk, rst)
+    BEGIN
+        IF rst = '1' THEN
             sp <= STACK_TOP;
 
-        elsif rising_edge(clk) and enb = '1' then
-            if(Increment = '1') then 
+        ELSIF rising_edge(clk) AND enb = '1' THEN
+            IF (Increment = '1') THEN
                 sp <= sp + 1;
-            elsif Decrement = '1' then
+            ELSIF Decrement = '1' THEN
                 sp <= sp - 1;
-            end if;
-        end if;
-    end process;
+            END IF;
+        END IF;
+    END PROCESS;
 
     Data <= STD_LOGIC_VECTOR(to_unsigned(sp, Data'length));
-end rtl ; -- rtl
+END rtl; -- rtl
