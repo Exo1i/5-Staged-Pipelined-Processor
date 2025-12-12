@@ -12,7 +12,7 @@ USE work.pipeline_data_pkg.ALL;
 PACKAGE processor_components_pkg IS
 
     -- ========== PIPELINE STAGE COMPONENTS ==========
-    
+
     COMPONENT fetch_stage IS
         PORT (
             clk : IN STD_LOGIC;
@@ -27,7 +27,7 @@ PACKAGE processor_components_pkg IS
             PushPCSelect : IN STD_LOGIC
         );
     END COMPONENT;
-    
+
     COMPONENT decode_stage IS
         PORT (
             clk : IN STD_LOGIC;
@@ -37,82 +37,33 @@ PACKAGE processor_components_pkg IS
             instruction_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             take_interrupt_in : IN STD_LOGIC;
             override_op_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-            decode_ctrl : IN decode_control_t;
-            execute_ctrl : IN execute_control_t;
-            memory_ctrl : IN memory_control_t;
-            writeback_ctrl : IN writeback_control_t;
+            ctrl_in : IN decode_ctrl_outputs_t;
             stall_control : IN STD_LOGIC;
             in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             immediate_from_fetch : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             is_swap_ex : IN STD_LOGIC;
-            wb_rd : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            wb_data : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            wb_enable : IN STD_LOGIC;
-            pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            operand_a_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            operand_b_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            immediate_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            rsrc1_out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-            rsrc2_out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-            rd_out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-            decode_ctrl_out : OUT decode_control_t;
-            execute_ctrl_out : OUT execute_control_t;
-            memory_ctrl_out : OUT memory_control_t;
-            writeback_ctrl_out : OUT writeback_control_t;
-            opcode_out : OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
-            is_interrupt_out : OUT STD_LOGIC;
-            is_hardware_int_out : OUT STD_LOGIC;
-            is_call_out : OUT STD_LOGIC;
-            is_return_out : OUT STD_LOGIC;
-            is_reti_out : OUT STD_LOGIC;
-            is_jmp_out : OUT STD_LOGIC;
-            is_jmp_conditional_out : OUT STD_LOGIC;
-            conditional_type_out : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
+            wb_in : IN writeback_outputs_t;
+            decode_out : OUT decode_outputs_t;
+            ctrl_out : OUT decode_ctrl_outputs_t;
+            flags_out : OUT decode_flags_t
         );
     END COMPONENT;
-    
+
     COMPONENT execute_stage IS
         PORT (
-            clk   : IN STD_LOGIC;
+            clk : IN STD_LOGIC;
             reset : IN STD_LOGIC;
-            WB_RegWrite_in  : IN STD_LOGIC;
-            WB_MemToReg_in  : IN STD_LOGIC;
-            M_MemRead_in    : IN STD_LOGIC;
-            M_MemWrite_in   : IN STD_LOGIC;
-            M_SpToMem_in    : IN STD_LOGIC;
-            M_PassInterrupt_in : IN STD_LOGIC;
-            EX_ALU_Op       : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
-            EX_PassImm      : IN STD_LOGIC;
-            EX_CCRWrEn      : IN STD_LOGIC;
-            EX_IsReturn     : IN STD_LOGIC;
-            EX_PassCCR      : IN STD_LOGIC;
-            OutA            : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            OutB            : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Immediate       : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            PC_in           : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Rsrc1           : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            Rsrc2           : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            Rdst1_in        : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            ForwardA        : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-            ForwardB        : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-            Forwarded_EXM   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Forwarded_MWB   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            StackFlags      : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            WB_RegWrite_out : OUT STD_LOGIC;
-            WB_MemToReg_out : OUT STD_LOGIC;
-            M_MemRead_out   : OUT STD_LOGIC;
-            M_MemWrite_out  : OUT STD_LOGIC;
-            M_SpToMem_out   : OUT STD_LOGIC;
-            M_PassInterrupt_out : OUT STD_LOGIC;
-            ALU_Result_out  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Primary_Data    : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Secondary_Data  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Rdst1_out       : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
-            CCR_Flags       : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
+            idex_ctrl_in : IN pipeline_decode_excute_ctrl_t;
+            idex_data_in : IN pipeline_decode_excute_t;
+            forwarding : IN forwarding_ctrl_t;
+            Forwarded_EXM : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Forwarded_MWB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            execute_out : OUT execute_outputs_t;
+            ctrl_out : OUT execute_ctrl_outputs_t
         );
     END COMPONENT;
-    
+
     COMPONENT MemoryStage IS
         PORT (
             clk : IN STD_LOGIC;
@@ -128,22 +79,19 @@ PACKAGE processor_components_pkg IS
             MemWriteData : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
         );
     END COMPONENT;
-    
+
     COMPONENT WritebackStage IS
         PORT (
             clk : IN STD_LOGIC;
             rst : IN STD_LOGIC;
             mem_wb_ctrl : IN pipeline_memory_writeback_ctrl_t;
             mem_wb_data : IN pipeline_memory_writeback_t;
-            PortEnable : OUT STD_LOGIC;
-            RegWE : OUT STD_LOGIC;
-            Data : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            RdstOut : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
+            wb_out : OUT writeback_outputs_t
         );
     END COMPONENT;
-    
+
     -- ========== PIPELINE REGISTER COMPONENTS ==========
-    
+
     COMPONENT if_id_register IS
         PORT (
             clk : IN STD_LOGIC;
@@ -154,7 +102,7 @@ PACKAGE processor_components_pkg IS
             data_out : OUT pipeline_fetch_decode_t
         );
     END COMPONENT;
-    
+
     COMPONENT id_ex_register IS
         PORT (
             clk : IN STD_LOGIC;
@@ -167,7 +115,7 @@ PACKAGE processor_components_pkg IS
             ctrl_out : OUT pipeline_decode_excute_ctrl_t
         );
     END COMPONENT;
-    
+
     COMPONENT ex_mem_register IS
         PORT (
             clk : IN STD_LOGIC;
@@ -180,7 +128,7 @@ PACKAGE processor_components_pkg IS
             ctrl_out : OUT pipeline_execute_memory_ctrl_t
         );
     END COMPONENT;
-    
+
     COMPONENT mem_wb_register IS
         PORT (
             clk : IN STD_LOGIC;
@@ -193,80 +141,80 @@ PACKAGE processor_components_pkg IS
             ctrl_out : OUT pipeline_memory_writeback_ctrl_t
         );
     END COMPONENT;
-    
+
     -- ========== CONTROL UNIT COMPONENTS ==========
-    
+
     COMPONENT opcode_decoder IS
         PORT (
-            opcode : IN std_logic_vector(4 DOWNTO 0);
-            override_operation : IN std_logic;
-            override_type : IN std_logic_vector(1 DOWNTO 0);
-            isSwap_from_execute : IN std_logic;
-            take_interrupt : IN std_logic;
-            is_hardware_int_mem : IN std_logic;
+            opcode : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
+            override_operation : IN STD_LOGIC;
+            override_type : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+            isSwap_from_execute : IN STD_LOGIC;
+            take_interrupt : IN STD_LOGIC;
+            is_hardware_int_mem : IN STD_LOGIC;
             decode_ctrl : OUT decode_control_t;
             execute_ctrl : OUT execute_control_t;
             memory_ctrl : OUT memory_control_t;
             writeback_ctrl : OUT writeback_control_t;
-            is_interrupt_out : OUT std_logic;
-            is_call_out : OUT std_logic;
-            is_return_out : OUT std_logic;
-            is_reti_out : OUT std_logic;
-            is_jmp_out : OUT std_logic;
-            is_jmp_conditional_out : OUT std_logic;
-            is_swap_out : OUT std_logic
+            is_interrupt_out : OUT STD_LOGIC;
+            is_call_out : OUT STD_LOGIC;
+            is_return_out : OUT STD_LOGIC;
+            is_reti_out : OUT STD_LOGIC;
+            is_jmp_out : OUT STD_LOGIC;
+            is_jmp_conditional_out : OUT STD_LOGIC;
+            is_swap_out : OUT STD_LOGIC
         );
     END COMPONENT;
-    
+
     COMPONENT interrupt_unit IS
         PORT (
-            IsInterrupt_DE : IN std_logic;
-            IsHardwareInt_DE : IN std_logic;
-            IsCall_DE : IN std_logic;
-            IsReturn_DE : IN std_logic;
-            IsReti_DE : IN std_logic;
-            IsInterrupt_EX : IN std_logic;
-            IsHardwareInt_EX : IN std_logic;
-            IsReti_EX : IN std_logic;
-            IsHardwareInt_MEM : IN std_logic;
-            HardwareInterrupt : IN std_logic;
-            Stall : OUT std_logic;
-            PassPC_NotPCPlus1 : OUT std_logic;
-            TakeInterrupt : OUT std_logic;
-            IsHardwareIntMEM_Out : OUT std_logic;
-            OverrideOperation : OUT std_logic;
-            OverrideType : OUT std_logic_vector(1 DOWNTO 0)
+            IsInterrupt_DE : IN STD_LOGIC;
+            IsHardwareInt_DE : IN STD_LOGIC;
+            IsCall_DE : IN STD_LOGIC;
+            IsReturn_DE : IN STD_LOGIC;
+            IsReti_DE : IN STD_LOGIC;
+            IsInterrupt_EX : IN STD_LOGIC;
+            IsHardwareInt_EX : IN STD_LOGIC;
+            IsReti_EX : IN STD_LOGIC;
+            IsHardwareInt_MEM : IN STD_LOGIC;
+            HardwareInterrupt : IN STD_LOGIC;
+            Stall : OUT STD_LOGIC;
+            PassPC_NotPCPlus1 : OUT STD_LOGIC;
+            TakeInterrupt : OUT STD_LOGIC;
+            IsHardwareIntMEM_Out : OUT STD_LOGIC;
+            OverrideOperation : OUT STD_LOGIC;
+            OverrideType : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
         );
     END COMPONENT;
-    
+
     COMPONENT branch_decision_unit IS
         PORT (
-            IsSoftwareInterrupt : IN std_logic;
-            IsHardwareInterrupt : IN std_logic;
-            UnconditionalBranch : IN std_logic;
-            ConditionalBranch : IN std_logic;
-            PredictedTaken : IN std_logic;
-            ActualTaken : IN std_logic;
-            Reset : IN std_logic;
-            BranchSelect : OUT std_logic;
-            BranchTargetSelect : OUT std_logic_vector(1 DOWNTO 0);
-            FlushDE : OUT std_logic;
-            FlushIF : OUT std_logic;
-            Stall_Branch : OUT std_logic
+            IsSoftwareInterrupt : IN STD_LOGIC;
+            IsHardwareInterrupt : IN STD_LOGIC;
+            UnconditionalBranch : IN STD_LOGIC;
+            ConditionalBranch : IN STD_LOGIC;
+            PredictedTaken : IN STD_LOGIC;
+            ActualTaken : IN STD_LOGIC;
+            Reset : IN STD_LOGIC;
+            BranchSelect : OUT STD_LOGIC;
+            BranchTargetSelect : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+            FlushDE : OUT STD_LOGIC;
+            FlushIF : OUT STD_LOGIC;
+            Stall_Branch : OUT STD_LOGIC
         );
     END COMPONENT;
-    
+
     COMPONENT freeze_control IS
         PORT (
-            PassPC_MEM : IN std_logic;
-            Stall_Interrupt : IN std_logic;
-            Stall_Branch : IN std_logic;
-            PC_WriteEnable : OUT std_logic;
-            IFDE_WriteEnable : OUT std_logic;
-            InsertNOP_IFDE : OUT std_logic
+            PassPC_MEM : IN STD_LOGIC;
+            Stall_Interrupt : IN STD_LOGIC;
+            Stall_Branch : IN STD_LOGIC;
+            PC_WriteEnable : OUT STD_LOGIC;
+            IFDE_WriteEnable : OUT STD_LOGIC;
+            InsertNOP_IFDE : OUT STD_LOGIC
         );
     END COMPONENT;
-    
+
     COMPONENT forwarding_unit IS
         PORT (
             MemRegWrite : IN STD_LOGIC;
