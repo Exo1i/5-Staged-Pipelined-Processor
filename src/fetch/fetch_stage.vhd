@@ -21,8 +21,6 @@ ENTITY fetch_stage IS
         -- Pipeline Output Bundle (to IF/ID register)
         fetch_out : OUT fetch_outputs_t;
 
-        -- Interrupt Input
-        intr_in : IN STD_LOGIC;
         PushPCSelect : IN STD_LOGIC -- 0=PC, 1=PC+1
     );
 END ENTITY fetch_stage;
@@ -57,7 +55,8 @@ BEGIN
     -- Populate output record
     fetch_out.pc <= current_pc;
     fetch_out.instruction <= mem_data;
-    fetch_out.pushed_pc <= current_pc WHEN PushPCSelect = '0' ELSE pc_plus_one;
+    fetch_out.pushed_pc <= current_pc WHEN PushPCSelect = '0' ELSE
+    pc_plus_one;
 
     -- Instantiate PC
     pc_inst : pc

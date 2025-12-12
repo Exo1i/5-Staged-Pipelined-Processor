@@ -1,6 +1,8 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+USE work.pipeline_data_pkg.ALL;
+USE work.pkg_opcodes.ALL;
 
 ENTITY tb_fetch_stage IS
 END ENTITY tb_fetch_stage;
@@ -20,7 +22,6 @@ ARCHITECTURE behavior OF tb_fetch_stage IS
             pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             pushed_pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             instruction_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            intr_in : IN STD_LOGIC;
             PushPCSelect : IN STD_LOGIC
         );
     END COMPONENT;
@@ -40,11 +41,7 @@ ARCHITECTURE behavior OF tb_fetch_stage IS
     SIGNAL intr_in : STD_LOGIC := '0';
     SIGNAL PushPCSelect : STD_LOGIC := '0';
 
-    -- Branch target select encoding
-    CONSTANT SEL_DECODE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00";
-    CONSTANT SEL_EXECUTE : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01";
-    CONSTANT SEL_MEMORY : STD_LOGIC_VECTOR(1 DOWNTO 0) := "10";
-    CONSTANT SEL_RESET : STD_LOGIC_VECTOR(1 DOWNTO 0) := "11";
+    -- Branch target select encoding from pkg_opcodes: TARGET_DECODE, TARGET_EXECUTE, TARGET_MEMORY, TARGET_RESET
 
     CONSTANT clk_period : TIME := 10 ns;
 
@@ -65,7 +62,6 @@ BEGIN
         pc_out => pc_out,
         pushed_pc_out => pushed_pc_out,
         instruction_out => instruction_out,
-        intr_in => intr_in,
         PushPCSelect => PushPCSelect
     );
 
@@ -93,7 +89,7 @@ BEGIN
         -- Expect PC to be 0, Memory returns M[0]
         mem_data <= X"00000100"; -- M[0] = Reset Vector
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_RESET;
+        BranchTargetSelect <= TARGET_RESET;
         WAIT FOR clk_period;
 
         ASSERT pc_out = X"00000100"
@@ -126,7 +122,7 @@ BEGIN
         REPORT "Test 4: Branch from Decode" SEVERITY NOTE;
         target_decode <= X"00000200";
         BranchSelect <= '1';
-        BranchTargetSelect <= SEL_DECODE;
+        BranchTargetSelect <= TARGET_DECODE;
         WAIT FOR clk_period;
         ASSERT pc_out = X"00000200"
         REPORT "Branch from decode failed" SEVERITY ERROR;
