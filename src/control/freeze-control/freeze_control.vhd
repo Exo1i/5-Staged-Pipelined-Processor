@@ -9,7 +9,7 @@ ENTITY freeze_control IS
         Stall_Branch : IN STD_LOGIC; -- From Branch Control ('1' = stall for branch misprediction) - Optional
 
         -- Outputs: Control signals for pipeline freeze
-        PC_WriteEnable : OUT STD_LOGIC; -- Enable PC register update ('1' = allow update, '0' = freeze)
+        PC_Freeze : OUT STD_LOGIC; -- Enable PC register update ('0' = allow update, '1' = freeze)
         IFDE_WriteEnable : OUT STD_LOGIC; -- Enable IF/DE pipeline register update
         InsertNOP_IFDE : OUT STD_LOGIC -- Insert NOP/bubble into IF/DE stage ('1' = insert NOP)
     );
@@ -28,8 +28,8 @@ BEGIN
 
     -- When stalling: freeze PC and IF/DE register, insert NOP
     -- When not stalling: allow normal operation
-    PC_WriteEnable <= NOT any_stall; -- '0' when stalling, '1' when normal
-    IFDE_WriteEnable <= NOT any_stall; -- '0' when stalling, '1' when normal
+    PC_Freeze <= any_stall; -- '1' when stalling, '0' when normal
+    IFDE_WriteEnable <= any_stall; -- '1' when stalling, '0' when normal
     InsertNOP_IFDE <= any_stall; -- '1' when stalling (insert bubble), '0' when normal
 
 END Behavioral;

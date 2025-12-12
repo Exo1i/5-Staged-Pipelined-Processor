@@ -173,7 +173,7 @@ BEGIN
         REPORT "ADD should select ALU_ADD" SEVERITY error;
         ASSERT writeback_ctrl_out.RegWrite = '1'
         REPORT "ADD should enable RegWrite" SEVERITY error;
-        ASSERT PC_WriteEnable = '1'
+        ASSERT PC_WriteEnable = '0'
         REPORT "Normal operation should allow PC update" SEVERITY error;
 
         REPORT "=== Test 2: Memory conflict - LDD in memory stage ===";
@@ -182,7 +182,7 @@ BEGIN
         WAIT FOR CLK_PERIOD;
         ASSERT PassPC_ToMem = '0'
         REPORT "Memory conflict should block fetch" SEVERITY error;
-        ASSERT PC_WriteEnable = '0'
+        ASSERT PC_WriteEnable = '1'
         REPORT "Memory conflict should freeze PC" SEVERITY error;
         ASSERT InsertNOP_IFDE = '1'
         REPORT "Memory conflict should insert NOP" SEVERITY error;
@@ -209,7 +209,7 @@ BEGIN
         WAIT FOR CLK_PERIOD;
         ASSERT memory_ctrl_out.PassInterrupt = PASS_INT_SOFTWARE
         REPORT "INT should set PassInterrupt to SOFTWARE" SEVERITY error;
-        ASSERT PC_WriteEnable = '0'
+        ASSERT PC_WriteEnable = '1'
         REPORT "INT should stall PC" SEVERITY error;
         WAIT FOR CLK_PERIOD;
         -- Simulate interrupt in execute stage

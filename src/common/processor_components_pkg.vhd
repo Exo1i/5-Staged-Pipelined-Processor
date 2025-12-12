@@ -204,7 +204,7 @@ PACKAGE processor_components_pkg IS
             PassPC_MEM : IN STD_LOGIC;
             Stall_Interrupt : IN STD_LOGIC;
             Stall_Branch : IN STD_LOGIC;
-            PC_WriteEnable : OUT STD_LOGIC;
+            PC_Freeze : OUT STD_LOGIC;
             IFDE_WriteEnable : OUT STD_LOGIC;
             InsertNOP_IFDE : OUT STD_LOGIC
         );

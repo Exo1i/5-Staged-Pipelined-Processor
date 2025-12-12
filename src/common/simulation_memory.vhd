@@ -11,22 +11,25 @@ ARCHITECTURE simulation_memory OF memory IS
     TYPE mem_array_t IS ARRAY(0 TO DEPTH - 1) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL mem : mem_array_t := (OTHERS => (OTHERS => '0'));
 
-    -- Procedure to load memory from file
+    -- Function to load memory from file
     IMPURE FUNCTION load_mem_from_file(filename : STRING) RETURN mem_array_t IS
-        FILE f : text;
+        FILE mem_file : text;
         VARIABLE l : line;
         VARIABLE tmp : STD_LOGIC_VECTOR(31 DOWNTO 0);
         VARIABLE i : INTEGER := 0;
         VARIABLE result : mem_array_t := (OTHERS => (OTHERS => '0'));
+        VARIABLE status : file_open_status;
     BEGIN
-        file_open(f, filename, read_mode);
-        WHILE NOT endfile(f) AND i < DEPTH LOOP
-            readline(f, l);
-            hread(l, tmp);
-            result(i) := tmp;
-            i := i + 1;
-        END LOOP;
-        file_close(f);
+        file_open(status, mem_file, filename, read_mode);
+        IF status = open_ok THEN
+            WHILE NOT endfile(mem_file) AND i < DEPTH LOOP
+                readline(mem_file, l);
+                hread(l, tmp);
+                result(i) := tmp;
+                i := i + 1;
+            END LOOP;
+            file_close(mem_file);
+        END IF;
         RETURN result;
     END FUNCTION;
 

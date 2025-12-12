@@ -108,7 +108,7 @@ ARCHITECTURE Structural OF processor_top IS
     SIGNAL branch_stall : STD_LOGIC;
 
     -- Freeze Control signals
-    SIGNAL freeze_pc_enable : STD_LOGIC;
+    SIGNAL freeze_pc : STD_LOGIC;
     SIGNAL freeze_ifid_enable : STD_LOGIC;
     SIGNAL freeze_insert_nop : STD_LOGIC;
 
@@ -145,8 +145,8 @@ BEGIN
         PushPCSelect => interrupt_push_pc_select
     );
 
-    -- Fetch stall control (inverted PC enable from freeze control)
-    fetch_stall <= NOT freeze_pc_enable;
+    -- Fetch stall control (freeze_pc from freeze control)
+    fetch_stall <= freeze_pc;
 
     -- ========== IF/ID PIPELINE REGISTER DATA ASSEMBLY ==========
     ifid_data_in.take_interrupt <= interrupt_take_interrupt;
@@ -398,7 +398,7 @@ BEGIN
         PassPC_MEM => passpc_mem,
         Stall_Interrupt => interrupt_stall,
         Stall_Branch => branch_stall,
-        PC_WriteEnable => freeze_pc_enable,
+        PC_Freeze => freeze_pc,
         IFDE_WriteEnable => freeze_ifid_enable,
         InsertNOP_IFDE => freeze_insert_nop
     );

@@ -28,7 +28,7 @@ END ENTITY pc;
 
 ARCHITECTURE rtl OF pc IS
     -- Internal PC register
-    SIGNAL pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0) := X"00000010";
 
     -- Next PC value
     SIGNAL pc_next : STD_LOGIC_VECTOR(31 DOWNTO 0);
