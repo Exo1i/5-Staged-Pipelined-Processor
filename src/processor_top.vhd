@@ -142,7 +142,6 @@ BEGIN
         branch_targets => branch_targets,
         mem_data => mem_data_in,
         fetch_out => fetch_out,
-        intr_in => intr,
         PushPCSelect => interrupt_push_pc_select
     );
 
@@ -204,7 +203,6 @@ BEGIN
         pushed_pc_in => ifid_data_out.pushed_pc,
         instruction_in => ifid_data_out.instruction,
         take_interrupt_in => ifid_data_out.take_interrupt,
-        override_op_in => ifid_data_out.override_op,
         ctrl_in => decoder_ctrl,
         stall_control => '0',
         in_port => in_port,
@@ -362,12 +360,10 @@ BEGIN
     interrupt_unit_inst : interrupt_unit
     PORT MAP(
         IsInterrupt_DE => decode_flags.is_interrupt,
-        IsHardwareInt_DE => decode_flags.is_hardware_int,
         IsCall_DE => decode_flags.is_call,
         IsReturn_DE => decode_flags.is_return,
         IsReti_DE => decode_flags.is_reti,
         IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
-        IsHardwareInt_EX => idex_ctrl_out.decode_ctrl.IsHardwareInterrupt,
         IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
         IsHardwareInt_MEM => is_hardware_int_mem,
         HardwareInterrupt => intr,

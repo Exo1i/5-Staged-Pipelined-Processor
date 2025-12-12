@@ -23,7 +23,6 @@ PACKAGE processor_components_pkg IS
             branch_targets : IN branch_targets_t;
             mem_data : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             fetch_out : OUT fetch_outputs_t;
-            intr_in : IN STD_LOGIC;
             PushPCSelect : IN STD_LOGIC
         );
     END COMPONENT;
@@ -36,7 +35,6 @@ PACKAGE processor_components_pkg IS
             pushed_pc_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             instruction_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             take_interrupt_in : IN STD_LOGIC;
-            override_op_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
             ctrl_in : IN decode_ctrl_outputs_t;
             stall_control : IN STD_LOGIC;
             in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
@@ -168,12 +166,10 @@ PACKAGE processor_components_pkg IS
     COMPONENT interrupt_unit IS
         PORT (
             IsInterrupt_DE : IN STD_LOGIC;
-            IsHardwareInt_DE : IN STD_LOGIC;
             IsCall_DE : IN STD_LOGIC;
             IsReturn_DE : IN STD_LOGIC;
             IsReti_DE : IN STD_LOGIC;
             IsInterrupt_EX : IN STD_LOGIC;
-            IsHardwareInt_EX : IN STD_LOGIC;
             IsReti_EX : IN STD_LOGIC;
             IsHardwareInt_MEM : IN STD_LOGIC;
             HardwareInterrupt : IN STD_LOGIC;
