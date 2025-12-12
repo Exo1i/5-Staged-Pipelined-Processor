@@ -80,7 +80,7 @@ PACKAGE processor_components_pkg IS
         );
     END COMPONENT;
 
-    COMPONENT WritebackStage IS
+    COMPONENT writeback_stage IS
         PORT (
             clk : IN STD_LOGIC;
             rst : IN STD_LOGIC;

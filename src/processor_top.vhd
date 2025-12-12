@@ -348,7 +348,7 @@ BEGIN
     );
 
     -- ========== WRITEBACK STAGE INSTANTIATION ==========
-    writeback_stage_inst : WritebackStage
+    writeback_stage_inst : writeback_stage
     PORT MAP(
         clk => clk,
         rst => rst,

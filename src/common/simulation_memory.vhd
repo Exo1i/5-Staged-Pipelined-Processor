@@ -1,15 +1,21 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE std.textio.ALL;
+USE IEEE.std_logic_textio.ALL;
+
 ARCHITECTURE simulation_memory OF memory IS
     CONSTANT MEM_FILENAME : STRING := "memory_data.mem";
-    CONSTANT DEPTH : INTEGER := 2 ** ADDR_WIDTH; -- 262,144 words
+    CONSTANT DEPTH : INTEGER := 2 ** 18; -- 262,144 words
 
-    TYPE mem_array_t IS ARRAY(0 TO DEPTH - 1) OF STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+    TYPE mem_array_t IS ARRAY(0 TO DEPTH - 1) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL mem : mem_array_t := (OTHERS => (OTHERS => '0'));
 
     -- Procedure to load memory from file
     IMPURE FUNCTION load_mem_from_file(filename : STRING) RETURN mem_array_t IS
         FILE f : text;
         VARIABLE l : line;
-        VARIABLE tmp : STD_LOGIC_VECTOR(DATA_WIDTH - 1 DOWNTO 0);
+        VARIABLE tmp : STD_LOGIC_VECTOR(31 DOWNTO 0);
         VARIABLE i : INTEGER := 0;
         VARIABLE result : mem_array_t := (OTHERS => (OTHERS => '0'));
     BEGIN
