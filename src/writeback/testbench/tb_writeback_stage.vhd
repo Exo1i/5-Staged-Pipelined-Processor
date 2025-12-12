@@ -27,8 +27,6 @@ BEGIN
     -- DUT Instantiation
     dut : ENTITY work.writeback_stage
         PORT MAP(
-            clk => clk,
-            rst => rst,
             mem_wb_ctrl => mem_wb_ctrl,
             mem_wb_data => mem_wb_data,
             wb_out => wb_out

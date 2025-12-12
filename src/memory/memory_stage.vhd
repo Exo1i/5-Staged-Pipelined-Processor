@@ -5,7 +5,7 @@ USE work.control_signals_pkg.ALL;
 USE work.pipeline_data_pkg.ALL;
 USE work.pkg_opcodes.ALL;
 
-ENTITY MemoryStage IS
+ENTITY memory_stage IS
     PORT (
         -- Clock and reset
         clk : IN STD_LOGIC;
@@ -29,9 +29,9 @@ ENTITY MemoryStage IS
         MemAddress : OUT STD_LOGIC_VECTOR(17 DOWNTO 0);
         MemWriteData : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
     );
-END MemoryStage;
+END memory_stage;
 
-ARCHITECTURE rtl OF MemoryStage IS
+ARCHITECTURE rtl OF memory_stage IS
     SIGNAL sp_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
 BEGIN

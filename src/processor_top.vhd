@@ -315,7 +315,7 @@ BEGIN
     );
 
     -- ========== MEMORY STAGE INSTANTIATION ==========
-    memory_stage_inst : MemoryStage
+    memory_stage_inst : memory_stage
     PORT MAP(
         clk => clk,
         rst => rst,
@@ -350,8 +350,6 @@ BEGIN
     -- ========== WRITEBACK STAGE INSTANTIATION ==========
     writeback_stage_inst : writeback_stage
     PORT MAP(
-        clk => clk,
-        rst => rst,
         -- Pipeline inputs (using records)
         mem_wb_ctrl => memwb_ctrl_out,
         mem_wb_data => memwb_data_out,

@@ -6,10 +6,6 @@ USE work.pipeline_data_pkg.ALL;
 
 ENTITY writeback_stage IS
     PORT (
-        -- Clock and reset
-        clk : IN STD_LOGIC;
-        rst : IN STD_LOGIC;
-
         -- Pipeline inputs (MEM/WB bundles)
         mem_wb_ctrl : IN pipeline_memory_writeback_ctrl_t;
         mem_wb_data : IN pipeline_memory_writeback_t;

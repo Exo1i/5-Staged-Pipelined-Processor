@@ -64,7 +64,7 @@ PACKAGE processor_components_pkg IS
         );
     END COMPONENT;
 
-    COMPONENT MemoryStage IS
+    COMPONENT memory_stage IS
         PORT (
             clk : IN STD_LOGIC;
             rst : IN STD_LOGIC;
@@ -82,8 +82,6 @@ PACKAGE processor_components_pkg IS
 
     COMPONENT writeback_stage IS
         PORT (
-            clk : IN STD_LOGIC;
-            rst : IN STD_LOGIC;
             mem_wb_ctrl : IN pipeline_memory_writeback_ctrl_t;
             mem_wb_data : IN pipeline_memory_writeback_t;
             wb_out : OUT writeback_outputs_t
