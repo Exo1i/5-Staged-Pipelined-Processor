@@ -6,7 +6,7 @@ use work.control_signals_pkg.all;
 entity opcode_decoder is
     Port (
         -- Inputs
-        opcode              : in  std_logic_vector(4 downto 0);   -- 5-bit opcode
+        opcode              : in  std_logic_vector(4 downto 0);   -- 5-bit opcode from IF/ID instruction
         override_operation  : in  std_logic;                       -- Override normal decoding
         override_type       : in  std_logic_vector(1 downto 0);   -- Type of override operation
         isSwap_from_execute : in  std_logic;                       -- Feedback from execute stage for SWAP second cycle
@@ -17,7 +17,16 @@ entity opcode_decoder is
         decode_ctrl         : out decode_control_t;
         execute_ctrl        : out execute_control_t;
         memory_ctrl         : out memory_control_t;
-        writeback_ctrl      : out writeback_control_t
+        writeback_ctrl      : out writeback_control_t;
+        
+        -- Instruction Type Outputs (for Interrupt Unit, Branch Predictor, etc.)
+        is_interrupt_out        : out std_logic;  -- INT instruction detected
+        is_call_out             : out std_logic;  -- CALL instruction detected
+        is_return_out           : out std_logic;  -- RET instruction detected
+        is_reti_out             : out std_logic;  -- RTI instruction detected
+        is_jmp_out              : out std_logic;  -- JMP instruction detected
+        is_jmp_conditional_out  : out std_logic;  -- Conditional jump (JZ/JN/JC)
+        is_swap_out             : out std_logic   -- SWAP instruction detected
     );
 end opcode_decoder;
 
@@ -212,23 +221,23 @@ begin
                 when OP_JZ =>
                     -- JZ Imm: Jump if Zero
                     decode_sig.IsJMPConditional := '1';
-                    decode_sig.ConditionalType  := COND_ZERO;
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
+                    execute_sig.ConditionalType := COND_ZERO;
                     
                 when OP_JN =>
                     -- JN Imm: Jump if Negative
                     decode_sig.IsJMPConditional := '1';
-                    decode_sig.ConditionalType  := COND_NEGATIVE;
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
+                    execute_sig.ConditionalType := COND_NEGATIVE;
                     
                 when OP_JC =>
                     -- JC Imm: Jump if Carry
                     decode_sig.IsJMPConditional := '1';
-                    decode_sig.ConditionalType  := COND_CARRY;
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
+                    execute_sig.ConditionalType := COND_CARRY;
                     
                 when OP_JMP =>
                     -- JMP Imm: Unconditional Jump
@@ -299,12 +308,25 @@ begin
         end if;
         -- Note: Software interrupt sets PASS_INT_SOFTWARE during normal decode
         
-        -- Assign outputs
+        -- Assign control outputs
         decode_ctrl    <= decode_sig;
         execute_ctrl   <= execute_sig;
         memory_ctrl    <= memory_sig;
         writeback_ctrl <= writeback_sig;
         
     end process;
+
+    -- ========== INSTRUCTION TYPE DETECTION (Combinational) ==========
+    -- These outputs go to Interrupt Unit, Branch Predictor, Freeze Control
+    
+    is_interrupt_out <= '1' when opcode = OP_INT else '0';
+    is_call_out <= '1' when opcode = OP_CALL else '0';
+    is_return_out <= '1' when opcode = OP_RET else '0';
+    is_reti_out <= '1' when opcode = OP_RTI else '0';
+    is_jmp_out <= '1' when opcode = OP_JMP else '0';
+    is_swap_out <= '1' when opcode = OP_SWAP else '0';
+    
+    -- Conditional jump detection
+    is_jmp_conditional_out <= '1' when (opcode = OP_JZ or opcode = OP_JN or opcode = OP_JC) else '0';
 
 end Behavioral;
