@@ -8,6 +8,7 @@ ENTITY if_id_register IS
         rst : IN STD_LOGIC;
         enable : IN STD_LOGIC; -- Enable/Stall control
         flush : IN STD_LOGIC; -- Flush control (for branches/interrupts) -- inserts NOP
+        flush_instruction : IN STD_LOGIC; -- Specific flush for instruction (inserts NOP)
 
         -- Inputs from Fetch Stage
         data_in : IN pipeline_fetch_decode_t;
@@ -33,6 +34,15 @@ BEGIN
             IF flush = '1' THEN
                 -- Flush pipeline register (insert bubble/NOP)
                 data_reg <= PIPELINE_FETCH_DECODE_RESET;
+
+            ELSIF flush_instruction = '1' THEN
+                -- Flush only instruction (insert NOP)
+                data_reg.instruction <= (OTHERS => '0');
+                data_reg.pc <= data_reg.pc;
+                data_reg.pushed_pc <= data_reg.pushed_pc;
+                data_reg.override_operation <= data_in.override_operation;
+                data_reg.take_interrupt <= data_in.take_interrupt;
+                data_reg.override_op <= data_in.override_op;
 
             ELSIF enable = '1' THEN
                 -- Update registers with new values

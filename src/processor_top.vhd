@@ -159,7 +159,7 @@ BEGIN
 
     -- IF/ID enable and flush control
     ifid_enable <= freeze_ifid_enable;
-    ifid_flush <= branch_flush_if OR freeze_insert_nop;
+    ifid_flush <= branch_flush_if;
 
     -- ========== IF/ID PIPELINE REGISTER INSTANTIATION ==========
     if_id_reg_inst : if_id_register
@@ -168,6 +168,7 @@ BEGIN
         rst => rst,
         enable => ifid_enable,
         flush => ifid_flush,
+        flush_instruction => freeze_insert_nop,
         data_in => ifid_data_in,
         data_out => ifid_data_out
     );

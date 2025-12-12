@@ -1,163 +1,163 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use work.pkg_opcodes.all;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE work.pkg_opcodes.ALL;
 
-entity branch_predictor is
-    Port (
-        clk                     : in  std_logic;
-        rst                     : in  std_logic;
-        
+ENTITY branch_predictor IS
+    PORT (
+        clk : IN STD_LOGIC;
+        rst : IN STD_LOGIC;
+
         -- Inputs from DECODE stage
-        IsJMP                   : in  std_logic;                      -- Unconditional jump
-        IsCall                  : in  std_logic;                      -- CALL instruction
-        IsJMPConditional        : in  std_logic;                      -- Conditional jump
-        ConditionalType         : in  std_logic_vector(1 downto 0);  -- Type of condition (Z/N/C)
-        PC_DE                   : in  std_logic_vector(31 downto 0); -- PC in decode stage
-        
-        -- Inputs from EXECUTE stage
-        CCR_Flags               : in  std_logic_vector(2 downto 0);  -- CCR flags (Z, N, C)
-        ActualTaken             : in  std_logic;                      -- Actual branch outcome
-        UpdatePredictor         : in  std_logic;                      -- Update predictor state
-        PC_EX                   : in  std_logic_vector(31 downto 0); -- PC in execute (for update)
-        
-        -- Outputs
-        PredictedTaken          : out std_logic;                      -- Prediction result
-        TreatConditionalAsUnconditional : out std_logic               -- Strong prediction flag
-    );
-end branch_predictor;
+        IsJMP : IN STD_LOGIC; -- Unconditional jump
+        IsCall : IN STD_LOGIC; -- CALL instruction
+        IsJMPConditional : IN STD_LOGIC; -- Conditional jump
+        ConditionalType : IN STD_LOGIC_VECTOR(1 DOWNTO 0); -- Type of condition (Z/N/C)
+        PC_DE : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- PC in decode stage
 
-architecture Behavioral of branch_predictor is
-    
+        -- Inputs from EXECUTE stage
+        CCR_Flags : IN STD_LOGIC_VECTOR(2 DOWNTO 0); -- CCR flags (Z, N, C)
+        ActualTaken : IN STD_LOGIC; -- Actual branch outcome
+        UpdatePredictor : IN STD_LOGIC; -- Update predictor state
+        PC_EX : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- PC in execute (for update)
+
+        -- Outputs
+        PredictedTaken : OUT STD_LOGIC; -- Prediction result
+        TreatConditionalAsUnconditional : OUT STD_LOGIC -- Strong prediction flag
+    );
+END branch_predictor;
+
+ARCHITECTURE Behavioral OF branch_predictor IS
+
     -- Simple prediction table (4 entries for demonstration)
     -- In a real implementation, this would be indexed by PC bits
-    type prediction_table_t is array (0 to 3) of std_logic_vector(1 downto 0);
-    signal prediction_table : prediction_table_t := (others => WEAKLY_NOT_TAKEN);
-    
+    TYPE prediction_table_t IS ARRAY (0 TO 3) OF STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL prediction_table : prediction_table_t := (OTHERS => WEAKLY_NOT_TAKEN);
+
     -- Extract index from PC (use lower bits)
-    signal index_de : integer range 0 to 3;
-    signal index_ex : integer range 0 to 3;
-    
+    SIGNAL index_de : INTEGER RANGE 0 TO 3;
+    SIGNAL index_ex : INTEGER RANGE 0 TO 3;
+
     -- Condition evaluation
-    signal condition_met : std_logic;
-    signal current_prediction : std_logic_vector(1 downto 0);
-    
-begin
-    
+    SIGNAL condition_met : STD_LOGIC;
+    SIGNAL current_prediction : STD_LOGIC_VECTOR(1 DOWNTO 0);
+
+BEGIN
+
     -- Extract table index from PC (using lower 2 bits)
-    index_de <= to_integer(unsigned(PC_DE(1 downto 0)));
-    index_ex <= to_integer(unsigned(PC_EX(1 downto 0)));
-    
+    index_de <= to_integer(unsigned(PC_DE(1 DOWNTO 0)));
+    index_ex <= to_integer(unsigned(PC_EX(1 DOWNTO 0)));
+
     -- Get current prediction for decode stage PC
     current_prediction <= prediction_table(index_de);
-    
+
     -- Evaluate condition based on CCR flags
-    process(ConditionalType, CCR_Flags)
-    begin
-        case ConditionalType is
-            when COND_ZERO =>
+    PROCESS (ConditionalType, CCR_Flags)
+    BEGIN
+        CASE ConditionalType IS
+            WHEN COND_ZERO =>
                 -- JZ: Jump if Zero flag set
-                condition_met <= CCR_Flags(2);  -- Z flag
-                
-            when COND_NEGATIVE =>
+                condition_met <= CCR_Flags(2); -- Z flag
+
+            WHEN COND_NEGATIVE =>
                 -- JN: Jump if Negative flag set
-                condition_met <= CCR_Flags(1);  -- N flag
-                
-            when COND_CARRY =>
+                condition_met <= CCR_Flags(1); -- N flag
+
+            WHEN COND_CARRY =>
                 -- JC: Jump if Carry flag set
-                condition_met <= CCR_Flags(0);  -- C flag
-                
-            when others =>
+                condition_met <= CCR_Flags(0); -- C flag
+
+            WHEN OTHERS =>
                 -- Unconditional or invalid
                 condition_met <= '1';
-        end case;
-    end process;
-    
+        END CASE;
+    END PROCESS;
+
     -- Prediction logic (combinational)
-    process(IsJMP, IsCall, IsJMPConditional, current_prediction, condition_met)
-    begin
+    PROCESS (IsJMP, IsCall, IsJMPConditional, current_prediction)
+    BEGIN
         -- Default values
         PredictedTaken <= '0';
         TreatConditionalAsUnconditional <= '0';
-        
-        if IsJMP = '1' or IsCall = '1' then
+
+        IF IsJMP = '1' OR IsCall = '1' THEN
             -- Unconditional branches are always taken
             PredictedTaken <= '1';
             TreatConditionalAsUnconditional <= '1';
-            
-        elsif IsJMPConditional = '1' then
+
+        ELSIF IsJMPConditional = '1' THEN
             -- Conditional branch: use 2-bit predictor
-            case current_prediction is
-                when STRONGLY_NOT_TAKEN =>
+            CASE current_prediction IS
+                WHEN STRONGLY_NOT_TAKEN =>
                     PredictedTaken <= '0';
-                    TreatConditionalAsUnconditional <= '1';  -- Strong prediction
-                    
-                when WEAKLY_NOT_TAKEN =>
+                    TreatConditionalAsUnconditional <= '1'; -- Strong prediction
+
+                WHEN WEAKLY_NOT_TAKEN =>
                     PredictedTaken <= '0';
-                    TreatConditionalAsUnconditional <= '0';  -- Weak prediction
-                    
-                when WEAKLY_TAKEN =>
+                    TreatConditionalAsUnconditional <= '0'; -- Weak prediction
+
+                WHEN WEAKLY_TAKEN =>
                     PredictedTaken <= '1';
-                    TreatConditionalAsUnconditional <= '0';  -- Weak prediction
-                    
-                when STRONGLY_TAKEN =>
+                    TreatConditionalAsUnconditional <= '0'; -- Weak prediction
+
+                WHEN STRONGLY_TAKEN =>
                     PredictedTaken <= '1';
-                    TreatConditionalAsUnconditional <= '1';  -- Strong prediction
-                    
-                when others =>
+                    TreatConditionalAsUnconditional <= '1'; -- Strong prediction
+
+                WHEN OTHERS =>
                     PredictedTaken <= '0';
                     TreatConditionalAsUnconditional <= '0';
-            end case;
-        end if;
-    end process;
-    
+            END CASE;
+        END IF;
+    END PROCESS;
+
     -- Update predictor state (sequential)
-    process(clk, rst)
-        variable next_state : std_logic_vector(1 downto 0);
-    begin
-        if rst = '1' then
+    PROCESS (clk, rst)
+        VARIABLE next_state : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    BEGIN
+        IF rst = '1' THEN
             -- Reset all predictions to weakly not taken
-            prediction_table <= (others => WEAKLY_NOT_TAKEN);
-            
-        elsif rising_edge(clk) then
-            if UpdatePredictor = '1' then
+            prediction_table <= (OTHERS => WEAKLY_NOT_TAKEN);
+
+        ELSIF rising_edge(clk) THEN
+            IF UpdatePredictor = '1' THEN
                 -- Update the 2-bit saturating counter
                 next_state := prediction_table(index_ex);
-                
-                if ActualTaken = '1' then
+
+                IF ActualTaken = '1' THEN
                     -- Branch was taken: increment counter (saturate at 11)
-                    case next_state is
-                        when STRONGLY_NOT_TAKEN =>
+                    CASE next_state IS
+                        WHEN STRONGLY_NOT_TAKEN =>
                             next_state := WEAKLY_NOT_TAKEN;
-                        when WEAKLY_NOT_TAKEN =>
+                        WHEN WEAKLY_NOT_TAKEN =>
                             next_state := WEAKLY_TAKEN;
-                        when WEAKLY_TAKEN =>
+                        WHEN WEAKLY_TAKEN =>
                             next_state := STRONGLY_TAKEN;
-                        when STRONGLY_TAKEN =>
-                            next_state := STRONGLY_TAKEN;  -- Saturate
-                        when others =>
+                        WHEN STRONGLY_TAKEN =>
+                            next_state := STRONGLY_TAKEN; -- Saturate
+                        WHEN OTHERS =>
                             next_state := WEAKLY_NOT_TAKEN;
-                    end case;
-                else
+                    END CASE;
+                ELSE
                     -- Branch was not taken: decrement counter (saturate at 00)
-                    case next_state is
-                        when STRONGLY_NOT_TAKEN =>
-                            next_state := STRONGLY_NOT_TAKEN;  -- Saturate
-                        when WEAKLY_NOT_TAKEN =>
+                    CASE next_state IS
+                        WHEN STRONGLY_NOT_TAKEN =>
+                            next_state := STRONGLY_NOT_TAKEN; -- Saturate
+                        WHEN WEAKLY_NOT_TAKEN =>
                             next_state := STRONGLY_NOT_TAKEN;
-                        when WEAKLY_TAKEN =>
+                        WHEN WEAKLY_TAKEN =>
                             next_state := WEAKLY_NOT_TAKEN;
-                        when STRONGLY_TAKEN =>
+                        WHEN STRONGLY_TAKEN =>
                             next_state := WEAKLY_TAKEN;
-                        when others =>
+                        WHEN OTHERS =>
                             next_state := WEAKLY_NOT_TAKEN;
-                    end case;
-                end if;
-                
+                    END CASE;
+                END IF;
+
                 -- Write back updated state
                 prediction_table(index_ex) <= next_state;
-            end if;
-        end if;
-    end process;
+            END IF;
+        END IF;
+    END PROCESS;
 
-end Behavioral;
+END Behavioral;

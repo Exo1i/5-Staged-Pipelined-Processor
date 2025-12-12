@@ -96,6 +96,7 @@ PACKAGE processor_components_pkg IS
             rst : IN STD_LOGIC;
             enable : IN STD_LOGIC;
             flush : IN STD_LOGIC;
+            flush_instruction : IN STD_LOGIC;
             data_in : IN pipeline_fetch_decode_t;
             data_out : OUT pipeline_fetch_decode_t
         );

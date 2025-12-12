@@ -33,7 +33,6 @@ END memory_stage;
 
 ARCHITECTURE rtl OF memory_stage IS
     SIGNAL sp_data : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
 BEGIN
 
     -- Stack Pointer Unit Instantiation

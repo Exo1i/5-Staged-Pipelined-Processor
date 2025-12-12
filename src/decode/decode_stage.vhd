@@ -15,7 +15,6 @@ ENTITY decode_stage IS
         pushed_pc_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
         instruction_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
         take_interrupt_in : IN STD_LOGIC;
-        override_op_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
 
         -- Control signals from Control Unit (as record)
         ctrl_in : IN decode_ctrl_outputs_t;
@@ -40,7 +39,7 @@ ENTITY decode_stage IS
 
         -- Control signals to ID/EX Register (as record)
         ctrl_out : OUT decode_ctrl_outputs_t;
-        
+
         -- Signals for Control Unit feedback (as record)
         flags_out : OUT decode_flags_t
     );
@@ -99,53 +98,59 @@ ARCHITECTURE Behavioral OF decode_stage IS
 BEGIN
 
     -- ========== INSTRUCTION DECODING ==========
-    
+
     -- Extract instruction fields
     opcode <= instruction_in(31 DOWNTO 27);
-    ra_addr <= instruction_in(26 DOWNTO 24);  -- Source register A
-    rb_addr <= instruction_in(23 DOWNTO 21);  -- Source register B
-    rd_addr <= instruction_in(20 DOWNTO 18);  -- Destination register
+    ra_addr <= instruction_in(26 DOWNTO 24); -- Source register A
+    rb_addr <= instruction_in(23 DOWNTO 21); -- Source register B
+    rd_addr <= instruction_in(20 DOWNTO 18); -- Destination register
     -- Note: Immediate value comes from immediate_from_fetch (fetched in cycle after opcode)
 
     -- ========== INSTRUCTION TYPE DETECTION ==========
-    
+
     -- Detect special instructions for control unit
-    is_interrupt <= '1' WHEN opcode = OP_INT ELSE '0';
-    is_call <= '1' WHEN opcode = OP_CALL ELSE '0';
-    is_return <= '1' WHEN opcode = OP_RET ELSE '0';
-    is_reti <= '1' WHEN opcode = OP_RTI ELSE '0';
-    is_jmp <= '1' WHEN opcode = OP_JMP ELSE '0';
-    
+    is_interrupt <= '1' WHEN opcode = OP_INT ELSE
+        '0';
+    is_call <= '1' WHEN opcode = OP_CALL ELSE
+        '0';
+    is_return <= '1' WHEN opcode = OP_RET ELSE
+        '0';
+    is_reti <= '1' WHEN opcode = OP_RTI ELSE
+        '0';
+    is_jmp <= '1' WHEN opcode = OP_JMP ELSE
+        '0';
+
     -- Conditional jumps
-    is_jmp_conditional <= '1' WHEN (opcode = OP_JZ OR opcode = OP_JN OR opcode = OP_JC) ELSE '0';
-    
+    is_jmp_conditional <= '1' WHEN (opcode = OP_JZ OR opcode = OP_JN OR opcode = OP_JC) ELSE
+        '0';
+
     -- Determine conditional type
     conditional_type <= COND_ZERO WHEN opcode = OP_JZ ELSE
-                        COND_NEGATIVE WHEN opcode = OP_JN ELSE
-                        COND_CARRY WHEN opcode = OP_JC ELSE
-                        "00";
-    
+        COND_NEGATIVE WHEN opcode = OP_JN ELSE
+        COND_CARRY WHEN opcode = OP_JC ELSE
+        "00";
+
     -- Hardware interrupt detection (from take_interrupt_in)
     is_hardware_int <= take_interrupt_in;
-    
+
     -- ========== REGISTER FILE INSTANTIATION ==========
-    
+
     reg_file_inst : register_file
-        PORT MAP (
-            clk => clk,
-            reset => rst,
-            Ra => ra_addr,
-            Rb => rb_addr,
-            ReadDataA => rf_data_a,
-            ReadDataB => rf_data_b,
-            Rdst => wb_in.rdst,
-            WriteData => wb_in.data,
-            WriteEnable => wb_in.reg_we
-        );
+    PORT MAP(
+        clk => clk,
+        reset => rst,
+        Ra => ra_addr,
+        Rb => rb_addr,
+        ReadDataA => rf_data_a,
+        ReadDataB => rf_data_b,
+        Rdst => wb_in.rdst,
+        WriteData => wb_in.data,
+        WriteEnable => wb_in.reg_we
+    );
 
     -- ========== OPERAND B MULTIPLEXER ==========
     -- Select source for Operand B based on OutBSelect from control unit
-    
+
     PROCESS (ctrl_in, rf_data_b, pushed_pc_in, immediate_from_fetch, in_port)
     BEGIN
         CASE ctrl_in.decode_ctrl.OutBSelect IS
@@ -154,7 +159,7 @@ BEGIN
             WHEN OUTB_PUSHED_PC =>
                 operand_b <= pushed_pc_in;
             WHEN OUTB_IMMEDIATE =>
-                operand_b <= immediate_from_fetch;  -- Full 32-bit immediate from fetch
+                operand_b <= immediate_from_fetch; -- Full 32-bit immediate from fetch
             WHEN OUTB_INPUT_PORT =>
                 operand_b <= in_port;
             WHEN OTHERS =>
@@ -165,12 +170,13 @@ BEGIN
     -- ========== REGISTER DESTINATION MULTIPLEXER (SWAP) ==========
     -- For SWAP instruction: 2nd cycle uses Rsrc2 as destination
     -- Normal instructions: use Rdst field
-    
-    rd_selected <= rb_addr WHEN is_swap_ex = '1' ELSE rd_addr;
+
+    rd_selected <= rb_addr WHEN is_swap_ex = '1' ELSE
+        rd_addr;
 
     -- ========== STALL CONTROL LOGIC ==========
     -- When stall_control = '1', insert NOPs in all control signals
-    
+
     PROCESS (stall_control, ctrl_in)
     BEGIN
         IF stall_control = '1' THEN
@@ -189,7 +195,7 @@ BEGIN
     END PROCESS;
 
     -- ========== OUTPUT ASSIGNMENTS ==========
-    
+
     -- Populate decode_outputs_t record
     decode_out.pc <= pc_in;
     decode_out.pushed_pc <= pushed_pc_in;
@@ -200,13 +206,13 @@ BEGIN
     decode_out.rsrc2 <= rb_addr;
     decode_out.rd <= rd_selected;
     decode_out.opcode <= opcode;
-    
+
     -- Populate decode_ctrl_outputs_t record (after stall handling)
     ctrl_out.decode_ctrl <= final_decode_ctrl;
     ctrl_out.execute_ctrl <= final_execute_ctrl;
     ctrl_out.memory_ctrl <= final_memory_ctrl;
     ctrl_out.writeback_ctrl <= final_writeback_ctrl;
-    
+
     -- Populate decode_flags_t record (control feedback signals)
     flags_out.is_jmp <= is_jmp;
     flags_out.is_call <= is_call;

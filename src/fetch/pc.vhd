@@ -41,13 +41,13 @@ BEGIN
     PROCESS (BranchTargetSelect, target_decode, target_execute, target_memory, target_reset)
     BEGIN
         CASE BranchTargetSelect IS
-            WHEN TARGET_DECODE =>
+            WHEN "00" => -- TARGET_DECODE
                 selected_branch_target <= target_decode;
-            WHEN TARGET_EXECUTE =>
+            WHEN "01" => -- TARGET_EXECUTE
                 selected_branch_target <= target_execute;
-            WHEN TARGET_MEMORY =>
+            WHEN "10" => -- TARGET_MEMORY
                 selected_branch_target <= target_memory;
-            WHEN TARGET_RESET =>
+            WHEN "11" => -- TARGET_RESET
                 selected_branch_target <= target_reset;
             WHEN OTHERS =>
                 selected_branch_target <= (OTHERS => '0');

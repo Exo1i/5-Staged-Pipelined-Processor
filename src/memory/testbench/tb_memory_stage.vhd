@@ -10,7 +10,6 @@ END tb_memory_stage;
 ARCHITECTURE testbench OF tb_memory_stage IS
     CONSTANT DATA_WIDTH : INTEGER := 32;
     CONSTANT ADDR_WIDTH : INTEGER := 18;
-    CONSTANT RDST_WIDTH : INTEGER := 3;
     CONSTANT CLK_PERIOD : TIME := 10 ns;
 
     -- Signals

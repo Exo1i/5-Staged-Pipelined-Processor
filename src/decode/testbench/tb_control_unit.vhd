@@ -250,9 +250,9 @@ BEGIN
         -- Simulate SWAP in execute stage
         IsSwap_EX <= '1';
         WAIT FOR CLK_PERIOD;
-        -- Second cycle should be MOV
-        ASSERT decode_ctrl_out.OutBSelect = OUTB_SWAPPED
-        REPORT "SWAP second cycle should use swapped value" SEVERITY error;
+        -- Second cycle should be MOV (uses OUTB_REGFILE, but data comes from swapped register)
+        ASSERT decode_ctrl_out.OutBSelect = OUTB_REGFILE
+        REPORT "SWAP second cycle should use register file" SEVERITY error;
         IsSwap_EX <= '0';
         WAIT FOR CLK_PERIOD;
 
