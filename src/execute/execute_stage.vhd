@@ -5,7 +5,7 @@ USE work.pipeline_data_pkg.ALL;
 
 ENTITY execute_stage IS
     PORT (
-        clk   : IN STD_LOGIC;
+        clk : IN STD_LOGIC;
         reset : IN STD_LOGIC;
 
         -- Control and data inputs from ID/EX Pipeline Register (as records)
@@ -13,20 +13,20 @@ ENTITY execute_stage IS
         idex_data_in : IN pipeline_decode_excute_t;
 
         -- Forwarding signals (as record)
-        forwarding      : IN forwarding_ctrl_t;
+        forwarding : IN forwarding_ctrl_t;
 
         -- Forwarded data from later pipeline stages
-        Forwarded_EXM   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-        Forwarded_MWB   : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        Forwarded_EXM : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+        Forwarded_MWB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
 
         -- Stack flags input
-        StackFlags      : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
 
         -- Data outputs (as record)
-        execute_out     : OUT execute_outputs_t;
+        execute_out : OUT execute_outputs_t;
 
         -- Control outputs (as record)
-        ctrl_out        : OUT execute_ctrl_outputs_t
+        ctrl_out : OUT execute_ctrl_outputs_t
     );
 END execute_stage;
 
@@ -59,27 +59,44 @@ ARCHITECTURE Behavioral OF execute_stage IS
         PORT (
             OperandA : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             OperandB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            ALU_Op   : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
-            Result   : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-            Zero     : OUT STD_LOGIC;
+            ALU_Op : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+            Result : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+            Zero : OUT STD_LOGIC;
             Negative : OUT STD_LOGIC;
-            Carry    : OUT STD_LOGIC
+            Carry : OUT STD_LOGIC
         );
     END COMPONENT;
 
     COMPONENT ccr IS
         PORT (
-            clk          : IN STD_LOGIC;
-            reset        : IN STD_LOGIC;
-            ALU_Zero     : IN STD_LOGIC;
+            clk : IN STD_LOGIC;
+            reset : IN STD_LOGIC;
+            ALU_Zero : IN STD_LOGIC;
             ALU_Negative : IN STD_LOGIC;
-            ALU_Carry    : IN STD_LOGIC;
-            CCRWrEn      : IN STD_LOGIC;
-            PassCCR      : IN STD_LOGIC;
-            StackFlags   : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            CCR_Out      : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
+            ALU_Carry : IN STD_LOGIC;
+            CCRWrEn : IN STD_LOGIC;
+            PassCCR : IN STD_LOGIC;
+            StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+            CCR_Out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
         );
     END COMPONENT;
+
+    -- MUX outputs for ALU inputs
+    SIGNAL In_A : STD_LOGIC_VECTOR(31 DOWNTO 0); -- ALU Input A (after forwarding MUX)
+    SIGNAL In_B : STD_LOGIC_VECTOR(31 DOWNTO 0); -- ALU Input B (after forwarding and PassImm MUX)
+    SIGNAL forwarded_B : STD_LOGIC_VECTOR(31 DOWNTO 0); -- After forwarding, before PassImm MUX
+
+    -- ALU outputs
+    SIGNAL alu_result_int : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL alu_zero : STD_LOGIC;
+    SIGNAL alu_neg : STD_LOGIC;
+    SIGNAL alu_carry : STD_LOGIC;
+
+    -- CCR output
+    SIGNAL ccr_out_int : STD_LOGIC_VECTOR(2 DOWNTO 0);
+
+    -- XOR gate output (for IsReturn logic)
+    SIGNAL ccr_write_enable : STD_LOGIC;
 
 BEGIN
 
@@ -107,34 +124,14 @@ BEGIN
 
     -- =====================================================
     -- Operand A MUX (3:1) - Forwarding for In_A
-    -- =====================================================ut A (after forwarding MUX)
-    SIGNAL In_B : STD_LOGIC_VECTOR(31 DOWNTO 0);  -- ALU Input B (after forwarding and PassImm MUX)
-    SIGNAL forwarded_B : STD_LOGIC_VECTOR(31 DOWNTO 0);  -- After forwarding, before PassImm MUX
-
-    -- ALU outputs
-    SIGNAL alu_result_int : STD_LOGIC_VECTOR(31 DOWNTO 0);
-    SIGNAL alu_zero       : STD_LOGIC;
-    SIGNAL alu_neg        : STD_LOGIC;
-    SIGNAL alu_carry      : STD_LOGIC;
-
-    -- CCR output
-    SIGNAL ccr_out_int    : STD_LOGIC_VECTOR(2 DOWNTO 0);
-
-    -- XOR gate output (for IsReturn logic)
-    SIGNAL ccr_write_enable : STD_LOGIC;
-
-BEGIN
-
-    -- =====================================================
-    -- Operand A MUX (3:1) - Forwarding for In_A
     -- =====================================================
     -- ForwardA: 00 = OutA (no forwarding), 10 = EX/MEM, 01 = MEM/WB
     PROCESS (forwarding.forward_a, OutA, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_a IS
-            WHEN "00"   => In_A <= OutA;            -- No forwarding
-            WHEN "10"   => In_A <= Forwarded_EXM;   -- Forward from EX/MEM
-            WHEN "01"   => In_A <= Forwarded_MWB;   -- Forward from MEM/WB
+            WHEN "00" => In_A <= OutA; -- No forwarding
+            WHEN "10" => In_A <= Forwarded_EXM; -- Forward from EX/MEM
+            WHEN "01" => In_A <= Forwarded_MWB; -- Forward from MEM/WB
             WHEN OTHERS => In_A <= OutA;
         END CASE;
     END PROCESS;
@@ -146,9 +143,9 @@ BEGIN
     PROCESS (forwarding.forward_b, OutB, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_b IS
-            WHEN "00"   => forwarded_B <= OutB;            -- No forwarding
-            WHEN "10"   => forwarded_B <= Forwarded_EXM;   -- Forward from EX/MEM
-            WHEN "01"   => forwarded_B <= Forwarded_MWB;   -- Forward from MEM/WB
+            WHEN "00" => forwarded_B <= OutB; -- No forwarding
+            WHEN "10" => forwarded_B <= Forwarded_EXM; -- Forward from EX/MEM
+            WHEN "01" => forwarded_B <= Forwarded_MWB; -- Forward from MEM/WB
             WHEN OTHERS => forwarded_B <= OutB;
         END CASE;
     END PROCESS;
@@ -177,26 +174,26 @@ BEGIN
     ALU_UNIT : alu PORT MAP(
         OperandA => In_A,
         OperandB => In_B,
-        ALU_Op   => EX_ALU_Op,
-        Result   => alu_result_int,
-        Zero     => alu_zero,
+        ALU_Op => EX_ALU_Op,
+        Result => alu_result_int,
+        Zero => alu_zero,
         Negative => alu_neg,
-        Carry    => alu_carry
+        Carry => alu_carry
     );
 
     -- =====================================================
     -- CCR Flags Register Instantiation
     -- =====================================================
     CCR_UNIT : ccr PORT MAP(
-        clk          => clk,
-        reset        => reset,
-        ALU_Zero     => alu_zero,
+        clk => clk,
+        reset => reset,
+        ALU_Zero => alu_zero,
         ALU_Negative => alu_neg,
-        ALU_Carry    => alu_carry,
-        CCRWrEn      => ccr_write_enable,
-        PassCCR      => EX_PassCCR,
-        StackFlags   => StackFlags,
-        CCR_Out      => ccr_out_int
+        ALU_Carry => alu_carry,
+        CCRWrEn => ccr_write_enable,
+        PassCCR => EX_PassCCR,
+        StackFlags => StackFlags,
+        CCR_Out => ccr_out_int
     );
 
     -- =====================================================
