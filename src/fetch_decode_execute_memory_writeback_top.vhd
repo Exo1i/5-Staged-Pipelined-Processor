@@ -81,6 +81,11 @@ ARCHITECTURE Structural OF fetch_decode_execute_memory_writeback_top IS
   -- Pipeline enable (stall front-end when MEM stage uses memory)
   SIGNAL front_enable : STD_LOGIC;
 
+  -- ===== Freeze control =====
+  SIGNAL pc_freeze : STD_LOGIC;
+  SIGNAL ifde_write_enable : STD_LOGIC;
+  SIGNAL insert_nop_ifde : STD_LOGIC;
+
 BEGIN
 
   -- No branches for this step
@@ -160,7 +165,7 @@ BEGIN
     PORT MAP(
       clk => clk,
       rst => rst,
-      stall => NOT front_enable,
+      stall => pc_freeze,
       BranchSelect => '0',
       BranchTargetSelect => "00",
       branch_targets => branch_targets,
@@ -174,9 +179,9 @@ BEGIN
     PORT MAP(
       clk => clk,
       rst => rst,
-      enable => front_enable,
+      enable => ifde_write_enable,
       flush => '0',
-      flush_instruction => '0',
+      flush_instruction => insert_nop_ifde,
       data_in => ifid_in,
       data_out => ifid_out
     );
@@ -195,7 +200,7 @@ BEGIN
       in_port => in_port,
       -- Immediate word comes from memory in the cycle after opcode fetch
       immediate_from_fetch => mem_data,
-      is_swap_ex => '0',
+      is_swap_ex => idex_ctrl_out.decode_ctrl.IsSwap,
       wb_in => wb_out,
       decode_out => decode_out,
       ctrl_out => decode_ctrl_out,
@@ -208,7 +213,7 @@ BEGIN
       opcode => decode_out.opcode,
       override_operation => ifid_out.override_operation,
       override_type => ifid_out.override_op,
-      isSwap_from_execute => '0',
+      isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
       take_interrupt => ifid_out.take_interrupt,
       is_hardware_int_mem => '0',
       decode_ctrl => decoder_ctrl.decode_ctrl,
@@ -222,6 +227,18 @@ BEGIN
       is_jmp_out => OPEN,
       is_jmp_conditional_out => OPEN,
       is_swap_out => OPEN
+    );
+
+  -- Freeze control unit manages pipeline stalls
+  freeze_control_inst : ENTITY work.freeze_control
+    PORT MAP(
+      PassPC_MEM => pass_pc,
+      Stall_Interrupt => '0',
+      Stall_Branch => '0',
+      is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
+      PC_Freeze => pc_freeze,
+      IFDE_WriteEnable => ifde_write_enable,
+      InsertNOP_IFDE => insert_nop_ifde
     );
 
   -- ===== ID/EX pack =====

@@ -45,8 +45,18 @@ begin
         memory_sig   := MEMORY_CTRL_DEFAULT;
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
-        -- Handle Override Operations First
-        if override_operation = '1' then
+        -- Handle SWAP second cycle override FIRST (highest priority)
+        if isSwap_from_execute = '1' then
+            -- Second cycle of SWAP: Complete the exchange with another MOV
+            decode_sig.OutBSelect       := OUTB_REGFILE;
+            execute_sig.ALU_Operation   := ALU_PASS_A;
+            writeback_sig.RegWrite      := '1';
+            writeback_sig.PassMem      := '0';
+            -- Note: Register addresses need to be swapped by datapath logic
+            -- Don't set IsSwap flag - this is the second cycle
+        
+        -- Handle Override Operations
+        elsif override_operation = '1' then
             case override_type is
                 when OVERRIDE_PUSH_PC =>
                     -- PUSH PC: SP--, MEM[SP] = PC
@@ -142,7 +152,8 @@ begin
                     -- Second cycle will be overridden by isSwap_from_execute
                     decode_sig.OutBSelect       := OUTB_REGFILE;
                     decode_sig.IsSwap           := '1';  -- Mark as SWAP for pipeline
-                    execute_sig.ALU_Operation   := ALU_PASS_A;  -- First move operation
+                    memory_sig.IsSwap           := '1';  -- Pass to memory stage
+                    execute_sig.ALU_Operation   := ALU_PASS_B;  -- First move operation
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.PassMem      := '0';
                     
@@ -288,20 +299,7 @@ begin
                 execute_sig.PassImm         := '1';
                 -- PassInterrupt will be set in memory stage based on is_hardware_int_mem
             end if;
-            
-            -- Handle SWAP second cycle override
-            if isSwap_from_execute = '1' then
-                -- Second cycle of SWAP: Complete the exchange with another MOV
-                decode_sig.OutBSelect       := OUTB_REGFILE;
-                execute_sig.ALU_Operation   := ALU_PASS_A;
-                writeback_sig.RegWrite      := '1';
-                writeback_sig.PassMem      := '0';
-                -- Note: Register addresses need to be swapped by datapath logic
-            end if;
         end if;
-        
-        -- Pass IsSwap through to memory stage for forwarding unit
-        memory_sig.IsSwap := decode_sig.IsSwap;
         
         -- Handle PassInterrupt based on hardware interrupt in memory stage
         if is_hardware_int_mem = '1' then
