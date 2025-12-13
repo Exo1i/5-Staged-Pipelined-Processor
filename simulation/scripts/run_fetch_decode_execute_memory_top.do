@@ -113,7 +113,7 @@ add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.memo
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.memory_ctrl.MemWrite
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.memory_ctrl.FlagFromMem
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.memory_ctrl.IsSwap
-add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.writeback_ctrl.MemToALU
+add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.writeback_ctrl.PassMem
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.writeback_ctrl.RegWrite
 add wave -radix binary sim:/fetch_decode_execute_memory_top/decode_ctrl_out.writeback_ctrl.OutPortWriteEn
 
@@ -129,7 +129,7 @@ add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.execut
 add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.memory_ctrl.MemRead
 add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.memory_ctrl.MemWrite
 add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.writeback_ctrl.MemToALU
+add wave -radix binary sim:/fetch_decode_execute_memory_top/idex_ctrl_out.writeback_ctrl.PassMem
 
 add wave -divider "Execute"
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/execute_out.primary_data
@@ -149,7 +149,7 @@ add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/exmem_data_out.
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/exmem_data_out.secondary_data
 add wave -radix unsigned sim:/fetch_decode_execute_memory_top/exmem_data_out.rdst1
 add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.writeback_ctrl.MemToALU
+add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.writeback_ctrl.PassMem
 add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.memory_ctrl.MemRead
 add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.memory_ctrl.MemWrite
 add wave -radix binary sim:/fetch_decode_execute_memory_top/exmem_ctrl_out.memory_ctrl.SP_Enable
@@ -167,7 +167,7 @@ add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/mem_wb_data_out
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_top/mem_wb_data_out.alu_data
 add wave -radix unsigned sim:/fetch_decode_execute_memory_top/mem_wb_data_out.rdst
 add wave -radix binary sim:/fetch_decode_execute_memory_top/mem_wb_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/fetch_decode_execute_memory_top/mem_wb_ctrl_out.writeback_ctrl.MemToALU
+add wave -radix binary sim:/fetch_decode_execute_memory_top/mem_wb_ctrl_out.writeback_ctrl.PassMem
 add wave -radix binary sim:/fetch_decode_execute_memory_top/mem_wb_ctrl_out.writeback_ctrl.OutPortWriteEn
 
 add wave -divider "Arb / Memory"

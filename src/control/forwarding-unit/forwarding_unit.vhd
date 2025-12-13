@@ -2,6 +2,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 USE work.pipeline_data_pkg.ALL;
+USE work.pkg_opcodes.ALL;
 
 ENTITY forwarding_unit IS
     PORT (
@@ -15,8 +16,10 @@ ENTITY forwarding_unit IS
         WBRdst : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
 
         -- Execution Stage
-        Rsrc1 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-        Rsrc2 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        ExRsrc1 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        ExRsrc2 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+        ExOutBSelect : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        ExIsImm : IN STD_LOGIC;
 
         -- Forwarding Control
         ForwardA : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -28,12 +31,12 @@ ARCHITECTURE rtl OF forwarding_unit IS
 
 BEGIN
     -- ForwardA mux control
-    PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, Rsrc1)
+    PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, ExRsrc1)
     BEGIN
-        IF MemRegWrite = '1' AND MemRdst = Rsrc1 AND MemIsSwap = '0' THEN
+        IF MemRegWrite = '1' AND MemRdst = ExRsrc1 AND MemIsSwap = '0' THEN
             -- Forward from EX/MEM stage (higher priority)
             ForwardA <= FORWARD_EX_MEM;
-        ELSIF WBRegWrite = '1' AND WBRdst = Rsrc1 THEN
+        ELSIF WBRegWrite = '1' AND WBRdst = ExRsrc1 THEN
             -- Forward from MEM/WB stage
             ForwardA <= FORWARD_MEM_WB;
         ELSE
@@ -43,17 +46,17 @@ BEGIN
     END PROCESS;
 
     -- ForwardB mux control
-    PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, Rsrc2)
+    PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, ExRsrc2)
     BEGIN
-        IF MemRegWrite = '1' AND MemRdst = Rsrc2 AND MemIsSwap = '0' THEN
-            -- Forward from EX/MEM stage (higher priority)
-            ForwardB <= FORWARD_EX_MEM;
-        ELSIF WBRegWrite = '1' AND WBRdst = Rsrc2 THEN
-            -- Forward from MEM/WB stage
-            ForwardB <= FORWARD_MEM_WB;
-        ELSE
-            -- No forwarding needed
-            ForwardB <= FORWARD_NONE;
+        ForwardB <= FORWARD_NONE;
+        if ExOutBSelect = OUTB_REGFILE AND ExIsImm = '0' then
+            IF MemRegWrite = '1' AND MemRdst = ExRsrc2 AND MemIsSwap = '0' THEN
+                -- Forward from EX/MEM stage (higher priority)
+                ForwardB <= FORWARD_EX_MEM;
+            ELSIF WBRegWrite = '1' AND WBRdst = ExRsrc2 THEN
+                -- Forward from MEM/WB stage
+                ForwardB <= FORWARD_MEM_WB;
+            END IF;
         END IF;
     END PROCESS;
 

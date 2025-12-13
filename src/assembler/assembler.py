@@ -232,6 +232,9 @@ class Assembler:
             self.error(
                 f"Invalid register '{instr.operands[0]}'", instr.line_num)
             return [0]
+        
+        if instr.mnemonic == 'OUT':
+            return [self.pack_header(opcode, r2=rdst)]
 
         return [self.pack_header(opcode, r1=rdst)]
 

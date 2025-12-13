@@ -34,7 +34,7 @@ architecture Behavioral of tb_alu is
     constant ALU_AND  : STD_LOGIC_VECTOR(3 downto 0) := "0010";
     constant ALU_NOT  : STD_LOGIC_VECTOR(3 downto 0) := "0011";
     constant ALU_INC  : STD_LOGIC_VECTOR(3 downto 0) := "0100";
-    constant ALU_PASS : STD_LOGIC_VECTOR(3 downto 0) := "0101";
+    constant ALU_PASS_A : STD_LOGIC_VECTOR(3 downto 0) := "0101";
     
 begin
     
@@ -146,14 +146,14 @@ begin
         report "Test 11: PASS 0x12345678";
         OperandA <= X"12345678";
         OperandB <= X"00000000";
-        ALU_Op   <= ALU_PASS;
+        ALU_Op   <= ALU_PASS_A;
         wait for 10 ns;
         assert Result = X"12345678" report "PASS failed" severity error;
         
         -- Test 12: Negative flag test
         report "Test 12: Negative flag on MSB=1";
         OperandA <= X"80000000";  -- MSB set
-        ALU_Op   <= ALU_PASS;
+        ALU_Op   <= ALU_PASS_A;
         wait for 10 ns;
         assert Negative = '1' report "Negative flag not set" severity error;
         

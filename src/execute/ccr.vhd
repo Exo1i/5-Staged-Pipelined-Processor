@@ -14,6 +14,7 @@ entity ccr is
         -- Control signals
         CCRWrEn      : in  STD_LOGIC;  -- Write enable from control unit
         PassCCR      : in  STD_LOGIC;  -- Restore flag for RTI instruction
+        SetCarry     : in  STD_LOGIC;
         
         -- Stack flags input (for RTI instruction)
         StackFlags   : in  STD_LOGIC_VECTOR(2 downto 0);  -- [Z, N, C]
@@ -37,10 +38,15 @@ begin
                     -- RTI instruction: restore flags from stack
                     ccr_reg <= StackFlags;
                 else
-                    -- Normal operation: update from ALU
-                    ccr_reg(2) <= ALU_Zero;      -- Z flag
-                    ccr_reg(1) <= ALU_Negative;  -- N flag
-                    ccr_reg(0) <= ALU_Carry;     -- C flag
+                    if SetCarry = '1' then
+                        -- Set Carry flag
+                        ccr_reg(0) <= '1';  -- C flag
+                    else
+                        -- Normal operation: update from ALU
+                        ccr_reg(2) <= ALU_Zero;      -- Z flag
+                        ccr_reg(1) <= ALU_Negative;  -- N flag
+                        ccr_reg(0) <= ALU_Carry;     -- C flag
+                    end if;
                 end if;
             end if;
         end if;

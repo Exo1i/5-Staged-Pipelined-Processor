@@ -2,7 +2,8 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
 USE work.pipeline_data_pkg.ALL;
-
+USE work.control_signals_pkg.ALL;
+USE work.pkg_opcodes.ALL;
 ENTITY execute_stage IS
     PORT (
         clk : IN STD_LOGIC;
@@ -38,6 +39,7 @@ ARCHITECTURE Behavioral OF execute_stage IS
     -- =====================================================
     COMPONENT alu IS
         PORT (
+            Carry_In: IN STD_LOGIC;
             OperandA : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             OperandB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             ALU_Op : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
@@ -57,6 +59,7 @@ ARCHITECTURE Behavioral OF execute_stage IS
             ALU_Carry : IN STD_LOGIC;
             CCRWrEn : IN STD_LOGIC;
             PassCCR : IN STD_LOGIC;
+            SetCarry : IN STD_LOGIC;
             StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             CCR_Out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
         );
@@ -78,11 +81,13 @@ ARCHITECTURE Behavioral OF execute_stage IS
 
     -- XOR gate output (for IsReturn logic)
     SIGNAL ccr_write_enable : STD_LOGIC;
+    SIGNAL set_carry_in_ccr : STD_LOGIC;
 BEGIN
 
     -- CCR write enable logic (XOR with IsReturn)
     ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable OR idex_ctrl_in.decode_ctrl.IsReturn;
-
+    set_carry_in_ccr <= '1' when idex_ctrl_in.execute_ctrl.ALU_Operation = ALU_SETC else '0';
+    
     -- =====================================================
     -- Operand A MUX (3:1) - Forwarding for In_A
     -- =====================================================
@@ -119,6 +124,7 @@ BEGIN
     -- ALU Instantiation
     -- =====================================================
     ALU_UNIT : alu PORT MAP(
+        Carry_In => ccr_out_int(0),
         OperandA => In_A,
         OperandB => forwarded_B,
         ALU_Op => idex_ctrl_in.execute_ctrl.ALU_Operation,
@@ -138,6 +144,7 @@ BEGIN
         ALU_Negative => alu_neg,
         ALU_Carry => alu_carry,
         CCRWrEn => ccr_write_enable,
+        SetCarry => set_carry_in_ccr,
         PassCCR => idex_ctrl_in.execute_ctrl.PassCCR,
         StackFlags => StackFlags,
         CCR_Out => ccr_out_int
@@ -153,7 +160,7 @@ BEGIN
     execute_out.ccr_flags <= ccr_out_int;
 
     ctrl_out.wb_regwrite <= idex_ctrl_in.writeback_ctrl.RegWrite;
-    ctrl_out.wb_memtoreg <= idex_ctrl_in.writeback_ctrl.MemToALU;
+    ctrl_out.wb_memtoreg <= idex_ctrl_in.writeback_ctrl.PassMem;
     ctrl_out.m_memread <= idex_ctrl_in.memory_ctrl.MemRead;
     ctrl_out.m_memwrite <= idex_ctrl_in.memory_ctrl.MemWrite;
     ctrl_out.m_sptomem <= idex_ctrl_in.memory_ctrl.SPtoMem;

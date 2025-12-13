@@ -32,7 +32,7 @@ BEGIN
     IF reset = '1' THEN
       -- Reset all registers to 0
       registers <= (OTHERS => (OTHERS => '0'));
-    ELSIF rising_edge(clk) THEN
+    ELSIF falling_edge(clk) THEN
       -- Single write port
       IF WriteEnable = '1' THEN
         registers(to_integer(unsigned(Rdst))) <= WriteData;

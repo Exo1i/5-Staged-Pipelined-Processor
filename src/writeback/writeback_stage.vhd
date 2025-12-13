@@ -20,12 +20,12 @@ ARCHITECTURE rtl OF writeback_stage IS
 
 BEGIN
 
-    -- MemToALU mux selects between:
+    -- PassMem mux selects between:
     -- 0: ALU result (ALUData)
     -- 1: Memory data (MemoryData)
-    PROCESS (mem_wb_ctrl.writeback_ctrl.MemToALU, mem_wb_data.memory_data, mem_wb_data.alu_data)
+    PROCESS (mem_wb_ctrl.writeback_ctrl.PassMem, mem_wb_data.memory_data, mem_wb_data.alu_data)
     BEGIN
-        IF mem_wb_ctrl.writeback_ctrl.MemToALU = '1' THEN
+        IF mem_wb_ctrl.writeback_ctrl.PassMem = '1' THEN
             selected_data <= mem_wb_data.memory_data;
         ELSE
             selected_data <= mem_wb_data.alu_data;
