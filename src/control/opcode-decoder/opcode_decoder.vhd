@@ -78,7 +78,7 @@ begin
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
                     memory_sig.MemRead    := '1';
-                    writeback_sig.MemToALU:= '1';
+                    writeback_sig.PassMem:= '1';
                     -- Branch logic handled by branch control
                     
                 when others =>
@@ -108,41 +108,43 @@ begin
                     execute_sig.ALU_Operation   := ALU_NOT;
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';  -- Use ALU result
+                    writeback_sig.PassMem      := '0';  -- Use ALU result
                     
                 when OP_INC =>
                     -- INC Rdst: Rdst = Rdst + 1
                     execute_sig.ALU_Operation   := ALU_INC;
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_OUT =>
                     -- OUT Rdst: Output Port = Rdst
+                    execute_sig.ALU_Operation   := ALU_PASS_A;
+                    writeback_sig.PassMem      := '0';
                     writeback_sig.OutPortWriteEn:= '1';
                     
                 when OP_IN =>
                     -- IN Rdst: Rdst = Input Port
                     decode_sig.OutBSelect       := OUTB_INPUT_PORT;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_A;
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_MOV =>
                     -- MOV Rsrc1, Rdst: Rdst = Rsrc1
                     decode_sig.OutBSelect       := OUTB_REGFILE;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_A;
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_SWAP =>
                     -- SWAP Rsrc1, Rdst: Treated as first MOV (Rsrc1 -> Rdst)
                     -- Second cycle will be overridden by isSwap_from_execute
                     decode_sig.OutBSelect       := OUTB_REGFILE;
                     decode_sig.IsSwap           := '1';  -- Mark as SWAP for pipeline
-                    execute_sig.ALU_Operation   := ALU_PASS;  -- First move operation
+                    execute_sig.ALU_Operation   := ALU_PASS_A;  -- First move operation
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_ADD =>
                     -- ADD Rdst, Rsrc1, Rsrc2
@@ -150,7 +152,7 @@ begin
                     execute_sig.ALU_Operation   := ALU_ADD;
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_SUB =>
                     -- SUB Rdst, Rsrc1, Rsrc2
@@ -158,7 +160,7 @@ begin
                     execute_sig.ALU_Operation   := ALU_SUB;
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_AND =>
                     -- AND Rdst, Rsrc1, Rsrc2
@@ -166,7 +168,7 @@ begin
                     execute_sig.ALU_Operation   := ALU_AND;
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_IADD =>
                     -- IADD Rdst, Rsrc1, Imm: Rdst = Rsrc1 + Imm
@@ -175,7 +177,7 @@ begin
                     execute_sig.PassImm         := '1';
                     execute_sig.CCR_WriteEnable := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_PUSH =>
                     -- PUSH Rdst: SP--, MEM[SP] = Rdst
@@ -192,15 +194,15 @@ begin
                     memory_sig.SPtoMem          := '1';
                     memory_sig.MemRead          := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '1';  -- Use memory data
+                    writeback_sig.PassMem      := '1';  -- Use memory data
                     
                 when OP_LDM =>
                     -- LDM Rdst, Imm: Rdst = Imm
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.ALU_Operation   := ALU_PASS;
+                    execute_sig.ALU_Operation   := ALU_PASS_B;
                     execute_sig.PassImm         := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '0';
+                    writeback_sig.PassMem      := '0';
                     
                 when OP_LDD =>
                     -- LDD Rdst, offset(Rsrc): Rdst = MEM[Rsrc + offset]
@@ -209,7 +211,7 @@ begin
                     execute_sig.ALU_Operation   := ALU_ADD;  -- Calculate address
                     memory_sig.MemRead          := '1';
                     writeback_sig.RegWrite      := '1';
-                    writeback_sig.MemToALU      := '1';  -- Use memory data
+                    writeback_sig.PassMem      := '1';  -- Use memory data
                     
                 when OP_STD =>
                     -- STD Rsrc1, offset(Rsrc2): MEM[Rsrc2 + offset] = Rsrc1
@@ -291,9 +293,9 @@ begin
             if isSwap_from_execute = '1' then
                 -- Second cycle of SWAP: Complete the exchange with another MOV
                 decode_sig.OutBSelect       := OUTB_REGFILE;
-                execute_sig.ALU_Operation   := ALU_PASS;
+                execute_sig.ALU_Operation   := ALU_PASS_A;
                 writeback_sig.RegWrite      := '1';
-                writeback_sig.MemToALU      := '0';
+                writeback_sig.PassMem      := '0';
                 -- Note: Register addresses need to be swapped by datapath logic
             end if;
         end if;

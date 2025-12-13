@@ -89,8 +89,27 @@ BEGIN
   branch_targets.target_memory <= (OTHERS => '0');
 
   -- Forwarding disabled (use pipeline operands)
-  forwarding.forward_a <= FORWARD_NONE;
-  forwarding.forward_b <= FORWARD_NONE;
+  -- forwarding.forward_a <= FORWARD_NONE;
+  -- forwarding.forward_b <= FORWARD_NONE;
+  -- Forwarding unit
+  forwarding_unit_inst : ENTITY work.forwarding_unit
+    PORT MAP(
+      -- Memory Stage (EX/MEM outputs)
+      MemRegWrite => exmem_ctrl_out.writeback_ctrl.RegWrite,
+      MemRdst => exmem_data_out.rdst1,
+      MemIsSwap => exmem_ctrl_out.memory_ctrl.IsSwap,
+      -- Writeback Stage (MEM/WB outputs)
+      WBRegWrite => memwb_ctrl.writeback_ctrl.RegWrite,
+      WBRdst => memwb_data.rdst,
+      -- Execution Stage (ID/EX outputs)
+      ExRsrc1 => idex_data_out.rsrc1,
+      ExRsrc2 => idex_data_out.rsrc2,
+      ExOutBSelect => idex_ctrl_out.decode_ctrl.OutBSelect,
+      ExIsImm => idex_ctrl_out.execute_ctrl.PassImm,
+      -- Forwarding Control
+      ForwardA => forwarding.forward_a,
+      ForwardB => forwarding.forward_b
+    );
 
   -- Memory hazard unit arbitrates fetch vs memory stage access
   memory_hazard_inst : ENTITY work.memory_hazard_unit
@@ -209,7 +228,6 @@ BEGIN
   idex_data_in.pc <= decode_out.pc;
   idex_data_in.operand_a <= decode_out.operand_a;
   idex_data_in.operand_b <= decode_out.operand_b;
-  idex_data_in.immediate <= decode_out.immediate;
   idex_data_in.rsrc1 <= decode_out.rsrc1;
   idex_data_in.rsrc2 <= decode_out.rsrc2;
   idex_data_in.rd <= decode_out.rd;
@@ -238,9 +256,10 @@ BEGIN
       reset => rst,
       idex_ctrl_in => idex_ctrl_out,
       idex_data_in => idex_data_out,
+      immediate => ifid_out.instruction,
       forwarding => forwarding,
-      Forwarded_EXM => (OTHERS => '0'),
-      Forwarded_MWB => (OTHERS => '0'),
+      Forwarded_EXM => exmem_data_out.primary_data,
+      Forwarded_MWB => wb_out.data,
       StackFlags => (OTHERS => '0'),
       execute_out => execute_out,
       ctrl_out => execute_ctrl_out
@@ -262,7 +281,7 @@ BEGIN
   exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
 
   exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
-  exmem_ctrl_in.writeback_ctrl.MemToALU <= execute_ctrl_out.wb_memtoreg;
+  exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
   exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
 
   exmem_reg_inst : ENTITY work.ex_mem_register

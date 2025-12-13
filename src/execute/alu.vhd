@@ -1,12 +1,14 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.NUMERIC_STD.ALL;
+use work.pkg_opcodes.all;
 
 ENTITY alu IS
   PORT (
+    Carry_In: IN STD_LOGIC;
     OperandA : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
     OperandB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-    ALU_Op : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+    ALU_Op : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
     Result : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     Zero : OUT STD_LOGIC;
     Negative : OUT STD_LOGIC;
@@ -15,64 +17,72 @@ ENTITY alu IS
 END alu;
 
 ARCHITECTURE Behavioral OF alu IS
-  -- ALU Operation Codes
-  CONSTANT ALU_ADD : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
-  CONSTANT ALU_SUB : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0001";
-  CONSTANT ALU_AND : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0010";
-  CONSTANT ALU_NOT : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0011";
-  CONSTANT ALU_INC : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0100";
-  CONSTANT ALU_PASS : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0101";
 
-  SIGNAL result_temp : STD_LOGIC_VECTOR(31 DOWNTO 0);
-  SIGNAL carry_temp : STD_LOGIC;
+SIGNAL temp_result : STD_LOGIC_VECTOR(31 DOWNTO 0);
+SIGNAL temp_carry : STD_LOGIC;
+SIGNAL add_result : STD_LOGIC_VECTOR(32 DOWNTO 0);
+SIGNAL sub_result : STD_LOGIC_VECTOR(32 DOWNTO 0);
+SIGNAL inc_result : STD_LOGIC_VECTOR(32 DOWNTO 0);
 
 BEGIN
-  PROCESS (OperandA, OperandB, ALU_Op)
-    VARIABLE temp_33bit : unsigned(32 DOWNTO 0);
+
+  -- Extended arithmetic operations for carry detection (using Carry_In)
+  add_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + UNSIGNED('0' & OperandB) + ("" & Carry_In));
+  sub_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) - UNSIGNED('0' & OperandB) - ("" & Carry_In));
+  inc_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + 1);
+
+  -- ALU operation process
+  PROCESS(ALU_Op, OperandA, OperandB, Carry_In, add_result, sub_result, inc_result)
   BEGIN
-    carry_temp <= '0'; -- Default carry
+    -- Default values
+    temp_result <= (OTHERS => '0');
+    temp_carry <= '0';
 
     CASE ALU_Op IS
       WHEN ALU_ADD =>
-        -- 33-bit addition for carry detection
-        temp_33bit := unsigned('0' & OperandA) + unsigned('0' & OperandB);
-        result_temp <= STD_LOGIC_VECTOR(temp_33bit(31 DOWNTO 0));
-        carry_temp <= temp_33bit(32);
+        temp_result <= add_result(31 DOWNTO 0);
+        temp_carry <= add_result(32);
 
       WHEN ALU_SUB =>
-        -- 33-bit subtraction for borrow detection
-        temp_33bit := unsigned('0' & OperandA) - unsigned('0' & OperandB);
-        result_temp <= STD_LOGIC_VECTOR(temp_33bit(31 DOWNTO 0));
-        carry_temp <= temp_33bit(32); -- Borrow flag
+        temp_result <= sub_result(31 DOWNTO 0);
+        temp_carry <= sub_result(32); -- Borrow flag
 
       WHEN ALU_AND =>
-        result_temp <= OperandA AND OperandB;
+        temp_result <= OperandA AND OperandB;
+        temp_carry <= '0';
 
       WHEN ALU_NOT =>
-        result_temp <= NOT OperandA;
+        temp_result <= NOT OperandA;
+        temp_carry <= '0';
 
       WHEN ALU_INC =>
-        -- Increment OperandA
-        temp_33bit := unsigned('0' & OperandA) + 1;
-        result_temp <= STD_LOGIC_VECTOR(temp_33bit(31 DOWNTO 0));
-        carry_temp <= temp_33bit(32);
+        temp_result <= inc_result(31 DOWNTO 0);
+        temp_carry <= inc_result(32);
 
-      WHEN ALU_PASS =>
-        -- Pass-through OperandA
-        result_temp <= OperandA;
+      WHEN ALU_PASS_A =>
+        temp_result <= OperandA;
+        temp_carry <= '0';
+
+      WHEN ALU_PASS_B =>
+        temp_result <= OperandB;
+        temp_carry <= '0';
+
+      WHEN ALU_SETC =>
+        temp_result <= (OTHERS => '0');
+        temp_carry <= '1';
 
       WHEN OTHERS =>
-        result_temp <= (OTHERS => '0');
+        temp_result <= (OTHERS => '0');
+        temp_carry <= '0';
     END CASE;
   END PROCESS;
 
   -- Output assignments
-  Result <= result_temp;
+  Result <= temp_result;
 
   -- Flag generation
-  Zero <= '1' WHEN result_temp = X"00000000" ELSE
-          '0';
-  Negative <= result_temp(31); -- MSB indicates negative
-  Carry <= carry_temp;
+  Zero <= '1' WHEN temp_result = X"00000000" ELSE '0';
+  Negative <= temp_result(31);
+  Carry <= temp_carry;
 
 END Behavioral;

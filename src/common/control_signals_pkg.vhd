@@ -39,7 +39,7 @@ PACKAGE control_signals_pkg IS
 
     -- WRITEBACK Stage Control Signals
     TYPE writeback_control_t IS RECORD
-        MemToALU : STD_LOGIC; -- 0=ALU result, 1=Memory data
+        PassMem : STD_LOGIC; -- 0=ALU result, 1=Memory data
         RegWrite : STD_LOGIC; -- Register file write enable
         OutPortWriteEn : STD_LOGIC; -- Output port write enable
     END RECORD;
@@ -77,7 +77,7 @@ PACKAGE control_signals_pkg IS
     );
 
     CONSTANT WRITEBACK_CTRL_DEFAULT : writeback_control_t := (
-        MemToALU => '0',
+        PassMem => '0',
         RegWrite => '0',
         OutPortWriteEn => '0'
     );

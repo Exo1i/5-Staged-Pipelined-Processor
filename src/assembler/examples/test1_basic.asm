@@ -11,5 +11,7 @@ START:
     LDM R0, 10
     LDM R1, 20
     ADD R2, R0, R1
+    SUB R3, R0, R1
+    AND R4, R0, R1
     OUT R2
     HLT

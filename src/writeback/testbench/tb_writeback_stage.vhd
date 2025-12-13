@@ -51,9 +51,9 @@ BEGIN
         rst <= '0';
         WAIT FOR CLK_PERIOD;
 
-        -- Test 2: MemToALU = '0' (ALU data selection)
-        REPORT "TEST 2: MemToALU = 0 (select ALUData)";
-        mem_wb_ctrl.writeback_ctrl.MemToALU <= '0';
+        -- Test 2: PassMem = '0' (ALU data selection)
+        REPORT "TEST 2: PassMem = 0 (select ALUData)";
+        mem_wb_ctrl.writeback_ctrl.PassMem <= '0';
         mem_wb_ctrl.writeback_ctrl.RegWrite <= '1';
         mem_wb_ctrl.writeback_ctrl.OutPortWriteEn <= '0';
         mem_wb_data.alu_data <= x"12345678";
@@ -65,9 +65,9 @@ BEGIN
         ASSERT wb_out.reg_we = '1' REPORT "Expected RegWE = 1" SEVERITY error;
         ASSERT wb_out.port_enable = '0' REPORT "Expected PortEnable = 0" SEVERITY error;
 
-        -- Test 3: MemToALU = '1' (Memory data selection)
-        REPORT "TEST 3: MemToALU = 1 (select MemoryData)";
-        mem_wb_ctrl.writeback_ctrl.MemToALU <= '1';
+        -- Test 3: PassMem = '1' (Memory data selection)
+        REPORT "TEST 3: PassMem = 1 (select MemoryData)";
+        mem_wb_ctrl.writeback_ctrl.PassMem <= '1';
         mem_wb_data.memory_data <= x"CAFEBABE";
         mem_wb_data.alu_data <= x"11111111";
         WAIT FOR CLK_PERIOD;
@@ -88,7 +88,7 @@ BEGIN
 
         -- Test 6: Different register destinations
         REPORT "TEST 6: Test different register destinations";
-        mem_wb_ctrl.writeback_ctrl.MemToALU <= '0';
+        mem_wb_ctrl.writeback_ctrl.PassMem <= '0';
         mem_wb_ctrl.writeback_ctrl.RegWrite <= '1';
         mem_wb_ctrl.writeback_ctrl.OutPortWriteEn <= '0';
         mem_wb_data.alu_data <= x"AABBCCDD";
@@ -103,13 +103,13 @@ BEGIN
         REPORT "TEST 7: Data mux with varying inputs";
         FOR i IN 0 TO 3 LOOP
             IF i MOD 2 = 0 THEN
-                mem_wb_ctrl.writeback_ctrl.MemToALU <= '0';
+                mem_wb_ctrl.writeback_ctrl.PassMem <= '0';
                 mem_wb_data.memory_data <= x"00000000";
                 mem_wb_data.alu_data <= STD_LOGIC_VECTOR(to_unsigned(i * 256, DATA_WIDTH));
                 WAIT FOR CLK_PERIOD;
                 ASSERT wb_out.data = STD_LOGIC_VECTOR(to_unsigned(i * 256, DATA_WIDTH)) REPORT "Expected ALUData" SEVERITY error;
             ELSE
-                mem_wb_ctrl.writeback_ctrl.MemToALU <= '1';
+                mem_wb_ctrl.writeback_ctrl.PassMem <= '1';
                 mem_wb_data.memory_data <= STD_LOGIC_VECTOR(to_unsigned(i * 256, DATA_WIDTH));
                 WAIT FOR CLK_PERIOD;
                 ASSERT wb_out.data = STD_LOGIC_VECTOR(to_unsigned(i * 256, DATA_WIDTH)) REPORT "Expected MemoryData" SEVERITY error;
@@ -132,7 +132,7 @@ BEGIN
 
         -- Test 9: All signals together
         REPORT "TEST 9: All signals integrated";
-        mem_wb_ctrl.writeback_ctrl.MemToALU <= '1';
+        mem_wb_ctrl.writeback_ctrl.PassMem <= '1';
         mem_wb_ctrl.writeback_ctrl.RegWrite <= '1';
         mem_wb_ctrl.writeback_ctrl.OutPortWriteEn <= '1';
         mem_wb_data.memory_data <= x"FEDCBA98";

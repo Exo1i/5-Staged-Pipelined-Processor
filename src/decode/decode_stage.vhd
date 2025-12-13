@@ -139,8 +139,8 @@ BEGIN
     PORT MAP(
         clk => clk,
         reset => rst,
-        Ra => ra_addr,
-        Rb => rb_addr,
+        Ra => rb_addr,
+        Rb => rc_addr,
         ReadDataA => rf_data_a,
         ReadDataB => rf_data_b,
         Rdst => wb_in.rdst,
@@ -202,8 +202,8 @@ BEGIN
     decode_out.operand_a <= rf_data_a;
     decode_out.operand_b <= operand_b;
     decode_out.immediate <= immediate_from_fetch;
-    decode_out.rsrc1 <= ra_addr;
-    decode_out.rsrc2 <= rb_addr;
+    decode_out.rsrc1 <= rb_addr;
+    decode_out.rsrc2 <= rc_addr;
     decode_out.rd <= rd_selected;
     decode_out.opcode <= opcode;
 

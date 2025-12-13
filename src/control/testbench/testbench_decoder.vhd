@@ -106,15 +106,15 @@ BEGIN
         REPORT "IN failed" SEVERITY error;
 
         test_instruction(OP_MOV, "MOV");
-        ASSERT execute_ctrl.ALU_Operation = ALU_PASS AND
+        ASSERT execute_ctrl.ALU_Operation = ALU_PASS_A AND
         writeback_ctrl.RegWrite = '1'
         REPORT "MOV failed" SEVERITY error;
 
         test_instruction(OP_SWAP, "SWAP - First Cycle");
         ASSERT decode_ctrl.IsSwap = '1' AND
-        execute_ctrl.ALU_Operation = ALU_PASS AND
+        execute_ctrl.ALU_Operation = ALU_PASS_A AND
         writeback_ctrl.RegWrite = '1' AND
-        writeback_ctrl.MemToALU = '0'
+        writeback_ctrl.PassMem = '0'
         REPORT "SWAP first cycle failed" SEVERITY error;
 
         -- Test SWAP second cycle (override via isSwap_from_execute)
@@ -122,7 +122,7 @@ BEGIN
         isSwap_from_execute <= '1';
         WAIT FOR 10 ns;
         REPORT "Testing SWAP - Second Cycle Override";
-        ASSERT execute_ctrl.ALU_Operation = ALU_PASS AND
+        ASSERT execute_ctrl.ALU_Operation = ALU_PASS_A AND
         writeback_ctrl.RegWrite = '1'
         REPORT "SWAP second cycle override failed" SEVERITY error;
         isSwap_from_execute <= '0';
@@ -166,21 +166,21 @@ BEGIN
         memory_ctrl.SPtoMem = '1' AND
         memory_ctrl.MemRead = '1' AND
         writeback_ctrl.RegWrite = '1' AND
-        writeback_ctrl.MemToALU = '1'
+        writeback_ctrl.PassMem = '1'
         REPORT "POP failed" SEVERITY error;
 
         test_instruction(OP_LDM, "LDM");
         ASSERT decode_ctrl.OutBSelect = OUTB_IMMEDIATE AND
         execute_ctrl.PassImm = '1' AND
         writeback_ctrl.RegWrite = '1' AND
-        writeback_ctrl.MemToALU = '0'
+        writeback_ctrl.PassMem = '0'
         REPORT "LDM failed" SEVERITY error;
 
         test_instruction(OP_LDD, "LDD");
         ASSERT execute_ctrl.PassImm = '1' AND
         memory_ctrl.MemRead = '1' AND
         writeback_ctrl.RegWrite = '1' AND
-        writeback_ctrl.MemToALU = '1'
+        writeback_ctrl.PassMem = '1'
         REPORT "LDD failed" SEVERITY error;
 
         test_instruction(OP_STD, "STD");
@@ -267,7 +267,7 @@ BEGIN
         memory_ctrl.SP_Function = '1' AND
         memory_ctrl.SPtoMem = '1' AND
         memory_ctrl.MemRead = '1' AND
-        writeback_ctrl.MemToALU = '1'
+        writeback_ctrl.PassMem = '1'
         REPORT "OVERRIDE_POP_PC failed" SEVERITY error;
 
         -- Test Override POP_FLAGS

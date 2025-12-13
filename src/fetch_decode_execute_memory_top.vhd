@@ -262,7 +262,7 @@ BEGIN
   exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
 
   exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
-  exmem_ctrl_in.writeback_ctrl.MemToALU <= execute_ctrl_out.wb_memtoreg;
+  exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
   exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
 
   exmem_reg_inst : ENTITY work.ex_mem_register
