@@ -123,7 +123,7 @@ BEGIN
     -- =====================================================
     -- Operand Secondary MUX (3:1) - Forwarding for secondary operand (before PassImm)
     -- =====================================================
-    PROCESS (forwarding.forward_secondary, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB, In_B)
+    PROCESS (forwarding.forward_secondary, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB)
     BEGIN
         CASE forwarding.forward_secondary IS
             WHEN FORWARD_NONE => forwarded_B <= idex_data_in.operand_b;

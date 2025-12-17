@@ -20,7 +20,12 @@ ARCHITECTURE rtl OF stack_pointer IS
     CONSTANT STACK_TOP : INTEGER := (2 ** 18) - 1;
 
     SIGNAL sp : INTEGER RANGE 0 TO STACK_TOP := STACK_TOP;
+
+    SIGNAL decremented_sp : INTEGER RANGE 0 TO STACK_TOP;
+    SIGNAL sp_out : INTEGER RANGE 0 TO STACK_TOP;
 BEGIN
+
+    decremented_sp <= sp - 1;
 
     PROCESS (clk, rst)
     BEGIN
@@ -31,10 +36,11 @@ BEGIN
             IF (Increment = '1') THEN
                 sp <= sp + 1;
             ELSIF Decrement = '1' THEN
-                sp <= sp - 1;
+                sp <= decremented_sp;
             END IF;
         END IF;
     END PROCESS;
-
-    Data <= STD_LOGIC_VECTOR(to_unsigned(sp, Data'length));
+    
+    sp_out <= sp when Increment = '1' ELSE decremented_sp;
+    Data <= STD_LOGIC_VECTOR(to_unsigned( sp_out, Data'length));
 END rtl; -- rtl
