@@ -168,6 +168,7 @@ add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/Result
 add wave -divider "Forwarding Unit"
 add wave -radix binary sim:/processor_top/forwarding.forward_a
 add wave -radix binary sim:/processor_top/forwarding.forward_b
+add wave -radix binary sim:/processor_top/forwarding.forward_secondary
 add wave -radix binary sim:/processor_top/forwarding_unit_inst/MemRegWrite
 add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/MemRdst
 add wave -radix binary sim:/processor_top/forwarding_unit_inst/MemIsSwap
@@ -175,6 +176,11 @@ add wave -radix binary sim:/processor_top/forwarding_unit_inst/WBRegWrite
 add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/WBRdst
 add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/ExRsrc1
 add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/ExRsrc2
+add wave -radix binary sim:/processor_top/forwarding_unit_inst/ExOutBSelect
+add wave -radix binary sim:/processor_top/forwarding_unit_inst/ExIsImm
+add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardA
+add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardB
+add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardSecondary
 
 add wave -divider "Execute Ctrl"
 add wave -radix binary sim:/processor_top/execute_inst/idex_ctrl_in.execute_ctrl
@@ -211,6 +217,13 @@ add wave -radix unsigned sim:/processor_top/mem_wb_data_comb.rdst
 add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.RegWrite
 add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.PassMem
 add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.OutPortWriteEn
+
+add wave -divider "Stack Pointer"
+add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_inst/SP
+add wave -radix binary sim:/processor_top/memory_inst/sp_inst/enable
+add wave -radix binary sim:/processor_top/memory_inst/sp_inst/operation
+add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_inst/StackPointer
+add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_out
 
 add wave -divider "WB"
 add wave -radix binary sim:/processor_top/wb_out.reg_we
