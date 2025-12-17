@@ -109,7 +109,7 @@ begin
                 when OP_HLT =>
                     -- Halt - implementation specific
                     -- Could set a halt flag or freeze pipeline
-                    null;
+                    decode_sig.IsHLT := '1';
                     
                 when OP_SETC =>
                     -- Set Carry Flag
@@ -139,7 +139,7 @@ begin
                 when OP_IN =>
                     -- IN Rdst: Rdst = Input Port
                     decode_sig.OutBSelect       := OUTB_INPUT_PORT;
-                    execute_sig.ALU_Operation   := ALU_PASS_A;
+                    execute_sig.ALU_Operation   := ALU_PASS_B;
                     writeback_sig.RegWrite      := '1';
                     writeback_sig.PassMem      := '0';
                     

@@ -265,6 +265,7 @@ BEGIN
           Stall_Interrupt => '0',
           Stall_Branch => '0',
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
+          is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
           requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
           PC_Freeze => pc_freeze,
           IFDE_WriteEnable => ifde_write_enable,

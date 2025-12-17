@@ -15,6 +15,7 @@ PACKAGE control_signals_pkg IS
         IsJMPConditional : STD_LOGIC; -- Conditional jump
         IsSwap : STD_LOGIC; -- SWAP instruction (first cycle)
         RequireImmediate : STD_LOGIC; -- Indicates if instruction needs immediate value
+        IsHLT : STD_LOGIC; -- HLT instruction
     END RECORD;
 
     -- EXECUTE Stage Control Signals
@@ -56,7 +57,8 @@ PACKAGE control_signals_pkg IS
         IsJMP => '0',
         IsJMPConditional => '0',
         IsSwap => '0',
-        RequireImmediate => '0'
+        RequireImmediate => '0',
+        IsHLT => '0'
     );
 
     CONSTANT EXECUTE_CTRL_DEFAULT : execute_control_t := (

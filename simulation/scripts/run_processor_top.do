@@ -261,5 +261,14 @@ add wave -radix binary sim:/processor_top/freeze_control_inst/stall_condition
 force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/processor_top/rst 1 0, 0 {300 ps}
 force -freeze sim:/processor_top/in_port 16#00000000 0
+force -freeze sim:/processor_top/in_port 16#12345678 0
 
 run 30000 ps
+
+# Example: Test in_port input changes during simulation
+force -freeze sim:/processor_top/in_port 16#00000000 0
+force -freeze sim:/processor_top/in_port 16#0000ABCD 2000ps
+force -freeze sim:/processor_top/in_port 16#FFFFFFFF 3000ps
+force -freeze sim:/processor_top/in_port 16#00000000 4000ps
+
+run 10000 ps

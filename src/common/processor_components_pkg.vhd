@@ -206,6 +206,7 @@ PACKAGE processor_components_pkg IS
             Stall_Interrupt : IN STD_LOGIC;
             Stall_Branch : IN STD_LOGIC;
             is_swap : IN STD_LOGIC;
+            is_hlt : IN STD_LOGIC;
             requireImmediate : IN STD_LOGIC;
             PC_Freeze : OUT STD_LOGIC;
             IFDE_WriteEnable : OUT STD_LOGIC;
