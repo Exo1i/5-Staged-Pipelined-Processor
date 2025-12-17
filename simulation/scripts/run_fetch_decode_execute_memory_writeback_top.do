@@ -1,5 +1,9 @@
 # Minimal integration: fetch + IF/ID + decode + opcode_decoder + ID/EX + execute + EX/MEM + memory_stage + MEM/WB + writeback
 
+if {![file exists memory_temp]} {
+    mkdir memory_temp
+}
+
 vlib ./simulation/work
 vmap work ./simulation/work
 
