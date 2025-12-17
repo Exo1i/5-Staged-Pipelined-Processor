@@ -21,6 +21,8 @@ ENTITY execute_stage IS
         Forwarded_EXM : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
         Forwarded_MWB : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
 
+        exmem_mem_to_ccr : IN STD_LOGIC;
+
         -- Stack flags input
         StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
 
@@ -50,21 +52,6 @@ ARCHITECTURE Behavioral OF execute_stage IS
         );
     END COMPONENT;
 
-    COMPONENT ccr IS
-        PORT (
-            clk : IN STD_LOGIC;
-            reset : IN STD_LOGIC;
-            ALU_Zero : IN STD_LOGIC;
-            ALU_Negative : IN STD_LOGIC;
-            ALU_Carry : IN STD_LOGIC;
-            CCRWrEn : IN STD_LOGIC;
-            PassCCR : IN STD_LOGIC;
-            SetCarry : IN STD_LOGIC;
-            StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
-            CCR_Out : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
-        );
-    END COMPONENT;
-
     -- MUX outputs for ALU inputs
     SIGNAL In_A : STD_LOGIC_VECTOR(31 DOWNTO 0); -- ALU Input A (after forwarding MUX)
     SIGNAL In_B : STD_LOGIC_VECTOR(31 DOWNTO 0); -- ALU Input B (after forwarding and PassImm MUX)
@@ -86,7 +73,7 @@ ARCHITECTURE Behavioral OF execute_stage IS
 BEGIN
 
     -- CCR write enable logic (XOR with IsReturn)
-    ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable OR idex_ctrl_in.decode_ctrl.IsReturn;
+    ccr_write_enable <= idex_ctrl_in.execute_ctrl.CCR_WriteEnable OR exmem_mem_to_ccr;
     set_carry_in_ccr <= '1' when idex_ctrl_in.execute_ctrl.ALU_Operation = ALU_SETC else '0';
     
     -- =====================================================
@@ -151,15 +138,15 @@ BEGIN
     -- =====================================================
     -- CCR Flags Register Instantiation
     -- =====================================================
-    CCR_UNIT : ccr PORT MAP(
+    CCR_UNIT : ENTITY work.ccr PORT MAP(
         clk => clk,
         reset => reset,
-        ALU_Zero => alu_zero,
+        ALU_Zero =>  alu_zero,
         ALU_Negative => alu_neg,
         ALU_Carry => alu_carry,
         CCRWrEn => ccr_write_enable,
         SetCarry => set_carry_in_ccr,
-        PassCCR => idex_ctrl_in.execute_ctrl.PassCCR,
+        MemToCCR => exmem_mem_to_ccr,
         StackFlags => StackFlags,
         CCR_Out => ccr_out_int
     );

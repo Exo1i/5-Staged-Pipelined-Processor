@@ -32,7 +32,7 @@ BEGIN
   inc_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + 1);
 
   -- ALU operation process
-  PROCESS(ALU_Op, OperandA, OperandB, Carry_In, add_result, sub_result, inc_result)
+  PROCESS(ALU_Op, OperandA, OperandB, add_result, sub_result, inc_result)
   BEGIN
     -- Default values
     temp_result <= (OTHERS => '0');

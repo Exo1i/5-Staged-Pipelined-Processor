@@ -17,4 +17,20 @@ START:
     INC R0
     IN R2
     OUT R2
+    INT 2
+    NOP
+    NOP
+    NOP
+    LDM R0, 12
+    LDM R1, 7
+    PUSH R1
+    PUSH R0
+    RTI
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
     HLT

@@ -13,6 +13,7 @@ ENTITY interrupt_unit IS
         -- Inputs from DE/EX pipeline register (signals in EXECUTE stage)
         IsInterrupt_EX : IN STD_LOGIC; -- Software/Hardware interrupt in execute
         IsReti_EX : IN STD_LOGIC; -- RTI instruction in execute
+        IsRet_EX : IN STD_LOGIC; -- RET instruction in execute
 
         -- Inputs from EX/MEM pipeline register (signals in MEMORY stage)
         IsHardwareInt_MEM : IN STD_LOGIC; -- Hardware interrupt flag in memory
@@ -36,8 +37,11 @@ BEGIN
 
     -- Detect if any interrupt-related operation is active
     any_interrupt_operation <= IsInterrupt_DE OR IsInterrupt_EX OR
-        IsReti_DE OR IsReti_EX OR
-        IsCall_DE OR IsReturn_DE OR
+        IsReti_DE OR
+        IsCall_DE OR
+        IsReturn_DE OR
+        IsReti_EX OR
+        IsRet_EX OR
         HardwareInterrupt;
 
     -- Stall signal: active during any interrupt processing
@@ -59,7 +63,7 @@ BEGIN
     IsHardwareIntMEM_Out <= IsHardwareInt_MEM;
 
     -- Determine override type based on priority
-    PROCESS (IsInterrupt_DE, IsInterrupt_EX, IsReti_DE, IsReti_EX,
+    PROCESS (IsInterrupt_DE, IsInterrupt_EX, IsReti_DE,
         IsCall_DE, IsReturn_DE)
     BEGIN
         -- Default to PUSH_PC (doesn't matter since OverrideOperation will be '0')
@@ -76,13 +80,9 @@ BEGIN
             -- Interrupt (SW or HW) in execute: Second cycle - push FLAGS
             OverrideType <= OVERRIDE_PUSH_PC;
 
-        ELSIF IsReti_DE = '1' THEN
+        ELSIF IsReti_DE = '1'  THEN
             -- Return from interrupt in decode: First cycle - pop FLAGS (opposite order!)
             OverrideType <= OVERRIDE_POP_FLAGS;
-
-        ELSIF IsReti_EX = '1' THEN
-            -- Return from interrupt in execute: Second cycle - pop PC
-            OverrideType <= OVERRIDE_POP_PC;
 
         ELSIF IsCall_DE = '1' THEN
             -- CALL instruction: Only push PC (single cycle)

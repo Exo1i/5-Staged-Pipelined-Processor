@@ -14,8 +14,10 @@ ARCHITECTURE testbench OF tb_forwarding_unit IS
     SIGNAL MemIsSwap : STD_LOGIC := '0';
     SIGNAL WBRegWrite : STD_LOGIC := '0';
     SIGNAL WBRdst : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL Rsrc1 : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL Rsrc2 : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL ExRsrc1 : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL ExRsrc2 : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL ExOutBSelect : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00";
+    SIGNAL ExIsImm : STD_LOGIC := '0';
     SIGNAL ForwardA : STD_LOGIC_VECTOR(1 DOWNTO 0);
     SIGNAL ForwardB : STD_LOGIC_VECTOR(1 DOWNTO 0);
     SIGNAL ForwardSecondary : STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -30,8 +32,10 @@ BEGIN
             MemIsSwap => MemIsSwap,
             WBRegWrite => WBRegWrite,
             WBRdst => WBRdst,
-            Rsrc1 => Rsrc1,
-            Rsrc2 => Rsrc2,
+            ExRsrc1 => ExRsrc1,
+            ExRsrc2 => ExRsrc2,
+            ExOutBSelect => ExOutBSelect,
+            ExIsImm => ExIsImm,
             ForwardA => ForwardA,
             ForwardB => ForwardB,
             ForwardSecondary => ForwardSecondary
@@ -44,8 +48,10 @@ BEGIN
         REPORT "TEST 1: No forwarding - no register match";
         MemRegWrite <= '0';
         WBRegWrite <= '0';
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemRdst <= "011";
         WBRdst <= "100";
         WAIT FOR CLK_PERIOD;
@@ -56,8 +62,10 @@ BEGIN
         REPORT "TEST 2: Forward from Memory stage for Rsrc1";
         MemRegWrite <= '1';
         MemRdst <= "001";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '0';
         WBRegWrite <= '0';
         WAIT FOR CLK_PERIOD;
@@ -68,8 +76,10 @@ BEGIN
         REPORT "TEST 3: Forward from Memory stage for Rsrc2";
         MemRegWrite <= '1';
         MemRdst <= "010";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "00" REPORT "Expected ForwardA = 00 (no forwarding)" SEVERITY error;
         ASSERT ForwardB = "01" REPORT "Expected ForwardB = 01 (Memory forward)" SEVERITY error;
@@ -78,8 +88,10 @@ BEGIN
         REPORT "TEST 4: Forward from Memory stage for both Rsrc1 and Rsrc2";
         MemRegWrite <= '1';
         MemRdst <= "011";
-        Rsrc1 <= "011";
-        Rsrc2 <= "011";
+        ExRsrc1 <= "011";
+        ExRsrc2 <= "011";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "01" REPORT "Expected ForwardA = 01 (Memory forward)" SEVERITY error;
         ASSERT ForwardB = "01" REPORT "Expected ForwardB = 01 (Memory forward)" SEVERITY error;
@@ -89,8 +101,10 @@ BEGIN
         MemRegWrite <= '0';
         WBRegWrite <= '1';
         WBRdst <= "001";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "10" REPORT "Expected ForwardA = 10 (Writeback forward)" SEVERITY error;
         ASSERT ForwardB = "00" REPORT "Expected ForwardB = 00 (no forwarding)" SEVERITY error;
@@ -99,8 +113,10 @@ BEGIN
         REPORT "TEST 6: Forward from Writeback stage for Rsrc2";
         WBRegWrite <= '1';
         WBRdst <= "010";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "00" REPORT "Expected ForwardA = 00 (no forwarding)" SEVERITY error;
         ASSERT ForwardB = "10" REPORT "Expected ForwardB = 10 (Writeback forward)" SEVERITY error;
@@ -111,8 +127,10 @@ BEGIN
         MemRdst <= "001";
         WBRegWrite <= '1';
         WBRdst <= "001";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "01" REPORT "Expected ForwardA = 01 (Memory priority)" SEVERITY error;
@@ -122,8 +140,10 @@ BEGIN
         REPORT "TEST 8: SWAP disables forwarding";
         MemRegWrite <= '1';
         MemRdst <= "001";
-        Rsrc1 <= "001";
-        Rsrc2 <= "001";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "001";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '1';
         WBRegWrite <= '0';
         WAIT FOR CLK_PERIOD;
@@ -136,8 +156,10 @@ BEGIN
         MemRdst <= "001";
         WBRegWrite <= '1';
         WBRdst <= "001";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '1';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "10" REPORT "Expected ForwardA = 10 (Writeback forward)" SEVERITY error;
@@ -149,8 +171,10 @@ BEGIN
         WBRegWrite <= '0';
         MemRdst <= "001";
         WBRdst <= "010";
-        Rsrc1 <= "001";
-        Rsrc2 <= "010";
+        ExRsrc1 <= "001";
+        ExRsrc2 <= "010";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "00" REPORT "Expected ForwardA = 00 (no forwarding)" SEVERITY error;
@@ -163,8 +187,10 @@ BEGIN
             MemRdst <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
             WBRegWrite <= '1';
             WBRdst <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
-            Rsrc1 <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
-            Rsrc2 <= STD_LOGIC_VECTOR(to_unsigned((i + 1) MOD 8, 3));
+            ExRsrc1 <= STD_LOGIC_VECTOR(to_unsigned(i, 3));
+            ExRsrc2 <= STD_LOGIC_VECTOR(to_unsigned((i + 1) MOD 8, 3));
+            ExOutBSelect <= "00";
+            ExIsImm <= '0';
             MemIsSwap <= '0';
             WAIT FOR CLK_PERIOD;
             ASSERT ForwardA = "01" REPORT "Expected ForwardA = 01 for reg " & INTEGER'image(i) SEVERITY error;
@@ -176,8 +202,10 @@ BEGIN
         MemRdst <= "011";
         WBRegWrite <= '1';
         WBRdst <= "100";
-        Rsrc1 <= "011";
-        Rsrc2 <= "100";
+        ExRsrc1 <= "011";
+        ExRsrc2 <= "100";
+        ExOutBSelect <= "00";
+        ExIsImm <= '0';
         MemIsSwap <= '0';
         WAIT FOR CLK_PERIOD;
         ASSERT ForwardA = "01" REPORT "Expected ForwardA = 01 (Memory forward)" SEVERITY error;

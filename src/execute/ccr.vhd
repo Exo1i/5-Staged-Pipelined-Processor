@@ -13,7 +13,7 @@ entity ccr is
         
         -- Control signals
         CCRWrEn      : in  STD_LOGIC;  -- Write enable from control unit
-        PassCCR      : in  STD_LOGIC;  -- Restore flag for RTI instruction
+        MemToCCR      : in  STD_LOGIC;  -- Restore flag for RTI instruction
         SetCarry     : in  STD_LOGIC;
         
         -- Stack flags input (for RTI instruction)
@@ -34,7 +34,7 @@ begin
             ccr_reg <= "000";  -- Clear all flags on reset
         elsif rising_edge(clk) then
             if CCRWrEn = '1' then
-                if PassCCR = '1' then
+                if MemToCCR = '1' then
                     -- RTI instruction: restore flags from stack
                     ccr_reg <= StackFlags;
                 else

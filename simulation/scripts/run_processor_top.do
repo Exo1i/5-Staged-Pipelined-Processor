@@ -131,7 +131,7 @@ add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.SPtoMem
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.PassInterrupt
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemRead
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemWrite
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.FlagFromMem
+add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemToCCR
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.IsSwap
 add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.PassMem
 add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.RegWrite
@@ -167,6 +167,15 @@ add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandA
 add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandB
 add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/ALU_Op
 add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/Result
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Zero
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Negative
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Carry
+
+add wave -divider "CCR Internal"
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCRWrEn
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/MemToCCR
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/StackFlags
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCR_Out
 
 add wave -divider "Forwarding Unit"
 add wave -radix binary sim:/processor_top/forwarding.forward_a
@@ -207,7 +216,7 @@ add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Enable
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Function
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SPtoMem
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.PassInterrupt
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.FlagFromMem
+add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.MemToCCR
 
 add wave -divider "Memory Stage"
 add wave -radix binary sim:/processor_top/mem_stage_read_req

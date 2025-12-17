@@ -29,7 +29,7 @@ end opcode_decoder;
 architecture Behavioral of opcode_decoder is
 begin
 
-    process(opcode, override_operation, override_type, isSwap_from_execute, take_interrupt, is_hardware_int_mem)
+    process(opcode, override_operation, override_type, isSwap_from_execute, take_interrupt, is_hardware_int_mem, requireImmediate)
         variable decode_sig   : decode_control_t;
         variable execute_sig  : execute_control_t;
         variable memory_sig   : memory_control_t;
@@ -78,7 +78,7 @@ begin
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
                     memory_sig.MemRead    := '1';
-                    memory_sig.FlagFromMem:= '1';
+                    memory_sig.MemToCCR   := '1';
                     
                 when OVERRIDE_POP_PC =>
                     -- POP PC: PC = MEM[SP], SP++
@@ -275,6 +275,11 @@ begin
                 when OP_RET =>
                     -- RET: Pop PC
                     decode_sig.IsReturn         := '1';
+                    decode_sig.IsReti     := '1';
+                    memory_sig.SP_Enable  := '1';
+                    memory_sig.SP_Function:= '1';  -- Increment
+                    memory_sig.SPtoMem    := '1';
+                    memory_sig.MemRead    := '1';
                     -- POP_PC will be handled by InterruptUnit via override
                     
                 when OP_INT =>
@@ -282,13 +287,17 @@ begin
                     decode_sig.IsInterrupt      := '1';
                     -- decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.PassImm         := '1';
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
+                    execute_sig.ALU_Operation   := ALU_PASS_B;
                     -- Push PC and FLAGS handled by InterruptUnit
                     
                 when OP_RTI =>
                     -- RTI: Return from Interrupt (Pop FLAGS, Pop PC)
-                    decode_sig.IsReti           := '1';
+                    decode_sig.IsReti     := '1';
+                    memory_sig.SP_Enable  := '1';
+                    memory_sig.SP_Function:= '1';  -- Increment
+                    memory_sig.SPtoMem    := '1';
+                    memory_sig.MemRead    := '1';
                     -- POP_FLAGS and POP_PC handled by InterruptUnit via override
                     
                 when others =>

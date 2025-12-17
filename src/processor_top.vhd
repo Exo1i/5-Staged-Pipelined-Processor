@@ -179,6 +179,7 @@ BEGIN
       IsReti_DE => decoder_ctrl.decode_ctrl.IsReti,
       IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
       IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
+      IsRet_EX => idex_ctrl_out.decode_ctrl.IsReturn,
       IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),
       HardwareInterrupt => hardware_interrupt,
       Stall => int_stall,
@@ -306,7 +307,8 @@ BEGIN
       forwarding => forwarding,
       Forwarded_EXM => exmem_data_out.primary_data,
       Forwarded_MWB => wb_out.data,
-      StackFlags => (OTHERS => '0'),
+      exmem_mem_to_ccr => exmem_ctrl_out.memory_ctrl.MemToCCR,
+      StackFlags => mem_data(2 DOWNTO 0),
       execute_out => execute_out,
       ctrl_out => execute_ctrl_out
     );
@@ -316,19 +318,22 @@ BEGIN
   exmem_data_in.secondary_data <= execute_out.secondary_data;
   exmem_data_in.rdst1 <= execute_out.rdst;
 
-  exmem_ctrl_in.memory_ctrl.MemRead <= execute_ctrl_out.m_memread;
-  exmem_ctrl_in.memory_ctrl.MemWrite <= execute_ctrl_out.m_memwrite;
-  exmem_ctrl_in.memory_ctrl.SPtoMem <= execute_ctrl_out.m_sptomem;
-  exmem_ctrl_in.memory_ctrl.PassInterrupt(0) <= execute_ctrl_out.m_passinterrupt;
-  exmem_ctrl_in.memory_ctrl.PassInterrupt(1) <= '0';
-  exmem_ctrl_in.memory_ctrl.SP_Enable <= idex_ctrl_out.memory_ctrl.SP_Enable;
-  exmem_ctrl_in.memory_ctrl.SP_Function <= idex_ctrl_out.memory_ctrl.SP_Function;
-  exmem_ctrl_in.memory_ctrl.FlagFromMem <= idex_ctrl_out.memory_ctrl.FlagFromMem;
-  exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
+  -- exmem_ctrl_in.memory_ctrl.MemRead <= execute_ctrl_out.m_memread;
+  -- exmem_ctrl_in.memory_ctrl.MemWrite <= execute_ctrl_out.m_memwrite;
+  -- exmem_ctrl_in.memory_ctrl.SPtoMem <= execute_ctrl_out.m_sptomem;
+  -- exmem_ctrl_in.memory_ctrl.PassInterrupt(0) <= execute_ctrl_out.m_passinterrupt;
+  -- exmem_ctrl_in.memory_ctrl.PassInterrupt(1) <= '0';
+  -- exmem_ctrl_in.memory_ctrl.SP_Enable <= idex_ctrl_out.memory_ctrl.SP_Enable;
+  -- exmem_ctrl_in.memory_ctrl.SP_Function <= idex_ctrl_out.memory_ctrl.SP_Function;
+  -- exmem_ctrl_in.memory_ctrl.FlagFromMem <= idex_ctrl_out.memory_ctrl.FlagFromMem;
+  -- exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
 
-  exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
-  exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
-  exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
+  -- exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
+  -- exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
+  -- exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
+
+  exmem_ctrl_in.memory_ctrl <= idex_ctrl_out.memory_ctrl;
+  exmem_ctrl_in.writeback_ctrl <= idex_ctrl_out.writeback_ctrl;
 
   exmem_reg_inst : ENTITY work.ex_mem_register
     PORT MAP(
