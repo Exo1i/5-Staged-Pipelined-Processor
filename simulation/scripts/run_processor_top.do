@@ -219,11 +219,10 @@ add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.PassMe
 add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.OutPortWriteEn
 
 add wave -divider "Stack Pointer"
-add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_inst/SP
-add wave -radix binary sim:/processor_top/memory_inst/sp_inst/enable
-add wave -radix binary sim:/processor_top/memory_inst/sp_inst/operation
-add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_inst/StackPointer
-add wave -radix hexadecimal sim:/processor_top/memory_inst/sp_out
+add wave -radix hexadecimal sim:/processor_top/memory_stage_inst/sp_unit/Data
+add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/enb
+add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/Increment
+add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/Decrement
 
 add wave -divider "WB"
 add wave -radix binary sim:/processor_top/wb_out.reg_we
