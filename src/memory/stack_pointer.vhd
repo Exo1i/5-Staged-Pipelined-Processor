@@ -21,11 +21,11 @@ ARCHITECTURE rtl OF stack_pointer IS
 
     SIGNAL sp : INTEGER RANGE 0 TO STACK_TOP := STACK_TOP;
 
-    SIGNAL decremented_sp : INTEGER RANGE 0 TO STACK_TOP;
+    SIGNAL incremented_sp : INTEGER RANGE 0 TO STACK_TOP;
     SIGNAL sp_out : INTEGER RANGE 0 TO STACK_TOP;
 BEGIN
 
-    decremented_sp <= sp - 1;
+    incremented_sp <= sp + 1;
 
     PROCESS (clk, rst)
     BEGIN
@@ -34,13 +34,13 @@ BEGIN
 
         ELSIF rising_edge(clk) AND enb = '1' THEN
             IF (Increment = '1') THEN
-                sp <= sp + 1;
+                sp <= incremented_sp;
             ELSIF Decrement = '1' THEN
-                sp <= decremented_sp;
+                sp <= sp - 1;
             END IF;
         END IF;
     END PROCESS;
     
-    sp_out <= sp when Increment = '1' ELSE decremented_sp;
+    sp_out <= sp when Decrement = '1' ELSE incremented_sp when Increment = '1' ELSE sp;
     Data <= STD_LOGIC_VECTOR(to_unsigned( sp_out, Data'length));
 END rtl; -- rtl
