@@ -238,7 +238,8 @@ class Assembler:
         if instr.mnemonic == 'PUSH':
             return [self.pack_header(opcode, r3=rdst)]
 
-        return [self.pack_header(opcode, r1=rdst)]
+
+        return [self.pack_header(opcode, r1=rdst)] #it handles IN and POP
 
     def encode_two_operand(self, instr: Instruction) -> List[int]:
         if len(instr.operands) < 2:

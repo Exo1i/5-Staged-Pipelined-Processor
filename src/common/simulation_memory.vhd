@@ -5,8 +5,8 @@ USE std.textio.ALL;
 USE IEEE.std_logic_textio.ALL;
 
 ARCHITECTURE simulation_memory OF memory IS
-    CONSTANT DUMP_START_ADDR : INTEGER := 0;
-    CONSTANT DUMP_END_ADDR   : INTEGER := 255; -- adjust as needed
+    CONSTANT DUMP_START_ADDR : INTEGER := 2**18-256; -- adjust as needed
+    CONSTANT DUMP_END_ADDR   : INTEGER := 2**18 - 1; -- adjust as needed
 
     SIGNAL clk_count : INTEGER := 0;
 

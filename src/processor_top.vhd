@@ -250,7 +250,7 @@ BEGIN
     PORT MAP(
       clk => clk,
       rst => rst,
-      enable => front_enable,
+      enable => '1',
       flush => insert_nop_deex or '0',
       data_in => idex_data_in,
       ctrl_in => idex_ctrl_in,
