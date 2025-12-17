@@ -25,8 +25,8 @@ ARCHITECTURE rtl OF stack_pointer IS
     SIGNAL sp_out : INTEGER RANGE 0 TO STACK_TOP;
 BEGIN
 
-    incremented_sp <= sp + 1;
-
+    incremented_sp <= sp + 1 when sp < STACK_TOP else STACK_TOP;    
+    
     PROCESS (clk, rst)
     BEGIN
         IF rst = '1' THEN

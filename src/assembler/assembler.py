@@ -235,8 +235,11 @@ class Assembler:
         
         if instr.mnemonic == 'OUT':
             return [self.pack_header(opcode, r2=rdst)]
-        if instr.mnemonic == 'PUSH':
+        elif instr.mnemonic == 'PUSH':
             return [self.pack_header(opcode, r3=rdst)]
+        elif instr.mnemonic == 'NOT' or instr.mnemonic == 'INC':
+            return [self.pack_header(opcode, r1=rdst, r2=rdst)]
+        
 
 
         return [self.pack_header(opcode, r1=rdst)] #it handles IN and POP
