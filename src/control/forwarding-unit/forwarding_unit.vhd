@@ -23,7 +23,8 @@ ENTITY forwarding_unit IS
 
         -- Forwarding Control
         ForwardA : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-        ForwardB : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
+        ForwardB : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+        ForwardSecondary : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
     );
 END forwarding_unit;
 
@@ -56,6 +57,20 @@ BEGIN
             ELSIF WBRegWrite = '1' AND WBRdst = ExRsrc2 THEN
                 -- Forward from MEM/WB stage
                 ForwardB <= FORWARD_MEM_WB;
+            END IF;
+        END IF;
+    END PROCESS;
+
+    PROCESS (MemRegWrite, MemRdst, WBRegWrite, WBRdst, ExRsrc2)
+    BEGIN
+        ForwardSecondary <= FORWARD_NONE;
+        if ExOutBSelect = OUTB_REGFILE then
+            IF MemRegWrite = '1' AND MemRdst = ExRsrc2 THEN
+                -- Forward from EX/MEM stage (higher priority)
+                ForwardSecondary <= FORWARD_EX_MEM;
+            ELSIF WBRegWrite = '1' AND WBRdst = ExRsrc2 THEN
+                -- Forward from MEM/WB stage
+                ForwardSecondary <= FORWARD_MEM_WB;
             END IF;
         END IF;
     END PROCESS;

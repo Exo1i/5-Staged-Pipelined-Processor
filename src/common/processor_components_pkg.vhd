@@ -224,7 +224,8 @@ PACKAGE processor_components_pkg IS
             Rsrc1 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             Rsrc2 : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
             ForwardA : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-            ForwardB : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
+            ForwardB : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+            ForwardSecondary : OUT STD_LOGIC_VECTOR(1 DOWNTO 0)
         );
     END COMPONENT;
 

@@ -184,6 +184,7 @@ PACKAGE pipeline_data_pkg IS
     TYPE forwarding_ctrl_t IS RECORD
         forward_a : STD_LOGIC_VECTOR(1 DOWNTO 0);
         forward_b : STD_LOGIC_VECTOR(1 DOWNTO 0);
+        forward_secondary : STD_LOGIC_VECTOR(1 DOWNTO 0);
     END RECORD;
 
     -- Forwarding Mux Select Values (2-bit)

@@ -121,6 +121,19 @@ BEGIN
     END PROCESS;
 
     -- =====================================================
+    -- Operand Secondary MUX (3:1) - Forwarding for secondary operand (before PassImm)
+    -- =====================================================
+    PROCESS (forwarding.forward_secondary, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB, In_B)
+    BEGIN
+        CASE forwarding.forward_secondary IS
+            WHEN FORWARD_NONE => forwarded_B <= idex_data_in.operand_b;
+            WHEN FORWARD_EX_MEM => forwarded_B <= Forwarded_EXM;
+            WHEN FORWARD_MEM_WB => forwarded_B <= Forwarded_MWB;
+            WHEN OTHERS => forwarded_B <= idex_data_in.operand_b;
+        END CASE;
+    END PROCESS;
+
+    -- =====================================================
     -- ALU Instantiation
     -- =====================================================
     ALU_UNIT : alu PORT MAP(

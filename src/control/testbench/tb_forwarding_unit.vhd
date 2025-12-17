@@ -18,6 +18,7 @@ ARCHITECTURE testbench OF tb_forwarding_unit IS
     SIGNAL Rsrc2 : STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
     SIGNAL ForwardA : STD_LOGIC_VECTOR(1 DOWNTO 0);
     SIGNAL ForwardB : STD_LOGIC_VECTOR(1 DOWNTO 0);
+    SIGNAL ForwardSecondary : STD_LOGIC_VECTOR(1 DOWNTO 0);
 
 BEGIN
 
@@ -32,7 +33,8 @@ BEGIN
             Rsrc1 => Rsrc1,
             Rsrc2 => Rsrc2,
             ForwardA => ForwardA,
-            ForwardB => ForwardB
+            ForwardB => ForwardB,
+            ForwardSecondary => ForwardSecondary
         );
 
     -- Test stimulus
