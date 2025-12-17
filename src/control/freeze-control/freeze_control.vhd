@@ -8,10 +8,12 @@ ENTITY freeze_control IS
         Stall_Interrupt : IN STD_LOGIC; -- From Interrupt Unit ('1' = stall for interrupt processing)
         Stall_Branch : IN STD_LOGIC; -- From Branch Control ('1' = stall for branch misprediction) - Optional
         is_swap : IN STD_LOGIC; -- From Decode Stage ('1' = SWAP operation in progress)
+        requireImmediate : IN STD_LOGIC; -- From Decode Stage ('1' = immediate instruction required)
         -- Outputs: Control signals for pipeline freeze
         PC_Freeze : OUT STD_LOGIC; -- Enable PC register update ('0' = allow update, '1' = freeze)
         IFDE_WriteEnable : OUT STD_LOGIC; -- Enable IF/DE pipeline register update
-        InsertNOP_IFDE : OUT STD_LOGIC -- Insert NOP/bubble into IF/DE stage ('1' = insert NOP)
+        InsertNOP_IFDE : OUT STD_LOGIC; -- Insert NOP/bubble into IF/DE stage ('1' = insert NOP)
+        InsertNOP_DEEX : OUT STD_LOGIC  -- Insert NOP/bubble into DE/EX stage ('1' = insert NOP)
     );
 END freeze_control;
 
@@ -22,8 +24,12 @@ BEGIN
     -- Concatenate all stall conditions into a vector for case statement
     stall_condition <= Stall_Branch & Stall_Interrupt & (NOT PassPC_MEM) & is_swap;
 
-    PROCESS(stall_condition)
+    PROCESS(stall_condition, requireImmediate)
     BEGIN
+        InsertNOP_DEEX <= '0'; -- Default no NOP in DE/EX
+        InsertNOP_IFDE <= '0'; -- Default no NOP in IF/DE
+        PC_Freeze <= '0';        -- Default no freeze
+        IFDE_WriteEnable <= '1'; -- Default enable IF/DE write
         CASE stall_condition IS
             -- SWAP operation: Freeze PC and IF/DE register, but don't insert NOP
             WHEN "0001" =>
@@ -35,7 +41,8 @@ BEGIN
             WHEN "0010" | "0011" =>
                 PC_Freeze <= '1';
                 IFDE_WriteEnable <= '0';
-                InsertNOP_IFDE <= '1';
+                InsertNOP_IFDE <= '0' when requireImmediate = '1' else '1';
+                InsertNOP_DEEX <= '1' when requireImmediate = '1' else '0';
 
             -- Interrupt stall: Full stall with NOP
             WHEN "0100" | "0101" | "0110" | "0111" =>

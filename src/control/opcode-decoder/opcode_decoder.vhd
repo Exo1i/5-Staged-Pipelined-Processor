@@ -12,7 +12,8 @@ entity opcode_decoder is
         isSwap_from_execute : in  std_logic;                       -- Feedback from execute stage for SWAP second cycle
         take_interrupt      : in  std_logic;                       -- From interrupt unit (treat as interrupt)
         is_hardware_int_mem : in  std_logic;                       -- Hardware interrupt flag in memory stage
-        
+        requireImmediate    : in std_logic;                       -- --- will come from excute --- --
+
         -- Output Control Signals (grouped by stage)
         decode_ctrl         : out decode_control_t;
         execute_ctrl        : out execute_control_t;
@@ -46,7 +47,9 @@ begin
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
         -- Handle SWAP second cycle override FIRST (highest priority)
-        if isSwap_from_execute = '1' then
+        if requireImmediate = '1' then
+            --noop
+        elsif isSwap_from_execute = '1' then
             -- Second cycle of SWAP: Complete the exchange with another MOV
             decode_sig.OutBSelect       := OUTB_REGFILE;
             execute_sig.ALU_Operation   := ALU_PASS_A;
@@ -184,6 +187,7 @@ begin
                 when OP_IADD =>
                     -- IADD Rdst, Rsrc1, Imm: Rdst = Rsrc1 + Imm
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
+                    decode_sig.RequireImmediate := '1';
                     execute_sig.ALU_Operation   := ALU_ADD;
                     execute_sig.PassImm         := '1';
                     execute_sig.CCR_WriteEnable := '1';
@@ -210,6 +214,7 @@ begin
                 when OP_LDM =>
                     -- LDM Rdst, Imm: Rdst = Imm
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
+                    decode_sig.RequireImmediate := '1';
                     execute_sig.ALU_Operation   := ALU_PASS_B;
                     execute_sig.PassImm         := '1';
                     writeback_sig.RegWrite      := '1';
@@ -217,6 +222,7 @@ begin
                     
                 when OP_LDD =>
                     -- LDD Rdst, offset(Rsrc): Rdst = MEM[Rsrc + offset]
+                    decode_sig.RequireImmediate := '1';
                     execute_sig.PassImm         := '1';
                     execute_sig.ALU_Operation   := ALU_ADD;  -- Calculate address
                     memory_sig.MemRead          := '1';
@@ -226,6 +232,7 @@ begin
                 when OP_STD =>
                     -- STD Rsrc1, offset(Rsrc2): MEM[Rsrc2 + offset] = Rsrc1
                     decode_sig.OutBSelect       := OUTB_REGFILE;
+                    decode_sig.RequireImmediate := '1';
                     execute_sig.PassImm         := '1';
                     execute_sig.ALU_Operation   := ALU_ADD;  -- Calculate address
                     memory_sig.MemWrite         := '1';
@@ -233,6 +240,7 @@ begin
                 when OP_JZ =>
                     -- JZ Imm: Jump if Zero
                     decode_sig.IsJMPConditional := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_ZERO;
@@ -240,6 +248,7 @@ begin
                 when OP_JN =>
                     -- JN Imm: Jump if Negative
                     decode_sig.IsJMPConditional := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_NEGATIVE;
@@ -247,6 +256,7 @@ begin
                 when OP_JC =>
                     -- JC Imm: Jump if Carry
                     decode_sig.IsJMPConditional := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_CARRY;
@@ -254,12 +264,14 @@ begin
                 when OP_JMP =>
                     -- JMP Imm: Unconditional Jump
                     decode_sig.IsJMP            := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     
                 when OP_CALL =>
                     -- CALL Imm: Push PC, Jump to Imm
                     decode_sig.IsCall           := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.IsJMP            := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
@@ -273,6 +285,7 @@ begin
                 when OP_INT =>
                     -- INT index: Software Interrupt
                     decode_sig.IsInterrupt      := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
@@ -324,7 +337,6 @@ begin
     is_reti_out <= '1' when opcode = OP_RTI else '0';
     is_jmp_out <= '1' when opcode = OP_JMP else '0';
     is_swap_out <= '1' when opcode = OP_SWAP else '0';
-    
     -- Conditional jump detection
     is_jmp_conditional_out <= '1' when (opcode = OP_JZ or opcode = OP_JN or opcode = OP_JC) else '0';
 

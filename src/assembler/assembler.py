@@ -235,6 +235,8 @@ class Assembler:
         
         if instr.mnemonic == 'OUT':
             return [self.pack_header(opcode, r2=rdst)]
+        if instr.mnemonic == 'PUSH':
+            return [self.pack_header(opcode, r3=rdst)]
 
         return [self.pack_header(opcode, r1=rdst)]
 

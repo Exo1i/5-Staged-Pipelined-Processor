@@ -147,6 +147,7 @@ PACKAGE processor_components_pkg IS
             override_operation : IN STD_LOGIC;
             override_type : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
             isSwap_from_execute : IN STD_LOGIC;
+            requireImmediate : IN STD_LOGIC;
             take_interrupt : IN STD_LOGIC;
             is_hardware_int_mem : IN STD_LOGIC;
             decode_ctrl : OUT decode_control_t;
@@ -204,9 +205,12 @@ PACKAGE processor_components_pkg IS
             PassPC_MEM : IN STD_LOGIC;
             Stall_Interrupt : IN STD_LOGIC;
             Stall_Branch : IN STD_LOGIC;
+            is_swap : IN STD_LOGIC;
+            requireImmediate : IN STD_LOGIC;
             PC_Freeze : OUT STD_LOGIC;
             IFDE_WriteEnable : OUT STD_LOGIC;
-            InsertNOP_IFDE : OUT STD_LOGIC
+            InsertNOP_IFDE : OUT STD_LOGIC;
+            InsertNOP_DEEX : OUT STD_LOGIC
         );
     END COMPONENT;
 

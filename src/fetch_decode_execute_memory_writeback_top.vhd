@@ -85,6 +85,7 @@ ARCHITECTURE Structural OF fetch_decode_execute_memory_writeback_top IS
   SIGNAL pc_freeze : STD_LOGIC;
   SIGNAL ifde_write_enable : STD_LOGIC;
   SIGNAL insert_nop_ifde : STD_LOGIC;
+  SIGNAL insert_nop_deex : STD_LOGIC;
 
 BEGIN
 
@@ -206,65 +207,69 @@ BEGIN
       ctrl_out => decode_ctrl_out,
       flags_out => decode_flags
     );
-
-  -- ===== Opcode decoder =====
-  opcode_decoder_inst : ENTITY work.opcode_decoder
-    PORT MAP(
-      opcode => decode_out.opcode,
-      override_operation => ifid_out.override_operation,
-      override_type => ifid_out.override_op,
-      isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
-      take_interrupt => ifid_out.take_interrupt,
-      is_hardware_int_mem => '0',
-      decode_ctrl => decoder_ctrl.decode_ctrl,
-      execute_ctrl => decoder_ctrl.execute_ctrl,
-      memory_ctrl => decoder_ctrl.memory_ctrl,
-      writeback_ctrl => decoder_ctrl.writeback_ctrl,
-      is_interrupt_out => OPEN,
-      is_call_out => OPEN,
-      is_return_out => OPEN,
-      is_reti_out => OPEN,
-      is_jmp_out => OPEN,
-      is_jmp_conditional_out => OPEN,
-      is_swap_out => OPEN
-    );
-
-  -- Freeze control unit manages pipeline stalls
-  freeze_control_inst : ENTITY work.freeze_control
-    PORT MAP(
-      PassPC_MEM => pass_pc,
-      Stall_Interrupt => '0',
-      Stall_Branch => '0',
-      is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
-      PC_Freeze => pc_freeze,
-      IFDE_WriteEnable => ifde_write_enable,
-      InsertNOP_IFDE => insert_nop_ifde
-    );
-
-  -- ===== ID/EX pack =====
+    
+    
+    -- ===== Opcode decoder =====
+    opcode_decoder_inst : ENTITY work.opcode_decoder
+      PORT MAP(
+        opcode => decode_out.opcode,
+        override_operation => ifid_out.override_operation,
+        override_type => ifid_out.override_op,
+        isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
+        take_interrupt => ifid_out.take_interrupt,
+        is_hardware_int_mem => '0',
+        requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
+        decode_ctrl => decoder_ctrl.decode_ctrl,
+        execute_ctrl => decoder_ctrl.execute_ctrl,
+        memory_ctrl => decoder_ctrl.memory_ctrl,
+        writeback_ctrl => decoder_ctrl.writeback_ctrl,
+        is_interrupt_out => OPEN,
+        is_call_out => OPEN,
+        is_return_out => OPEN,
+        is_reti_out => OPEN,
+        is_jmp_out => OPEN,
+        is_jmp_conditional_out => OPEN,
+        is_swap_out => OPEN
+      );
+    -- ===== ID/EX pack =====
   idex_data_in.pc <= decode_out.pc;
   idex_data_in.operand_a <= decode_out.operand_a;
   idex_data_in.operand_b <= decode_out.operand_b;
   idex_data_in.rsrc1 <= decode_out.rsrc1;
   idex_data_in.rsrc2 <= decode_out.rsrc2;
   idex_data_in.rd <= decode_out.rd;
-
+  
   idex_ctrl_in.decode_ctrl <= decode_ctrl_out.decode_ctrl;
   idex_ctrl_in.execute_ctrl <= decode_ctrl_out.execute_ctrl;
   idex_ctrl_in.memory_ctrl <= decode_ctrl_out.memory_ctrl;
   idex_ctrl_in.writeback_ctrl <= decode_ctrl_out.writeback_ctrl;
 
   idex_inst : ENTITY work.id_ex_register
+
     PORT MAP(
       clk => clk,
       rst => rst,
       enable => front_enable,
-      flush => '0',
+      flush => insert_nop_deex or '0',
       data_in => idex_data_in,
       ctrl_in => idex_ctrl_in,
       data_out => idex_data_out,
       ctrl_out => idex_ctrl_out
-    );
+      );
+      
+      -- Freeze control unit manages pipeline stalls
+      freeze_control_inst : ENTITY work.freeze_control
+        PORT MAP(
+          PassPC_MEM => pass_pc,
+          Stall_Interrupt => '0',
+          Stall_Branch => '0',
+          is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
+          requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
+          PC_Freeze => pc_freeze,
+          IFDE_WriteEnable => ifde_write_enable,
+          InsertNOP_IFDE => insert_nop_ifde,
+          InsertNOP_DEEX => insert_nop_deex
+        );
 
   -- ===== Execute stage =====
   execute_inst : ENTITY work.execute_stage
