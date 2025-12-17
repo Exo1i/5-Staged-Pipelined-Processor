@@ -356,7 +356,7 @@ class Assembler:
             offset_masked = self._validate_and_mask_16bit(
                 offset, instr.line_num)
 
-            w1 = self.pack_header(opcode, r1=rsrc1, r2=rsrc2)
+            w1 = self.pack_header(opcode, r2=rsrc2, r3=rsrc1)
             w2 = self.sign_extend_16bit(offset_masked) & 0xFFFFFFFF
             return [w1, w2]
 

@@ -206,7 +206,6 @@ begin
                     
                 when OP_LDD =>
                     -- LDD Rdst, offset(Rsrc): Rdst = MEM[Rsrc + offset]
-                    decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ALU_Operation   := ALU_ADD;  -- Calculate address
                     memory_sig.MemRead          := '1';
@@ -215,7 +214,7 @@ begin
                     
                 when OP_STD =>
                     -- STD Rsrc1, offset(Rsrc2): MEM[Rsrc2 + offset] = Rsrc1
-                    decode_sig.OutBSelect       := OUTB_IMMEDIATE;
+                    decode_sig.OutBSelect       := OUTB_REGFILE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ALU_Operation   := ALU_ADD;  -- Calculate address
                     memory_sig.MemWrite         := '1';
