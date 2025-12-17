@@ -10,6 +10,7 @@ ENTITY processor_top IS
     clk : IN STD_LOGIC;
     rst : IN STD_LOGIC;
     in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    hardware_interrupt : IN STD_LOGIC;
     out_port : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     out_port_en : OUT STD_LOGIC
   );
@@ -87,6 +88,13 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL insert_nop_ifde : STD_LOGIC;
   SIGNAL insert_nop_deex : STD_LOGIC;
 
+  -- ===== Interrupt unit =====
+  SIGNAL int_stall : STD_LOGIC;
+  SIGNAL int_pass_pc_not_plus1 : STD_LOGIC;
+  SIGNAL int_take_interrupt : STD_LOGIC;
+  SIGNAL int_is_hardware_int_mem : STD_LOGIC;
+  SIGNAL int_override_operation : STD_LOGIC;
+  SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
 BEGIN
 
   -- No branches for this step
@@ -132,9 +140,9 @@ BEGIN
   front_enable <= pass_pc;
 
   -- IF/ID pack
-  ifid_in.take_interrupt <= '0';
-  ifid_in.override_operation <= '0';
-  ifid_in.override_op <= (OTHERS => '0');
+  ifid_in.take_interrupt <= int_take_interrupt;
+  ifid_in.override_operation <= int_override_operation;
+  ifid_in.override_op <= int_override_type;
   ifid_in.pc <= fetch_out.pc;
   ifid_in.pushed_pc <= fetch_out.pushed_pc;
   ifid_in.instruction <= fetch_out.instruction;
@@ -162,6 +170,25 @@ BEGIN
       MemWrite => mem_write_mux
     );
 
+  -- ===== Interrupt unit =====
+  interrupt_unit_inst : ENTITY work.interrupt_unit
+    PORT MAP(
+      IsInterrupt_DE => decoder_ctrl.decode_ctrl.IsInterrupt,
+      IsCall_DE => decoder_ctrl.decode_ctrl.IsCall,
+      IsReturn_DE => decoder_ctrl.decode_ctrl.IsReturn,
+      IsReti_DE => decoder_ctrl.decode_ctrl.IsReti,
+      IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
+      IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
+      IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),
+      HardwareInterrupt => hardware_interrupt,
+      Stall => int_stall,
+      PassPC_NotPCPlus1 => int_pass_pc_not_plus1,
+      TakeInterrupt => int_take_interrupt,
+      IsHardwareIntMEM_Out => int_is_hardware_int_mem,
+      OverrideOperation => int_override_operation,
+      OverrideType => int_override_type
+    );
+
   -- ===== Fetch stage =====
   fetch_inst : ENTITY work.fetch_stage
     PORT MAP(
@@ -173,7 +200,7 @@ BEGIN
       branch_targets => branch_targets,
       mem_data => mem_data,
       fetch_out => fetch_out,
-      PushPCSelect => '0'
+      PushPCSelect => int_pass_pc_not_plus1
     );
 
   -- ===== IF/ID register =====
@@ -218,19 +245,14 @@ BEGIN
         override_type => ifid_out.override_op,
         isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
         take_interrupt => ifid_out.take_interrupt,
-        is_hardware_int_mem => '0',
+        is_hardware_int_mem => int_is_hardware_int_mem,
         requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
         decode_ctrl => decoder_ctrl.decode_ctrl,
         execute_ctrl => decoder_ctrl.execute_ctrl,
         memory_ctrl => decoder_ctrl.memory_ctrl,
         writeback_ctrl => decoder_ctrl.writeback_ctrl,
-        is_interrupt_out => OPEN,
-        is_call_out => OPEN,
-        is_return_out => OPEN,
-        is_reti_out => OPEN,
         is_jmp_out => OPEN,
-        is_jmp_conditional_out => OPEN,
-        is_swap_out => OPEN
+        is_jmp_conditional_out => OPEN
       );
     -- ===== ID/EX pack =====
   idex_data_in.pc <= decode_out.pc;
@@ -262,7 +284,7 @@ BEGIN
       freeze_control_inst : ENTITY work.freeze_control
         PORT MAP(
           PassPC_MEM => pass_pc,
-          Stall_Interrupt => '0',
+          Stall_Interrupt => int_stall,
           Stall_Branch => '0',
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,

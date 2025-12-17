@@ -168,7 +168,7 @@ BEGIN
     -- Output Assignments
     -- =====================================================
     execute_out.primary_data <= alu_result_int;
-    execute_out.secondary_data <= ccr_out_int WHEN idex_ctrl_in.execute_ctrl.PassCCR = '1' ELSE
+    execute_out.secondary_data <= (31 downto 3 => '0') & ccr_out_int WHEN idex_ctrl_in.execute_ctrl.PassCCR = '1' ELSE
     forward_secondary;
     execute_out.rdst <= idex_data_in.rd;
     execute_out.ccr_flags <= ccr_out_int;

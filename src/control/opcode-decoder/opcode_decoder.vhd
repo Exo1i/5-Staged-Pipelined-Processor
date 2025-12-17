@@ -21,13 +21,8 @@ entity opcode_decoder is
         writeback_ctrl      : out writeback_control_t;
         
         -- Instruction Type Outputs (for Interrupt Unit, Branch Predictor, etc.)
-        is_interrupt_out        : out std_logic;  -- INT instruction detected
-        is_call_out             : out std_logic;  -- CALL instruction detected
-        is_return_out           : out std_logic;  -- RET instruction detected
-        is_reti_out             : out std_logic;  -- RTI instruction detected
         is_jmp_out              : out std_logic;  -- JMP instruction detected
-        is_jmp_conditional_out  : out std_logic;  -- Conditional jump (JZ/JN/JC)
-        is_swap_out             : out std_logic   -- SWAP instruction detected
+        is_jmp_conditional_out  : out std_logic  -- Conditional jump (JZ/JN/JC)
     );
 end opcode_decoder;
 
@@ -285,7 +280,7 @@ begin
                 when OP_INT =>
                     -- INT index: Software Interrupt
                     decode_sig.IsInterrupt      := '1';
-                    decode_sig.RequireImmediate := '1';
+                    -- decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
@@ -331,12 +326,7 @@ begin
     -- ========== INSTRUCTION TYPE DETECTION (Combinational) ==========
     -- These outputs go to Interrupt Unit, Branch Predictor, Freeze Control
     
-    is_interrupt_out <= '1' when opcode = OP_INT else '0';
-    is_call_out <= '1' when opcode = OP_CALL else '0';
-    is_return_out <= '1' when opcode = OP_RET else '0';
-    is_reti_out <= '1' when opcode = OP_RTI else '0';
     is_jmp_out <= '1' when opcode = OP_JMP else '0';
-    is_swap_out <= '1' when opcode = OP_SWAP else '0';
     -- Conditional jump detection
     is_jmp_conditional_out <= '1' when (opcode = OP_JZ or opcode = OP_JN or opcode = OP_JC) else '0';
 

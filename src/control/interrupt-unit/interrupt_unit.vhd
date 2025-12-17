@@ -53,7 +53,7 @@ BEGIN
     TakeInterrupt <= HardwareInterrupt;
 
     -- For hardware interrupt, we want to save current PC (not PC+1)
-    PassPC_NotPCPlus1 <= HardwareInterrupt;
+    PassPC_NotPCPlus1 <= not HardwareInterrupt;
 
     -- Pass hardware interrupt flag in memory stage to decoder
     IsHardwareIntMEM_Out <= IsHardwareInt_MEM;
@@ -70,11 +70,11 @@ BEGIN
 
         IF IsInterrupt_DE = '1' THEN
             -- Interrupt (SW or HW) in decode: First cycle - push PC
-            OverrideType <= OVERRIDE_PUSH_PC;
+            OverrideType <= OVERRIDE_PUSH_FLAGS;
 
         ELSIF IsInterrupt_EX = '1' THEN
             -- Interrupt (SW or HW) in execute: Second cycle - push FLAGS
-            OverrideType <= OVERRIDE_PUSH_FLAGS;
+            OverrideType <= OVERRIDE_PUSH_PC;
 
         ELSIF IsReti_DE = '1' THEN
             -- Return from interrupt in decode: First cycle - pop FLAGS (opposite order!)
