@@ -82,6 +82,7 @@ ARCHITECTURE Behavioral OF execute_stage IS
     -- XOR gate output (for IsReturn logic)
     SIGNAL ccr_write_enable : STD_LOGIC;
     SIGNAL set_carry_in_ccr : STD_LOGIC;
+    SIGNAL forward_secondary : STD_LOGIC_VECTOR(31 DOWNTO 0);
 BEGIN
 
     -- CCR write enable logic (XOR with IsReturn)
@@ -121,6 +122,19 @@ BEGIN
     END PROCESS;
 
     -- =====================================================
+    -- Operand Secondary MUX (3:1) - Forwarding for secondary operand (before PassImm)
+    -- =====================================================
+    PROCESS (forwarding.forward_secondary, idex_data_in.operand_b, Forwarded_EXM, Forwarded_MWB)
+    BEGIN
+        CASE forwarding.forward_secondary IS
+            WHEN FORWARD_NONE => forward_secondary <= idex_data_in.operand_b;
+            WHEN FORWARD_EX_MEM => forward_secondary <= Forwarded_EXM;
+            WHEN FORWARD_MEM_WB => forward_secondary <= Forwarded_MWB;
+            WHEN OTHERS => forward_secondary <= idex_data_in.operand_b;
+        END CASE;
+    END PROCESS;
+
+    -- =====================================================
     -- ALU Instantiation
     -- =====================================================
     ALU_UNIT : alu PORT MAP(
@@ -155,7 +169,7 @@ BEGIN
     -- =====================================================
     execute_out.primary_data <= alu_result_int;
     execute_out.secondary_data <= ccr_out_int WHEN idex_ctrl_in.execute_ctrl.PassCCR = '1' ELSE
-    idex_data_in.operand_b;
+    forward_secondary;
     execute_out.rdst <= idex_data_in.rd;
     execute_out.ccr_flags <= ccr_out_int;
 

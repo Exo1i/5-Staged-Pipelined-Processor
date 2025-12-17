@@ -5,6 +5,11 @@ USE std.textio.ALL;
 USE IEEE.std_logic_textio.ALL;
 
 ARCHITECTURE simulation_memory OF memory IS
+    CONSTANT DUMP_START_ADDR : INTEGER := 2**18-256; -- adjust as needed
+    CONSTANT DUMP_END_ADDR   : INTEGER := 2**18 - 1; -- adjust as needed
+
+    SIGNAL clk_count : INTEGER := 0;
+
     CONSTANT MEM_FILENAME : STRING := "memory_data.mem";
     CONSTANT DEPTH : INTEGER := 2 ** 18; -- 262,144 words
 
@@ -33,6 +38,16 @@ ARCHITECTURE simulation_memory OF memory IS
         RETURN result;
     END FUNCTION;
 
+    FUNCTION min_int(a, b : INTEGER) RETURN INTEGER IS
+    BEGIN
+        IF a < b THEN
+            RETURN a;
+        ELSE
+            RETURN b;
+        END IF;
+    END FUNCTION;
+
+
     -- Store initial memory state
     CONSTANT initial_mem : mem_array_t := load_mem_from_file(MEM_FILENAME);
 
@@ -53,5 +68,49 @@ BEGIN
     ReadData <= mem(to_integer(unsigned(Address))) WHEN (MemRead = '1' AND MemWrite = '0')
         ELSE
         (OTHERS => 'Z');
+
+    
+dump_mem_each_clk : PROCESS(clk)
+    FILE dump_file : text;
+    VARIABLE l      : line;
+    VARIABLE fname  : line;
+    VARIABLE status : file_open_status;
+BEGIN
+    IF rising_edge(clk) AND rst = '0' THEN
+
+        -- Clear filename buffer
+        fname := null;
+
+        -- Build filename
+        write(fname, string'("memory_temp/mem_data_clk_"));
+        write(fname, clk_count);
+        write(fname, string'(".mem"));
+
+        -- Ensure the file will be created/truncated
+        file_open(status, dump_file, fname.all, write_mode);
+
+        IF status /= open_ok THEN
+            -- Report warning, file could not open (directory may not exist)
+            REPORT "Failed to open dump file: " & fname.all SEVERITY warning;
+        ELSE
+            -- Dump memory range safely
+            IF DUMP_START_ADDR <= DUMP_END_ADDR THEN
+                FOR i IN DUMP_START_ADDR TO min_int(DUMP_END_ADDR, DEPTH - 1) LOOP
+                    l := null;
+                    hwrite(l, mem(i));
+                    writeline(dump_file, l);
+                END LOOP;
+            END IF;
+
+            file_close(dump_file);
+        END IF;
+
+        -- Increment clock counter
+        clk_count <= clk_count + 1;
+    END IF;
+END PROCESS;
+
+
+
 
 END ARCHITECTURE simulation_memory;

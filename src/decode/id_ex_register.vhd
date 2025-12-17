@@ -9,7 +9,6 @@ ENTITY id_ex_register IS
         rst : IN STD_LOGIC;
         enable : IN STD_LOGIC;
         flush : IN STD_LOGIC;
-
         -- Grouped data inputs from Decode Stage
         data_in : IN pipeline_decode_excute_t;
         

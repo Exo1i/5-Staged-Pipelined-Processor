@@ -235,8 +235,14 @@ class Assembler:
         
         if instr.mnemonic == 'OUT':
             return [self.pack_header(opcode, r2=rdst)]
+        elif instr.mnemonic == 'PUSH':
+            return [self.pack_header(opcode, r3=rdst)]
+        elif instr.mnemonic == 'NOT' or instr.mnemonic == 'INC':
+            return [self.pack_header(opcode, r1=rdst, r2=rdst)]
+        
 
-        return [self.pack_header(opcode, r1=rdst)]
+
+        return [self.pack_header(opcode, r1=rdst)] #it handles IN and POP
 
     def encode_two_operand(self, instr: Instruction) -> List[int]:
         if len(instr.operands) < 2:
@@ -251,6 +257,11 @@ class Assembler:
             return [0]
 
         opcode = ISA.OPCODES[instr.mnemonic]
+        
+        # Special encoding for SWAP: opcode Rdst Rsrc Rdst
+        if instr.mnemonic == 'SWAP':
+            return [self.pack_header(opcode, r1=rdst, r2=rdst, r3=rsrc)]
+        
         return [self.pack_header(opcode, r1=rdst, r2=rsrc)]
 
     def encode_three_operand(self, instr: Instruction) -> List[int]:
@@ -356,7 +367,7 @@ class Assembler:
             offset_masked = self._validate_and_mask_16bit(
                 offset, instr.line_num)
 
-            w1 = self.pack_header(opcode, r1=rsrc1, r2=rsrc2)
+            w1 = self.pack_header(opcode, r2=rsrc2, r3=rsrc1)
             w2 = self.sign_extend_16bit(offset_masked) & 0xFFFFFFFF
             return [w1, w2]
 
