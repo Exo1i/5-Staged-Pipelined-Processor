@@ -232,6 +232,13 @@ add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/mem_read_o
 add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/mem_write_out
 add wave -radix hexadecimal sim:/fetch_decode_execute_memory_writeback_top/mem_data
 
+add wave -divider "Freeze Control"
+add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/pc_freeze
+add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/ifde_write_enable
+add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/insert_nop_ifde
+add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/freeze_control_inst/is_swap
+add wave -radix binary sim:/fetch_decode_execute_memory_writeback_top/freeze_control_inst/stall_condition
+
 # Clock + reset
 force -freeze sim:/fetch_decode_execute_memory_writeback_top/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/fetch_decode_execute_memory_writeback_top/rst 1 0, 0 {300 ps}

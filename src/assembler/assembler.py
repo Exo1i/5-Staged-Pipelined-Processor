@@ -251,6 +251,11 @@ class Assembler:
             return [0]
 
         opcode = ISA.OPCODES[instr.mnemonic]
+        
+        # Special encoding for SWAP: opcode Rdst Rsrc Rdst
+        if instr.mnemonic == 'SWAP':
+            return [self.pack_header(opcode, r1=rdst, r2=rdst, r3=rsrc)]
+        
         return [self.pack_header(opcode, r1=rdst, r2=rsrc)]
 
     def encode_three_operand(self, instr: Instruction) -> List[int]:
