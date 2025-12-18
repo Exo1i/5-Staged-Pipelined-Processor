@@ -4,6 +4,7 @@ USE IEEE.NUMERIC_STD.ALL;
 
 USE work.pipeline_data_pkg.ALL;
 USE work.control_signals_pkg.ALL;
+USE work.pkg_opcodes.ALL;
 
 ENTITY processor_top IS
   PORT (
@@ -88,6 +89,14 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL insert_nop_ifde : STD_LOGIC;
   SIGNAL insert_nop_deex : STD_LOGIC;
 
+  -- ===== Branch decision unit =====
+  SIGNAL branch_select : STD_LOGIC;
+  SIGNAL branch_target_select : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  SIGNAL flush_de : STD_LOGIC;
+  SIGNAL flush_if : STD_LOGIC;
+  SIGNAL stall_branch : STD_LOGIC;
+  SIGNAL actual_taken : STD_LOGIC;
+
   -- ===== Interrupt unit =====
   SIGNAL int_stall : STD_LOGIC;
   SIGNAL int_pass_pc_not_plus1 : STD_LOGIC;
@@ -97,17 +106,27 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
 BEGIN
 
-  -- No branches for this step
-  branch_targets.target_decode <= (OTHERS => '0');
-  branch_targets.target_execute <= (OTHERS => '0');
-  branch_targets.target_memory <= (OTHERS => '0');
+  -- Branch targets from different pipeline stages
+  branch_targets.target_decode <= decode_out.operand_b; -- Immediate/target from decode
+  branch_targets.target_execute <= idex_data_out.operand_b; -- Target computed in execute
+  branch_targets.target_memory <= (OTHERS => '0'); -- Interrupt vector (not used yet)
+
+  -- Compute actual branch taken based on CCR flags and conditional type
+  -- CCR format: [2] = Zero, [1] = Negative, [0] = Carry
+  -- ConditionalType from ID/EX: 00 = JZ (Zero), 01 = JN (Negative), 10 = JC (Carry)
+  -- Note: Both CCR flags and ConditionalType must come from the same pipeline stage
+  actual_taken <= execute_out.ccr_flags(2) WHEN idex_ctrl_out.execute_ctrl.ConditionalType = COND_ZERO ELSE -- JZ: check Zero flag
+    execute_out.ccr_flags(1) WHEN idex_ctrl_out.execute_ctrl.ConditionalType = COND_NEGATIVE ELSE -- JN: check Negative flag
+    execute_out.ccr_flags(0) WHEN idex_ctrl_out.execute_ctrl.ConditionalType = COND_CARRY ELSE -- JC: check Carry flag
+    '0'; -- Default
 
   -- Forwarding disabled (use pipeline operands)
   -- forwarding.forward_a <= FORWARD_NONE;
   -- forwarding.forward_b <= FORWARD_NONE;
   -- Forwarding unit
   forwarding_unit_inst : ENTITY work.forwarding_unit
-    PORT MAP(
+    PORT MAP
+    (
       -- Memory Stage (EX/MEM outputs)
       MemRegWrite => exmem_ctrl_out.writeback_ctrl.RegWrite,
       MemRdst => exmem_data_out.rdst1,
@@ -128,7 +147,8 @@ BEGIN
 
   -- Memory hazard unit arbitrates fetch vs memory stage access
   memory_hazard_inst : ENTITY work.memory_hazard_unit
-    PORT MAP(
+    PORT MAP
+    (
       MemRead_MEM => mem_stage_read_req,
       MemWrite_MEM => mem_stage_write_req,
       PassPC => pass_pc,
@@ -153,14 +173,16 @@ BEGIN
     mem_stage_addr;
   mem_wdata_mux <= (OTHERS => '0') WHEN pass_pc = '1' ELSE
     mem_stage_wdata;
-  mem_read_mux <= (NOT rst) WHEN pass_pc = '1' ELSE
+  -- Memory read enabled during fetch (including during reset to read reset vector)
+  mem_read_mux <= '1' WHEN pass_pc = '1' ELSE
     mem_read_out;
   mem_write_mux <= '0' WHEN pass_pc = '1' ELSE
     mem_write_out;
 
   -- Shared memory
   mem_inst : ENTITY work.memory
-    PORT MAP(
+    PORT MAP
+    (
       clk => clk,
       rst => rst,
       Address => mem_addr_mux,
@@ -196,8 +218,8 @@ BEGIN
       clk => clk,
       rst => rst,
       stall => pc_freeze,
-      BranchSelect => '0',
-      BranchTargetSelect => "00",
+      BranchSelect => branch_select,
+      BranchTargetSelect => branch_target_select,
       branch_targets => branch_targets,
       mem_data => mem_data,
       fetch_out => fetch_out,
@@ -210,7 +232,7 @@ BEGIN
       clk => clk,
       rst => rst,
       enable => ifde_write_enable,
-      flush => '0',
+      flush => flush_if,
       flush_instruction => insert_nop_ifde,
       data_in => ifid_in,
       data_out => ifid_out
@@ -274,7 +296,7 @@ BEGIN
       clk => clk,
       rst => rst,
       enable => '1',
-      flush => insert_nop_deex or '0',
+      flush => insert_nop_deex OR flush_de,
       data_in => idex_data_in,
       ctrl_in => idex_ctrl_in,
       data_out => idex_data_out,
@@ -286,7 +308,7 @@ BEGIN
         PORT MAP(
           PassPC_MEM => pass_pc,
           Stall_Interrupt => int_stall,
-          Stall_Branch => '0',
+          Stall_Branch => stall_branch,
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
           requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
@@ -317,20 +339,6 @@ BEGIN
   exmem_data_in.primary_data <= execute_out.primary_data;
   exmem_data_in.secondary_data <= execute_out.secondary_data;
   exmem_data_in.rdst1 <= execute_out.rdst;
-
-  -- exmem_ctrl_in.memory_ctrl.MemRead <= execute_ctrl_out.m_memread;
-  -- exmem_ctrl_in.memory_ctrl.MemWrite <= execute_ctrl_out.m_memwrite;
-  -- exmem_ctrl_in.memory_ctrl.SPtoMem <= execute_ctrl_out.m_sptomem;
-  -- exmem_ctrl_in.memory_ctrl.PassInterrupt(0) <= execute_ctrl_out.m_passinterrupt;
-  -- exmem_ctrl_in.memory_ctrl.PassInterrupt(1) <= '0';
-  -- exmem_ctrl_in.memory_ctrl.SP_Enable <= idex_ctrl_out.memory_ctrl.SP_Enable;
-  -- exmem_ctrl_in.memory_ctrl.SP_Function <= idex_ctrl_out.memory_ctrl.SP_Function;
-  -- exmem_ctrl_in.memory_ctrl.FlagFromMem <= idex_ctrl_out.memory_ctrl.FlagFromMem;
-  -- exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
-
-  -- exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
-  -- exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
-  -- exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
 
   exmem_ctrl_in.memory_ctrl <= idex_ctrl_out.memory_ctrl;
   exmem_ctrl_in.writeback_ctrl <= idex_ctrl_out.writeback_ctrl;
@@ -383,6 +391,28 @@ BEGIN
       mem_wb_data => memwb_data,
       wb_out => wb_out
     );
+
+
+  -- ===== Branch decision unit =====
+  branch_decision_inst : ENTITY work.branch_decision_unit
+    PORT MAP
+    (
+      -- Inputs
+      IsSoftwareInterrupt => '0', -- TODO: Connect when interrupts implemented
+      IsHardwareInterrupt => '0', -- TODO: Connect when interrupts implemented
+      UnconditionalBranch => decode_ctrl_out.decode_ctrl.IsJMP, -- JMP/CALL from decode (early detection)
+      ConditionalBranch => idex_ctrl_out.decode_ctrl.IsJMPConditional, -- Conditional branch from ID/EX (needs CCR)
+      PredictedTaken => '0', -- Static prediction: always not-taken
+      ActualTaken => actual_taken, -- Actual outcome computed from CCR flags
+      Reset => rst,
+      -- Outputs
+      BranchSelect => branch_select,
+      BranchTargetSelect => branch_target_select,
+      FlushDE => flush_de,
+      FlushIF => flush_if,
+      Stall_Branch => stall_branch
+    );
+
 
   -- Expose OUT port behavior for debugging
   out_port_en <= wb_out.port_enable;

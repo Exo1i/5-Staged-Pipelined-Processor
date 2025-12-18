@@ -28,13 +28,16 @@ END ENTITY pc;
 
 ARCHITECTURE rtl OF pc IS
     -- Internal PC register
-    SIGNAL pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0) := X"00000010";
+    SIGNAL pc_reg : STD_LOGIC_VECTOR(31 DOWNTO 0) := (OTHERS => '0');
 
     -- Next PC value
     SIGNAL pc_next : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
     -- Branch target based on BranchTargetSelect
     SIGNAL selected_branch_target : STD_LOGIC_VECTOR(31 DOWNTO 0);
+
+    -- Reset sequence: after reset falls, we need one cycle to load reset vector from mem[0]
+    SIGNAL reset_pending : STD_LOGIC := '0';
 
 BEGIN
     -- Multiplexer for branch target selection
@@ -55,9 +58,12 @@ BEGIN
     END PROCESS;
 
     -- Combinational logic for next PC value
-    PROCESS (pc_reg, BranchSelect, selected_branch_target, enable)
+    PROCESS (pc_reg, BranchSelect, selected_branch_target, enable, reset_pending, target_reset)
     BEGIN
-        IF enable = '1' THEN
+        IF reset_pending = '1' THEN
+            -- After reset: load reset vector from mem[0] (available as target_reset)
+            pc_next <= target_reset;
+        ELSIF enable = '1' THEN
             IF BranchSelect = '1' THEN
                 -- Take branch target
                 pc_next <= selected_branch_target;
@@ -71,15 +77,20 @@ BEGIN
         END IF;
     END PROCESS;
 
-    -- Sequential logic for PC register
+    -- Sequential logic for PC register and reset sequence
     PROCESS (clk, rst)
     BEGIN
         IF rst = '1' THEN
-            -- On reset, PC will be loaded from memory[0] in the next cycle
-            -- Initialize to 0 temporarily
+            -- On reset: set PC to 0 so we can read mem[0]
             pc_reg <= (OTHERS => '0');
+            reset_pending <= '1';  -- Mark that we need to load reset vector
         ELSIF rising_edge(clk) THEN
+            -- Always use pc_next for consistent timing
             pc_reg <= pc_next;
+            -- Clear reset_pending after first clock
+            IF reset_pending = '1' THEN
+                reset_pending <= '0';
+            END IF;
         END IF;
     END PROCESS;
 

@@ -155,6 +155,29 @@ class Assembler:
             self.current_address = new_address
             self.log(f".ORG directive: set address to {new_address:05X}")
             return True
+        
+        elif directive == '.DW':
+            # Data Word directive - place raw 32-bit value(s) in memory
+            # Value resolution happens in second pass to allow forward references
+            if len(operands) < 1:
+                self.error(".DW requires at least one value", line_num)
+                return True
+            
+            for operand in operands:
+                # Create a pseudo-instruction for the data word (value resolved in second pass)
+                instr = Instruction(
+                    label=None,
+                    mnemonic='.DW',
+                    operands=[operand],
+                    line_num=line_num,
+                    address=self.current_address,
+                    machine_code=None  # Will be filled in second pass
+                )
+                self.instructions.append(instr)
+                self.log(f".DW at {self.current_address:05X}: {operand} (deferred)")
+                self.current_address += 1
+            return True
+            
         return False
 
     def first_pass(self, lines: List[str]):
@@ -433,6 +456,21 @@ class Assembler:
     def second_pass(self):
         self.log("Starting second pass...")
         for instr in self.instructions:
+            # Handle .DW - resolve value now that symbol table is complete
+            if instr.mnemonic == '.DW':
+                operand = instr.operands[0]
+                if operand in self.symbol_table:
+                    value = self.symbol_table[operand]
+                else:
+                    value = self.parse_number(operand)
+                    if value is None:
+                        self.error(f"Invalid value for .DW: '{operand}'", instr.line_num)
+                        instr.machine_code = [0]
+                        continue
+                instr.machine_code = [value & 0xFFFFFFFF]
+                self.log(f"Addr {instr.address:05X}: .DW   {operand:15s} -> {value:08X}")
+                continue
+                
             machine_code = self.encode_instruction(instr)
             instr.machine_code = machine_code
 
