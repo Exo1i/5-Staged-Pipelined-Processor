@@ -41,10 +41,8 @@ begin
         memory_sig   := MEMORY_CTRL_DEFAULT;
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
-        -- Handle SWAP second cycle override FIRST (highest priority)
-        if requireImmediate = '1' then
-            --noop
-        elsif isSwap_from_execute = '1' then
+       
+        if isSwap_from_execute = '1' then
             -- Second cycle of SWAP: Complete the exchange with another MOV
             decode_sig.OutBSelect       := OUTB_REGFILE;
             execute_sig.ALU_Operation   := ALU_PASS_A;
@@ -93,6 +91,9 @@ begin
                     null;
             end case;
             
+        elsif requireImmediate = '1' then
+            -- Immediate instruction required but no override - treat as NOP
+            null;    
         else
             -- Normal Opcode Decoding
             case opcode is
@@ -287,7 +288,7 @@ begin
                 when OP_INT =>
                     -- INT index: Software Interrupt
                     decode_sig.IsInterrupt      := '1';
-                    -- decode_sig.RequireImmediate := '1';
+                    decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
                     execute_sig.ALU_Operation   := ALU_PASS_B;

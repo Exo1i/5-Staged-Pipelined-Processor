@@ -25,7 +25,7 @@ START:
     LDM R1, 7
     PUSH R1
     PUSH R0
-    RTI
+    INT 1
     NOP
     NOP
     NOP
