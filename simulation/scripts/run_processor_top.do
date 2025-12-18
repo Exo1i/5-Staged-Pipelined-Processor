@@ -286,7 +286,6 @@ add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsHardwareInt_MEM
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/any_interrupt_operation
 
 # Clock + reset
 force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100

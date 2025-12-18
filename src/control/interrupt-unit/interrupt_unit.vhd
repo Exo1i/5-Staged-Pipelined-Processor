@@ -32,25 +32,16 @@ ENTITY interrupt_unit IS
 END interrupt_unit;
 
 ARCHITECTURE Behavioral OF interrupt_unit IS
-    SIGNAL any_interrupt_operation : STD_LOGIC;
 BEGIN
-
-    -- Detect if any interrupt-related operation is active
-    any_interrupt_operation <= IsInterrupt_DE OR IsInterrupt_EX OR
-        IsReti_DE OR
-        IsCall_DE OR
-        IsReturn_DE OR
-        IsReti_EX OR
-        IsRet_EX OR
-        HardwareInterrupt;
 
     -- Stall signal: active during any interrupt processing
     -- This goes to Freeze Control to freeze fetch and PC
-    Stall <= any_interrupt_operation;
-
-    -- Override operation: active when we need to force push/pop
-    OverrideOperation <= any_interrupt_operation;
-
+    Stall <= IsInterrupt_DE OR IsInterrupt_EX OR
+             IsReti_DE      OR IsReti_EX      OR
+             IsReturn_DE    OR IsRet_EX       OR
+             IsCall_DE      OR
+             HardwareInterrupt;
+        
     -- Hardware interrupt handling
     -- When hardware interrupt occurs, signal decoder to treat as interrupt
     -- This will be written to IF/DE register
@@ -63,11 +54,11 @@ BEGIN
     IsHardwareIntMEM_Out <= IsHardwareInt_MEM;
 
     -- Determine override type based on priority
-    PROCESS (IsInterrupt_DE, IsInterrupt_EX, IsReti_DE,
-        IsCall_DE, IsReturn_DE)
+    PROCESS (IsInterrupt_DE, IsInterrupt_EX, IsReti_DE, IsCall_DE, IsReturn_DE)
     BEGIN
         -- Default to PUSH_PC (doesn't matter since OverrideOperation will be '0')
         OverrideType <= OVERRIDE_PUSH_PC;
+        OverrideOperation <= '0';
 
         -- Priority: Hardware interrupt during fetch doesn't override yet (it goes through TakeInterrupt)
         -- Once interrupt is in decode/execute, handle normally
@@ -75,23 +66,27 @@ BEGIN
         IF IsInterrupt_DE = '1' THEN
             -- Interrupt (SW or HW) in decode: First cycle - push PC
             OverrideType <= OVERRIDE_PUSH_FLAGS;
+            OverrideOperation <= '1';
 
         ELSIF IsInterrupt_EX = '1' THEN
             -- Interrupt (SW or HW) in execute: Second cycle - push FLAGS
             OverrideType <= OVERRIDE_PUSH_PC;
+            OverrideOperation <= '1';
 
         ELSIF IsReti_DE = '1'  THEN
             -- Return from interrupt in decode: First cycle - pop FLAGS (opposite order!)
             OverrideType <= OVERRIDE_POP_FLAGS;
+            OverrideOperation <= '1';
 
         ELSIF IsCall_DE = '1' THEN
             -- CALL instruction: Only push PC (single cycle)
             OverrideType <= OVERRIDE_PUSH_PC;
+            OverrideOperation <= '1';
 
         ELSIF IsReturn_DE = '1' THEN
             -- RET instruction: Only pop PC (single cycle)
             OverrideType <= OVERRIDE_POP_PC;
-
+            OverrideOperation <= '1';
         END IF;
     END PROCESS;
 

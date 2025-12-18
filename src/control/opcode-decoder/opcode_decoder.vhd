@@ -268,14 +268,16 @@ begin
                     decode_sig.IsCall           := '1';
                     decode_sig.RequireImmediate := '1';
                     decode_sig.IsJMP            := '1';
-                    decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.PassImm         := '1';
+                    memory_sig.SP_Enable        := '1';
+                    memory_sig.SP_Function      := '0';  -- Decrement
+                    memory_sig.SPtoMem          := '1';
+                    memory_sig.MemWrite         := '1';
+                    decode_sig.OutBSelect       := OUTB_PUSHED_PC;
                     -- PUSH_PC will be handled by InterruptUnit via override
                     
                 when OP_RET =>
                     -- RET: Pop PC
                     decode_sig.IsReturn         := '1';
-                    decode_sig.IsReti     := '1';
                     memory_sig.SP_Enable  := '1';
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
