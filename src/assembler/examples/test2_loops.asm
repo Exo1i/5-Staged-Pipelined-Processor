@@ -14,7 +14,7 @@ LOOP:
     OUT R0
     INC R0
     SUB R2, R1, R0
-    ;JZ END
+    JZ END
     JMP LOOP
     
 END:

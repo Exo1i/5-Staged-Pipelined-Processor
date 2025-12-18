@@ -158,7 +158,6 @@ add wave -radix unsigned sim:/processor_top/execute_out.rdst
 add wave -radix binary sim:/processor_top/execute_out.ccr_flags
 add wave -radix binary  sim:/processor_top/execute_inst/In_A
 add wave -radix binary  sim:/processor_top/execute_inst/In_B
-add wave -radix binary  sim:/processor_top/execute_inst/In_B
 add wave -radix binary  sim:/processor_top/execute_inst/forwarded_B
 add wave -radix binary  sim:/processor_top/execute_inst/forwarding
 

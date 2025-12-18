@@ -100,7 +100,7 @@ BEGIN
 
   -- Branch targets from different pipeline stages
   branch_targets.target_decode <= decode_out.operand_b; -- Immediate/target from decode
-  branch_targets.target_execute <= execute_out.primary_data; -- Target computed in execute
+  branch_targets.target_execute <= idex_data_out.operand_b; -- Target computed in execute
   branch_targets.target_memory <= (OTHERS => '0'); -- Interrupt vector (not used yet)
 
   -- Compute actual branch taken based on CCR flags and conditional type
