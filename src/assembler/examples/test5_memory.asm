@@ -1,8 +1,9 @@
 ; Test 5: Memory Operations
 ; Tests: LDD, STD with offsets
 
+; Reset vector
 .ORG 0x0000
-    JMP MAIN
+.DW MAIN                ; Reset vector
 
 .ORG 0x0010
 MAIN:

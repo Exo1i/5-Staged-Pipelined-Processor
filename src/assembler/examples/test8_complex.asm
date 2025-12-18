@@ -5,11 +5,11 @@
 
 ; Reset vector - PC starts from address stored at location 0
 .ORG 0x0000
-    JMP MAIN        ; Jump to main program
+.DW MAIN                ; Reset vector
 
-; Interrupt vector - PC loads from location 1 on interrupt
+; Interrupt vector - PC loads from this location on interrupt
 .ORG 0x0002
-    JMP ISR         ; Jump to interrupt service routine
+.DW ISR                 ; Interrupt vector
 
 ; ============================================================
 ; Main Program - Starts at address 0x0100

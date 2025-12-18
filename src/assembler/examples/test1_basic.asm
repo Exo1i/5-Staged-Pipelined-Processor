@@ -2,10 +2,10 @@
 ; Tests: NOP, HLT, SETC, arithmetic, output
 
 .ORG 0x0000
-    JMP START
+.DW MAIN                ; Reset vector
 
 .ORG 0x0010
-START:
+MAIN:
     NOP
     SETC
     LDM R0, 10
