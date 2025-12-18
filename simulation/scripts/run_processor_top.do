@@ -58,6 +58,9 @@ vcom -2008 ./src/control/forwarding-unit/forwarding_unit.vhd
 # Freezing unit 
 vcom -2008 ./src/control/freeze-control/freeze_control.vhd
 
+# Branch decision unit
+vcom -2008 ./src/control/branch-control/branch-decision-unit/branch_decision_unit.vhd
+
 # Top
 vcom -2008 ./src/processor_top.vhd
 
@@ -256,6 +259,23 @@ add wave -radix binary sim:/processor_top/insert_nop_deex
 add wave -radix binary sim:/processor_top/freeze_control_inst/is_swap
 add wave -radix binary sim:/processor_top/freeze_control_inst/requireImmediate
 add wave -radix binary sim:/processor_top/freeze_control_inst/stall_condition
+
+add wave -divider "Branch Decision Unit"
+add wave -radix binary sim:/processor_top/branch_select
+add wave -radix binary sim:/processor_top/branch_target_select
+add wave -radix binary sim:/processor_top/flush_if
+add wave -radix binary sim:/processor_top/flush_de
+add wave -radix binary sim:/processor_top/stall_branch
+add wave -radix binary sim:/processor_top/actual_taken
+add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMP
+add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMPConditional
+add wave -radix binary sim:/processor_top/idex_ctrl_out.execute_ctrl.ConditionalType
+add wave -radix binary sim:/processor_top/execute_out.ccr_flags
+
+add wave -divider "Branch Targets"
+add wave -radix hexadecimal sim:/processor_top/branch_targets.target_decode
+add wave -radix hexadecimal sim:/processor_top/branch_targets.target_execute
+add wave -radix hexadecimal sim:/processor_top/branch_targets.target_memory
 
 # Clock + reset
 force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100

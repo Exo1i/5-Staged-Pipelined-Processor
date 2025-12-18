@@ -24,17 +24,19 @@ end branch_decision_unit;
 
 architecture Behavioral of branch_decision_unit is
     
-    signal misprediction : std_logic;
+    -- Dynamic prediction signals (commented out for static prediction)
+    -- signal misprediction : std_logic;
     signal take_branch   : std_logic;
     
 begin
     
-    -- Detect branch misprediction
-    misprediction <= ConditionalBranch and (PredictedTaken xor ActualTaken);
+    -- Dynamic prediction: Detect branch misprediction
+    -- misprediction <= ConditionalBranch and (PredictedTaken xor ActualTaken);
     
     -- Determine if we should take a branch
+    -- Static prediction: Always predict not-taken, resolve in execute stage
     process(Reset, IsHardwareInterrupt, IsSoftwareInterrupt, UnconditionalBranch, 
-            ConditionalBranch, ActualTaken, misprediction)
+            ConditionalBranch, ActualTaken)
     begin
         -- Default values
         take_branch <= '0';
@@ -45,10 +47,12 @@ begin
         
         -- Priority-based decision
         if Reset = '1' then
-            -- Highest priority: Reset
-            take_branch <= '1';
-            BranchTargetSelect <= TARGET_RESET;
-            FlushDE <= '1';
+            -- During reset: output neutral signals
+            -- PC module handles reset internally (resets to 0)
+            -- Don't try to branch to target_reset which may be undefined
+            take_branch <= '0';
+            BranchTargetSelect <= TARGET_DECODE;
+            FlushDE <= '1';  -- Still flush pipeline
             FlushIF <= '1';
             
         elsif IsHardwareInterrupt = '1' then
@@ -72,18 +76,27 @@ begin
             FlushDE <= '1';
             FlushIF <= '1';
             
-        elsif misprediction = '1' then
-            -- Branch misprediction detected
-            take_branch <= ActualTaken;  -- Take branch based on actual outcome
-            BranchTargetSelect <= TARGET_EXECUTE;  -- Use immediate from execute
-            FlushDE <= '1';  -- Flush decode stage
-            FlushIF <= '1';  -- Flush fetch stage
-            
+        -- Static prediction: branch is taken when ActualTaken is true
+        -- (we always predicted not-taken, so flush and redirect if actually taken)
         elsif ConditionalBranch = '1' and ActualTaken = '1' then
-            -- Conditional branch correctly predicted as taken
             take_branch <= '1';
-            BranchTargetSelect <= TARGET_EXECUTE;  -- Use immediate from execute
-            -- No flush needed if prediction was correct
+            BranchTargetSelect <= TARGET_EXECUTE;  -- Use target from execute
+            FlushDE <= '1';  -- Flush decode stage (wrong path)
+            FlushIF <= '1';  -- Flush fetch stage (wrong path)
+            
+        -- Dynamic prediction logic (commented out):
+        -- elsif misprediction = '1' then
+        --     -- Branch misprediction detected
+        --     take_branch <= ActualTaken;  -- Take branch based on actual outcome
+        --     BranchTargetSelect <= TARGET_EXECUTE;  -- Use immediate from execute
+        --     FlushDE <= '1';  -- Flush decode stage
+        --     FlushIF <= '1';  -- Flush fetch stage
+        --     
+        -- elsif ConditionalBranch = '1' and ActualTaken = '1' then
+        --     -- Conditional branch correctly predicted as taken
+        --     take_branch <= '1';
+        --     BranchTargetSelect <= TARGET_EXECUTE;  -- Use immediate from execute
+        --     -- No flush needed if prediction was correct
             
         end if;
     end process;
