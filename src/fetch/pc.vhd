@@ -20,8 +20,10 @@ ENTITY pc IS
         target_memory : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- Interrupt address from memory
         target_reset : IN STD_LOGIC_VECTOR(31 DOWNTO 0); -- Reset vector from memory[0]
 
+
         -- Output
         pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0); -- Current PC value
+        pc_nxt: OUT STD_LOGIC_VECTOR(31 DOWNTO 0); -- Next PC value
         pc_plus_one : OUT STD_LOGIC_VECTOR(31 DOWNTO 0) -- PC + 1 for CALL/INT
     );
 END ENTITY pc;
@@ -63,14 +65,12 @@ BEGIN
         IF reset_pending = '1' THEN
             -- After reset: load reset vector from mem[0] (available as target_reset)
             pc_next <= target_reset;
+        ELSIF BranchSelect = '1' THEN
+            -- Take branch target
+            pc_next <= selected_branch_target;
         ELSIF enable = '1' THEN
-            IF BranchSelect = '1' THEN
-                -- Take branch target
-                pc_next <= selected_branch_target;
-            ELSE
-                -- Normal increment (PC + 1)
-                pc_next <= STD_LOGIC_VECTOR(UNSIGNED(pc_reg) + 1);
-            END IF;
+            -- Normal increment (PC + 1)
+            pc_next <= STD_LOGIC_VECTOR(UNSIGNED(pc_reg) + 1);
         ELSE
             -- Hold current value when disabled (HLT or stall)
             pc_next <= pc_reg;
@@ -96,6 +96,7 @@ BEGIN
 
     -- Output assignments
     pc_out <= pc_reg;
+    pc_nxt <= pc_next;
     pc_plus_one <= STD_LOGIC_VECTOR(UNSIGNED(pc_reg) + 2);
 
 END ARCHITECTURE rtl;

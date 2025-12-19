@@ -77,6 +77,8 @@ add wave -radix binary sim:/processor_top/rst
 add wave -radix hexadecimal sim:/processor_top/in_port
 add wave -radix hexadecimal sim:/processor_top/out_port
 add wave -radix binary sim:/processor_top/out_port_en
+add wave -radix binary sim:/processor_top/hardware_interrupt
+
 
 add wave -divider "Fetch"
 add wave -radix hexadecimal sim:/processor_top/fetch_out.pc
@@ -91,6 +93,17 @@ add wave -radix hexadecimal sim:/processor_top/ifid_out.pc
 add wave -radix hexadecimal sim:/processor_top/ifid_out.pushed_pc
 add wave -radix hexadecimal sim:/processor_top/ifid_out.instruction
 
+# IF/ID Register internals
+add wave -divider "IF/ID Register Internals"
+add wave -radix binary sim:/processor_top/ifid_inst/flush_instruction
+add wave -radix binary sim:/processor_top/ifid_inst/enable
+add wave -radix binary sim:/processor_top/ifid_inst/data_reg.take_interrupt
+add wave -radix binary sim:/processor_top/ifid_inst/data_reg.override_operation
+add wave -radix binary sim:/processor_top/ifid_inst/data_reg.override_op
+add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.pc
+add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.pushed_pc
+add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.instruction
+
 add wave -divider "Decode"
 add wave -radix hexadecimal sim:/processor_top/decode_out.pc
 add wave -radix hexadecimal sim:/processor_top/decode_out.pushed_pc
@@ -101,6 +114,22 @@ add wave -radix hexadecimal sim:/processor_top/decode_out.immediate
 add wave -radix unsigned sim:/processor_top/decode_out.rsrc1
 add wave -radix unsigned sim:/processor_top/decode_out.rsrc2
 add wave -radix unsigned sim:/processor_top/decode_out.rd
+
+# Divider for opcode_decoder signals
+add wave -divider "Opcode Decoder"
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/opcode
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/override_operation
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/override_type
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/isSwap_from_execute
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/take_interrupt
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_hardware_int_mem
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/requireImmediate
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/decode_ctrl
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/execute_ctrl
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/memory_ctrl
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/writeback_ctrl
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_jmp_out
+add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_jmp_conditional_out
 
 add wave -divider "Register File"
 add wave -radix unsigned sim:/processor_top/decode_inst/reg_file_inst/Ra
@@ -269,11 +298,20 @@ add wave -radix binary sim:/processor_top/insert_nop_ifde
 add wave -radix binary sim:/processor_top/insert_nop_deex
 add wave -radix binary sim:/processor_top/freeze_control_inst/is_swap
 add wave -radix binary sim:/processor_top/freeze_control_inst/requireImmediate
-add wave -radix binary sim:/processor_top/freeze_control_inst/stall_condition
+
+add wave -radix binary sim:/processor_top/freeze_control_inst/PassPC_MEM
+add wave -radix binary sim:/processor_top/freeze_control_inst/Stall_Interrupt
+add wave -radix binary sim:/processor_top/freeze_control_inst/Stall_Branch
+add wave -radix binary sim:/processor_top/freeze_control_inst/is_hlt
+add wave -radix binary sim:/processor_top/freeze_control_inst/PC_Freeze
+add wave -radix binary sim:/processor_top/freeze_control_inst/IFDE_WriteEnable
+add wave -radix binary sim:/processor_top/freeze_control_inst/InsertNOP_IFDE
+add wave -radix binary sim:/processor_top/freeze_control_inst/InsertNOP_DEEX
 
 add wave -divider "Interrupt Unit"
 add wave -radix binary sim:/processor_top/hardware_interrupt
 add wave -radix binary sim:/processor_top/int_stall
+add wave -radix binary sim:/processor_top/memory_hazard_int
 add wave -radix binary sim:/processor_top/int_pass_pc_not_plus1
 add wave -radix binary sim:/processor_top/int_take_interrupt
 add wave -radix binary sim:/processor_top/int_is_hardware_int_mem
@@ -283,11 +321,18 @@ add wave -radix binary sim:/processor_top/int_override_type
 add wave -divider "Interrupt Unit Internal"
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_DE
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReturn_DE
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_EX
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_EX
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_EX
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsHardwareInt_MEM
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_MEM
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_MEM
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_MEM
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_MEM
+
+
 add wave -divider "Branch Decision Unit"
 add wave -radix binary sim:/processor_top/branch_select
 add wave -radix binary sim:/processor_top/branch_target_select
@@ -298,19 +343,55 @@ add wave -radix binary sim:/processor_top/actual_taken
 add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMP
 add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMPConditional
 add wave -radix binary sim:/processor_top/idex_ctrl_out.execute_ctrl.ConditionalType
-add wave -radix binary sim:/processor_top/execute_out.ccr_flags
 
 add wave -divider "Branch Targets"
 add wave -radix hexadecimal sim:/processor_top/branch_targets.target_decode
 add wave -radix hexadecimal sim:/processor_top/branch_targets.target_execute
 add wave -radix hexadecimal sim:/processor_top/branch_targets.target_memory
 
+
+# Divider for fetch_stage signals
+add wave -divider "fetch_stage Signals"
+add wave -radix binary sim:/processor_top/fetch_inst/clk
+add wave -radix binary sim:/processor_top/fetch_inst/rst
+add wave -radix binary sim:/processor_top/fetch_inst/stall
+add wave -radix binary sim:/processor_top/fetch_inst/BranchSelect
+add wave -radix binary sim:/processor_top/fetch_inst/BranchTargetSelect
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/branch_targets
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/mem_data
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/fetch_out
+add wave -radix binary sim:/processor_top/fetch_inst/PushPCSelect
+add wave -radix binary sim:/processor_top/fetch_inst/pc_enable
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/current_pc
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_plus_one
+
+# Divider for pc signals (internal to fetch_stage)
+add wave -divider "pc Signals"
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/clk
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/rst
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/BranchSelect
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/BranchTargetSelect
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/enable
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_decode
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_execute
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_memory
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_reset
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_out
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_plus_one
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_reg
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_next
+add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/selected_branch_target
+add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/reset_pending
+
+
+
+
 # Clock + reset
 force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/processor_top/rst 1 0, 0 {300 ps}
 force -freeze sim:/processor_top/in_port 16#00000000 0
 force -freeze sim:/processor_top/in_port 16#12345678 0
-force -freeze sim:/processor_top/hardware_interrupt 0 0
+force -freeze sim:/processor_top/hardware_interrupt 0 0, 1 2600ps, 0 2700ps
 
 run 30000 ps
 

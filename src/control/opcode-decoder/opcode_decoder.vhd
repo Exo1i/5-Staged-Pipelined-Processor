@@ -41,8 +41,14 @@ begin
         memory_sig   := MEMORY_CTRL_DEFAULT;
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
-       
-        if isSwap_from_execute = '1' then
+       -- Handle take_interrupt signal (from interrupt unit for hardware interrupt)
+        if take_interrupt = '1' then
+            -- Treat as software interrupt (INT instruction)
+            decode_sig.IsInterrupt      := '1';
+            memory_sig.PassInterrupt    := PASS_INT_HARDWARE;  
+            memory_sig.MemRead          := '1';
+            memory_sig.IsInterrupt    := '1';
+        elsif isSwap_from_execute = '1' then
             -- Second cycle of SWAP: Complete the exchange with another MOV
             decode_sig.OutBSelect       := OUTB_REGFILE;
             execute_sig.ALU_Operation   := ALU_PASS_A;
@@ -78,14 +84,9 @@ begin
                     memory_sig.MemRead    := '1';
                     memory_sig.MemToCCR   := '1';
                     
-                when OVERRIDE_POP_PC =>
-                    -- POP PC: PC = MEM[SP], SP++
-                    memory_sig.SP_Enable  := '1';
-                    memory_sig.SP_Function:= '1';  -- Increment
-                    memory_sig.SPtoMem    := '1';
-                    memory_sig.MemRead    := '1';
-                    writeback_sig.PassMem:= '1';
-                    -- Branch logic handled by branch control
+                when OVERRIDE_NOP =>
+                    -- NOP Override: Do nothing (all defaults)
+                    null;
                     
                 when others =>
                     null;
@@ -292,6 +293,8 @@ begin
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
                     execute_sig.ALU_Operation   := ALU_PASS_B;
+                    memory_sig.MemRead          := '1';
+                    memory_sig.IsInterrupt    := '1';
                     -- Push PC and FLAGS handled by InterruptUnit
                     
                 when OP_RTI =>
@@ -301,6 +304,7 @@ begin
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
                     memory_sig.MemRead    := '1';
+                    memory_sig.IsReti      := '1';
                     -- POP_FLAGS and POP_PC handled by InterruptUnit via override
                     
                 when others =>
@@ -309,24 +313,10 @@ begin
                     null;
             end case;
             
-            -- Handle take_interrupt signal (from interrupt unit for hardware interrupt)
-            if take_interrupt = '1' then
-                -- Treat as software interrupt (INT instruction)
-                decode_sig.IsInterrupt      := '1';
-                decode_sig.IsHardwareInterrupt := '1';  -- Mark as hardware for pipeline tracking
-                decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                execute_sig.PassImm         := '1';
-                -- PassInterrupt will be set in memory stage based on is_hardware_int_mem
-            end if;
+            
         end if;
         
-        -- Handle PassInterrupt based on hardware interrupt in memory stage
-        if is_hardware_int_mem = '1' then
-            -- Hardware interrupt in memory stage: use hardware interrupt vector
-            memory_sig.PassInterrupt := PASS_INT_HARDWARE;
-        end if;
-        -- Note: Software interrupt sets PASS_INT_SOFTWARE during normal decode
-        
+                
         -- Assign control outputs
         decode_ctrl    <= decode_sig;
         execute_ctrl   <= execute_sig;

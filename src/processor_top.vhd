@@ -94,6 +94,7 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL branch_target_select : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL flush_de : STD_LOGIC;
   SIGNAL flush_if : STD_LOGIC;
+  SIGNAL flush_ex : STD_LOGIC;
   SIGNAL stall_branch : STD_LOGIC;
   SIGNAL actual_taken : STD_LOGIC;
 
@@ -104,12 +105,13 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL int_is_hardware_int_mem : STD_LOGIC;
   SIGNAL int_override_operation : STD_LOGIC;
   SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  SIGNAL memory_hazard_int : STD_LOGIC;
 BEGIN
 
   -- Branch targets from different pipeline stages
   branch_targets.target_decode <= decode_out.operand_b; -- Immediate/target from decode
   branch_targets.target_execute <= idex_data_out.operand_b; -- Target computed in execute
-  branch_targets.target_memory <= (OTHERS => '0'); -- Interrupt vector (not used yet)
+  branch_targets.target_memory <= mem_data;
 
   -- Compute actual branch taken based on CCR flags and conditional type
   -- CCR format: [2] = Zero, [1] = Negative, [0] = Carry
@@ -159,13 +161,7 @@ BEGIN
   -- When MEM stage is using memory, stall the front-end (fetch + if/id + id/ex)
   front_enable <= pass_pc;
 
-  -- IF/ID pack
-  ifid_in.take_interrupt <= int_take_interrupt;
-  ifid_in.override_operation <= int_override_operation;
-  ifid_in.override_op <= int_override_type;
-  ifid_in.pc <= fetch_out.pc;
-  ifid_in.pushed_pc <= fetch_out.pushed_pc;
-  ifid_in.instruction <= fetch_out.instruction;
+
 
   -- ===== Memory muxing =====
   -- If PassPC=1 -> Fetch uses memory. If PassPC=0 -> Memory stage uses memory.
@@ -195,16 +191,22 @@ BEGIN
   -- ===== Interrupt unit =====
   interrupt_unit_inst : ENTITY work.interrupt_unit
     PORT MAP(
-      IsInterrupt_DE => decoder_ctrl.decode_ctrl.IsInterrupt,
-      IsCall_DE => decoder_ctrl.decode_ctrl.IsCall,
-      IsReturn_DE => decoder_ctrl.decode_ctrl.IsReturn,
-      IsReti_DE => decoder_ctrl.decode_ctrl.IsReti,
+      IsInterrupt_DE => decode_ctrl_out.decode_ctrl.IsInterrupt,
+      IsCall_DE => decode_ctrl_out.decode_ctrl.IsCall,
+      IsRet_DE => decode_ctrl_out.decode_ctrl.IsReturn, 
+      IsReti_DE => decode_ctrl_out.decode_ctrl.IsReti,
       IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
       IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
       IsRet_EX => idex_ctrl_out.decode_ctrl.IsReturn,
+      IsCall_EX => idex_ctrl_out.decode_ctrl.IsCall,
+      IsInterrupt_MEM => exmem_ctrl_out.memory_ctrl.IsInterrupt,
+      IsCall_MEM => exmem_ctrl_out.memory_ctrl.IsCall,
+      IsRet_MEM => exmem_ctrl_out.memory_ctrl.IsReturn,
+      IsReti_MEM => exmem_ctrl_out.memory_ctrl.IsReti,
       IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),
       HardwareInterrupt => hardware_interrupt,
-      Stall => int_stall,
+      freeze_fetch => int_stall,
+      memory_hazard => memory_hazard_int,
       PassPC_NotPCPlus1 => int_pass_pc_not_plus1,
       TakeInterrupt => int_take_interrupt,
       IsHardwareIntMEM_Out => int_is_hardware_int_mem,
@@ -226,14 +228,19 @@ BEGIN
       PushPCSelect => int_pass_pc_not_plus1
     );
 
+  ifid_in.take_interrupt <= hardware_interrupt; 
+  ifid_in.override_operation <= int_override_operation;
+  ifid_in.override_op <= int_override_type;
+  ifid_in.pc <= fetch_out.pc;
+  ifid_in.pushed_pc <= fetch_out.pushed_pc;
+  ifid_in.instruction <= fetch_out.instruction;
   -- ===== IF/ID register =====
   ifid_inst : ENTITY work.if_id_register
     PORT MAP(
       clk => clk,
       rst => rst,
       enable => ifde_write_enable,
-      flush => flush_if,
-      flush_instruction => insert_nop_ifde,
+      flush_instruction => insert_nop_ifde or flush_if,
       data_in => ifid_in,
       data_out => ifid_out
     );
@@ -264,8 +271,8 @@ BEGIN
     opcode_decoder_inst : ENTITY work.opcode_decoder
       PORT MAP(
         opcode => decode_out.opcode,
-        override_operation => ifid_out.override_operation,
-        override_type => ifid_out.override_op,
+        override_operation => int_override_operation,
+        override_type => int_override_type,
         isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
         take_interrupt => ifid_out.take_interrupt,
         is_hardware_int_mem => int_is_hardware_int_mem,
@@ -302,7 +309,6 @@ BEGIN
       data_out => idex_data_out,
       ctrl_out => idex_ctrl_out
       );
-      
       -- Freeze control unit manages pipeline stalls
       freeze_control_inst : ENTITY work.freeze_control
         PORT MAP(
@@ -311,7 +317,8 @@ BEGIN
           Stall_Branch => stall_branch,
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
-          requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
+          requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
+          memory_hazard_int => memory_hazard_int,
           PC_Freeze => pc_freeze,
           IFDE_WriteEnable => ifde_write_enable,
           InsertNOP_IFDE => insert_nop_ifde,
@@ -398,8 +405,9 @@ BEGIN
     PORT MAP
     (
       -- Inputs
-      IsSoftwareInterrupt => '0', -- TODO: Connect when interrupts implemented
-      IsHardwareInterrupt => '0', -- TODO: Connect when interrupts implemented
+      IsSoftwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and not exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Software interrupt from EX/MEM
+      IsHardwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and  exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Hardware interrupt from EX/MEM
+      IsRTI => exmem_ctrl_out.memory_ctrl.IsRetI, -- Return from interrupt
       UnconditionalBranch => decode_ctrl_out.decode_ctrl.IsJMP, -- JMP/CALL from decode (early detection)
       ConditionalBranch => idex_ctrl_out.decode_ctrl.IsJMPConditional, -- Conditional branch from ID/EX (needs CCR)
       PredictedTaken => '0', -- Static prediction: always not-taken
@@ -410,6 +418,7 @@ BEGIN
       BranchTargetSelect => branch_target_select,
       FlushDE => flush_de,
       FlushIF => flush_if,
+      FlushEX => flush_ex,
       Stall_Branch => stall_branch
     );
 

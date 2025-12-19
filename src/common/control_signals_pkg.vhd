@@ -37,6 +37,10 @@ PACKAGE control_signals_pkg IS
         MemWrite : STD_LOGIC; -- Memory write enable
         MemToCCR : STD_LOGIC; -- Load flags from memory (POP FLAGS)
         IsSwap : STD_LOGIC; -- SWAP in memory (disable forwarding)
+        IsInterrupt : STD_LOGIC; -- Interrupt being processed
+        IsReturn : STD_LOGIC; -- RET instruction
+        IsCall : STD_LOGIC; -- CALL instruction
+        IsReti : STD_LOGIC; -- RTI instruction
     END RECORD;
 
     -- WRITEBACK Stage Control Signals
@@ -77,7 +81,11 @@ PACKAGE control_signals_pkg IS
         MemRead => '0',
         MemWrite => '0',
         MemToCCR => '0',
-        IsSwap => '0'
+        IsSwap => '0',
+        IsInterrupt => '0',
+        IsReturn => '0',
+        IsCall => '0',
+        IsReti => '0'
     );
 
     CONSTANT WRITEBACK_CTRL_DEFAULT : writeback_control_t := (

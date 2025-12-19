@@ -5,15 +5,21 @@ USE work.pkg_opcodes.ALL;
 ENTITY interrupt_unit IS
     PORT (
         -- Inputs from DECODE stage
-        IsInterrupt_DE : IN STD_LOGIC; -- Software/Hardware interrupt in decode
-        IsCall_DE : IN STD_LOGIC; -- CALL instruction in decode
-        IsReturn_DE : IN STD_LOGIC; -- RET instruction in decode
-        IsReti_DE : IN STD_LOGIC; -- RTI instruction in decode
+        IsInterrupt_DE : IN STD_LOGIC; -- Software/Hardware interrupt in fetch
+        IsCall_DE : IN STD_LOGIC; -- CALL instruction in fetch
+        IsRet_DE : IN STD_LOGIC; -- RET instruction in fetch
+        IsReti_DE : IN STD_LOGIC; -- RTI instruction in fetch
+
+        IsInterrupt_EX : IN STD_LOGIC; -- Software/Hardware interrupt in decode
+        IsCall_EX : IN STD_LOGIC; -- CALL instruction in decode
+        IsRet_EX : IN STD_LOGIC; -- RET instruction in decode
+        IsReti_EX : IN STD_LOGIC; -- RTI instruction in decode
 
         -- Inputs from DE/EX pipeline register (signals in EXECUTE stage)
-        IsInterrupt_EX : IN STD_LOGIC; -- Software/Hardware interrupt in execute
-        IsReti_EX : IN STD_LOGIC; -- RTI instruction in execute
-        IsRet_EX : IN STD_LOGIC; -- RET instruction in execute
+        IsInterrupt_MEM : IN STD_LOGIC; -- Software/Hardware interrupt in execute
+        IsCall_MEM : IN STD_LOGIC; -- CALL instruction in execute
+        IsReti_MEM : IN STD_LOGIC; -- RTI instruction in execute
+        IsRet_MEM : IN STD_LOGIC; -- RET instruction in execute
 
         -- Inputs from EX/MEM pipeline register (signals in MEMORY stage)
         IsHardwareInt_MEM : IN STD_LOGIC; -- Hardware interrupt flag in memory
@@ -22,7 +28,8 @@ ENTITY interrupt_unit IS
         HardwareInterrupt : IN STD_LOGIC; -- External hardware interrupt signal
 
         -- Outputs
-        Stall : OUT STD_LOGIC; -- Stall signal to Freeze Control
+        freeze_fetch : OUT STD_LOGIC; -- Stall signal to Freeze Control
+        memory_hazard : OUT STD_LOGIC; -- Memory hazard signal to Hazard Unit
         PassPC_NotPCPlus1 : OUT STD_LOGIC; -- For hardware interrupt (pass current PC)
         TakeInterrupt : OUT STD_LOGIC; -- Signal decoder to treat as interrupt
         IsHardwareIntMEM_Out : OUT STD_LOGIC; -- Hardware interrupt in memory (to decoder)
@@ -36,11 +43,18 @@ BEGIN
 
     -- Stall signal: active during any interrupt processing
     -- This goes to Freeze Control to freeze fetch and PC
-    Stall <= IsInterrupt_DE OR IsInterrupt_EX OR
-             IsReti_DE      OR IsReti_EX      OR
-             IsReturn_DE    OR IsRet_EX       OR
-             IsCall_DE      OR
-             HardwareInterrupt;
+    freeze_fetch <= IsCall_EX  OR IsInterrupt_EX    OR
+                IsReti_MEM     OR IsReti_EX         OR
+                IsRet_MEM      OR IsRet_EX          OR
+                IsCall_MEM     OR  IsInterrupt_MEM  OR
+                IsInterrupt_DE OR IsReti_DE         OR  
+                IsRet_DE       OR IsCall_DE         OR
+                HardwareInterrupt;
+
+    memory_hazard <=  IsInterrupt_MEM   OR
+                      IsReti_MEM        OR
+                      IsCall_MEM        OR
+                      IsRet_MEM;
         
     -- Hardware interrupt handling
     -- When hardware interrupt occurs, signal decoder to treat as interrupt
@@ -54,7 +68,14 @@ BEGIN
     IsHardwareIntMEM_Out <= IsHardwareInt_MEM;
 
     -- Determine override type based on priority
-    PROCESS (IsInterrupt_DE, IsInterrupt_EX, IsReti_DE, IsCall_DE, IsReturn_DE)
+    PROCESS (IsInterrupt_EX,
+             IsInterrupt_MEM,
+             IsReti_EX,
+             IsReti_MEM,
+             IsCall_EX,
+             IsCall_MEM,
+             IsRet_EX,
+             IsRet_MEM)
     BEGIN
         -- Default to PUSH_PC (doesn't matter since OverrideOperation will be '0')
         OverrideType <= OVERRIDE_PUSH_PC;
@@ -63,29 +84,43 @@ BEGIN
         -- Priority: Hardware interrupt during fetch doesn't override yet (it goes through TakeInterrupt)
         -- Once interrupt is in decode/execute, handle normally
 
-        IF IsInterrupt_DE = '1' THEN
+        IF IsInterrupt_EX = '1' THEN
             -- Interrupt (SW or HW) in decode: First cycle - push PC
             OverrideType <= OVERRIDE_PUSH_FLAGS;
             OverrideOperation <= '1';
 
-        ELSIF IsInterrupt_EX = '1' THEN
+        ELSIF IsInterrupt_MEM = '1' THEN
             -- Interrupt (SW or HW) in execute: Second cycle - push FLAGS
             OverrideType <= OVERRIDE_PUSH_PC;
             OverrideOperation <= '1';
 
-        ELSIF IsReti_DE = '1'  THEN
+        ELSIF IsReti_EX = '1'  THEN
             -- Return from interrupt in decode: First cycle - pop FLAGS (opposite order!)
             OverrideType <= OVERRIDE_POP_FLAGS;
             OverrideOperation <= '1';
 
-        ELSIF IsCall_DE = '1' THEN
+        ElSIF IsReti_MEM = '1' THEN
+            -- Return from interrupt in execute: Second cycle - pop PC
+            OverrideType <= OVERRIDE_NOP;
+            OverrideOperation <= '1';
+
+        ELSIF IsCall_EX = '1' THEN
             -- CALL instruction: Only push PC (single cycle)
             OverrideType <= OVERRIDE_PUSH_PC;
             OverrideOperation <= '1';
+        ELSIF IsCall_MEM = '1' THEN
+            -- CALL instruction in execute: Only push PC (single cycle)
+            OverrideType <= OVERRIDE_NOP;
+            OverrideOperation <= '1';
 
-        ELSIF IsReturn_DE = '1' THEN
+        ELSIF IsRet_EX = '1' THEN
             -- RET instruction: Only pop PC (single cycle)
-            OverrideType <= OVERRIDE_POP_PC;
+            OverrideType <= OVERRIDE_NOP;
+            OverrideOperation <= '1';
+
+        ELSIF IsRet_MEM = '1' THEN
+            -- RET instruction in execute: Only pop PC (single cycle)
+            OverrideType <= OVERRIDE_NOP;
             OverrideOperation <= '1';
         END IF;
     END PROCESS;

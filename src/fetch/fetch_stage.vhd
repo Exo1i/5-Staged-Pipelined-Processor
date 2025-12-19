@@ -39,12 +39,14 @@ ARCHITECTURE Behavioral OF fetch_stage IS
             target_memory : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             target_reset : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
             pc_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+            pc_nxt: OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
             pc_plus_one : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
         );
     END COMPONENT;
 
     SIGNAL pc_enable : STD_LOGIC;
     SIGNAL current_pc : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL pc_nxt : STD_LOGIC_VECTOR(31 DOWNTO 0);
     SIGNAL pc_plus_one : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
 BEGIN
@@ -55,7 +57,7 @@ BEGIN
     -- Populate output record
     fetch_out.pc <= current_pc;
     fetch_out.instruction <= mem_data;
-    fetch_out.pushed_pc <= current_pc WHEN PushPCSelect = '0' ELSE
+    fetch_out.pushed_pc <= pc_nxt WHEN PushPCSelect = '0' ELSE
     pc_plus_one;
 
     -- Instantiate PC
@@ -71,6 +73,7 @@ BEGIN
         target_memory => branch_targets.target_memory,
         target_reset => mem_data, -- Reset vector comes from memory (M[0])
         pc_out => current_pc,
+        pc_nxt => pc_nxt,
         pc_plus_one => pc_plus_one
     );
 

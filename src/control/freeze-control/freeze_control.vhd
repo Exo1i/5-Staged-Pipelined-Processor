@@ -10,6 +10,7 @@ ENTITY freeze_control IS
         is_swap : IN STD_LOGIC; -- From Decode Stage ('1' = SWAP operation in progress)
         is_hlt : IN STD_LOGIC; -- From Decode Stage ('1' = HLT instruction)
         requireImmediate : IN STD_LOGIC; -- From Decode Stage ('1' = immediate instruction required)
+        memory_hazard_int : IN STD_LOGIC; -- From Interrupt Unit ('1' = memory hazard due to interrupt)
         -- Outputs: Control signals for pipeline freeze
         PC_Freeze : OUT STD_LOGIC; -- Enable PC register update ('0' = allow update, '1' = freeze)
         IFDE_WriteEnable : OUT STD_LOGIC; -- Enable IF/DE pipeline register update
@@ -19,13 +20,10 @@ ENTITY freeze_control IS
 END freeze_control;
 
 ARCHITECTURE Behavioral OF freeze_control IS
-    SIGNAL stall_condition : STD_LOGIC_VECTOR(3 DOWNTO 0);
 BEGIN
 
     -- Concatenate all stall conditions into a vector for case statement
-    stall_condition <= Stall_Branch & Stall_Interrupt & (NOT PassPC_MEM) & is_swap;
-
-    PROCESS(stall_condition, requireImmediate, is_hlt)
+    PROCESS(PassPC_MEM, Stall_Interrupt, Stall_Branch, is_swap, is_hlt)
     BEGIN
             InsertNOP_DEEX <= '0'; -- Default no NOP in DE/EX
             InsertNOP_IFDE <= '0'; -- Default no NOP in IF/DE
@@ -39,38 +37,29 @@ BEGIN
                 InsertNOP_IFDE <= '0';
                 InsertNOP_DEEX <= '1';
             ELSE
-                CASE stall_condition IS
-                    -- SWAP operation: Freeze PC and IF/DE register, but don't insert NOP
-                    WHEN "0001" =>
-                        PC_Freeze <= '1';        -- Freeze PC
-                        IFDE_WriteEnable <= '0'; -- Disable IF/DE register write
-                        InsertNOP_IFDE <= '0';   -- Don't insert NOP (preserve instruction)
-
-                    -- Memory hazard (PassPC_MEM = '0'): Full stall with NOP
-                    WHEN "0010" | "0011" =>
-                        PC_Freeze <= '1';
-                        IFDE_WriteEnable <= '0';
-                        InsertNOP_IFDE <= '0' when requireImmediate = '1' else '1';
-                        InsertNOP_DEEX <= '1' when requireImmediate = '1' else '0';
-
-                    -- Interrupt stall: Full stall with NOP
-                    WHEN "0100" | "0101" | "0110" | "0111" =>
-                        PC_Freeze <= '1';
-                        IFDE_WriteEnable <= '0';
-                        InsertNOP_IFDE <= '0' when stall_condition = "0110" else '1';
-
-                    -- Branch misprediction: Full stall with NOP
-                    WHEN "1000" | "1001" | "1010" | "1011" | "1100" | "1101" | "1110" | "1111" =>
-                        PC_Freeze <= '1';
-                        IFDE_WriteEnable <= '0';
-                        InsertNOP_IFDE <= '1';
-
-                    -- Normal operation: No stall
-                    WHEN OTHERS =>
-                        PC_Freeze <= '0';
+                IF Stall_Interrupt = '1' THEN
+                    IFDE_WriteEnable <= '0';
+                ELSIF is_swap = '1' THEN 
+                    PC_Freeze <= '1';
+                    IFDE_WriteEnable <= '0';
+                END IF;
+                
+                IF memory_hazard_int = '1' THEN
+                    IF Stall_Interrupt = '1' THEN
                         IFDE_WriteEnable <= '1';
-                        InsertNOP_IFDE <= '0';
-                END CASE;
+                        InsertNOP_IFDE <= '1';
+                    ELSE 
+                        IFDE_WriteEnable <= '1';
+                        InsertNOP_IFDE <= '1';
+                        InsertNOP_DEEX <= '1';
+                    END IF;
+                END IF;
+
+                IF PassPC_MEM = '0' THEN
+                    PC_Freeze <= '1';
+                    InsertNOP_IFDE <= '1';
+                END IF;     
+
             END IF;
     END PROCESS;
 

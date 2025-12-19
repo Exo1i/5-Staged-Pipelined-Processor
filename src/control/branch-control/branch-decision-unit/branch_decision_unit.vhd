@@ -7,6 +7,7 @@ entity branch_decision_unit is
         -- Inputs from various sources
         IsSoftwareInterrupt     : in  std_logic;                      -- Software interrupt
         IsHardwareInterrupt     : in  std_logic;                      -- Hardware interrupt
+        IsRTI                   : in  std_logic;                      -- Return from interrupt 
         UnconditionalBranch     : in  std_logic;                      -- Unconditional branch (JMP/CALL)
         ConditionalBranch       : in  std_logic;                      -- Conditional branch in execute
         PredictedTaken          : in  std_logic;                      -- Prediction from predictor
@@ -18,6 +19,7 @@ entity branch_decision_unit is
         BranchTargetSelect      : out std_logic_vector(1 downto 0);  -- Target mux select
         FlushDE                 : out std_logic;                      -- Flush decode stage
         FlushIF                 : out std_logic;                      -- Flush fetch stage
+        FlushEX                 : out std_logic;                      -- Flush execute stage
         Stall_Branch            : out std_logic                       -- Stall signal for freeze control
     );
 end branch_decision_unit;
@@ -35,7 +37,7 @@ begin
     
     -- Determine if we should take a branch
     -- Static prediction: Always predict not-taken, resolve in execute stage
-    process(Reset, IsHardwareInterrupt, IsSoftwareInterrupt, UnconditionalBranch, 
+    process(Reset, IsHardwareInterrupt, IsSoftwareInterrupt, IsRTI, UnconditionalBranch, 
             ConditionalBranch, ActualTaken)
     begin
         -- Default values
@@ -43,6 +45,7 @@ begin
         BranchTargetSelect <= TARGET_DECODE;
         FlushDE <= '0';
         FlushIF <= '0';
+        FlushEX <= '0';
         Stall_Branch <= '0';
         
         -- Priority-based decision
@@ -59,15 +62,23 @@ begin
             -- Hardware interrupt
             take_branch <= '1';
             BranchTargetSelect <= TARGET_MEMORY;  -- Interrupt vector from memory
-            FlushDE <= '1';
+            FlushDE <= '0';
             FlushIF <= '1';
             
         elsif IsSoftwareInterrupt = '1' then
             -- Software interrupt
             take_branch <= '1';
             BranchTargetSelect <= TARGET_MEMORY;  -- Interrupt vector from memory
+            FlushDE <= '0';
+            FlushIF <= '1';
+
+        elsif IsRTI = '1' then
+            -- Return from interrupt
+            take_branch <= '1';
+            BranchTargetSelect <= TARGET_MEMORY;  -- Return address from memory
             FlushDE <= '1';
             FlushIF <= '1';
+            FlushEX <= '1';
             
         elsif UnconditionalBranch = '1' then
             -- Unconditional branch (JMP, CALL)
