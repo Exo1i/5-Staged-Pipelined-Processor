@@ -144,7 +144,6 @@ add wave -radix hexadecimal sim:/processor_top/decode_inst/reg_file_inst/registe
 add wave -divider "Decode Ctrl"
 add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.OutBSelect
 add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsInterrupt
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsHardwareInterrupt
 add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsCall
 add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsReturn
 add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsReti

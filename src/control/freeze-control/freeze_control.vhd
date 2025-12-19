@@ -23,7 +23,7 @@ ARCHITECTURE Behavioral OF freeze_control IS
 BEGIN
 
     -- Concatenate all stall conditions into a vector for case statement
-    PROCESS(PassPC_MEM, Stall_Interrupt, Stall_Branch, is_swap, is_hlt)
+    PROCESS(PassPC_MEM, Stall_Interrupt, Stall_Branch, is_swap, is_hlt , memory_hazard_int)
     BEGIN
             InsertNOP_DEEX <= '0'; -- Default no NOP in DE/EX
             InsertNOP_IFDE <= '0'; -- Default no NOP in IF/DE

@@ -7,7 +7,6 @@ PACKAGE control_signals_pkg IS
     TYPE decode_control_t IS RECORD
         OutBSelect : STD_LOGIC_VECTOR(1 DOWNTO 0); -- Selects source for operand B
         IsInterrupt : STD_LOGIC; -- Software interrupt
-        IsHardwareInterrupt : STD_LOGIC; -- Hardware interrupt (from external)
         IsReturn : STD_LOGIC; -- RET instruction
         IsCall : STD_LOGIC; -- CALL instruction
         IsReti : STD_LOGIC; -- RTI instruction
@@ -41,6 +40,7 @@ PACKAGE control_signals_pkg IS
         IsReturn : STD_LOGIC; -- RET instruction
         IsCall : STD_LOGIC; -- CALL instruction
         IsReti : STD_LOGIC; -- RTI instruction
+        IsHardwareInterrupt : STD_LOGIC; -- Hardware interrupt being processed
     END RECORD;
 
     -- WRITEBACK Stage Control Signals
@@ -54,7 +54,6 @@ PACKAGE control_signals_pkg IS
     CONSTANT DECODE_CTRL_DEFAULT : decode_control_t := (
         OutBSelect => "00",
         IsInterrupt => '0',
-        IsHardwareInterrupt => '0',
         IsReturn => '0',
         IsCall => '0',
         IsReti => '0',
@@ -85,7 +84,8 @@ PACKAGE control_signals_pkg IS
         IsInterrupt => '0',
         IsReturn => '0',
         IsCall => '0',
-        IsReti => '0'
+        IsReti => '0',
+        IsHardwareInterrupt => '0'
     );
 
     CONSTANT WRITEBACK_CTRL_DEFAULT : writeback_control_t := (

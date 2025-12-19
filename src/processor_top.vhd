@@ -106,6 +106,7 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL int_override_operation : STD_LOGIC;
   SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL memory_hazard_int : STD_LOGIC;
+  SIGNAL isHardware: STD_LOGIC;
 BEGIN
 
   -- Branch targets from different pipeline stages
@@ -228,19 +229,22 @@ BEGIN
       PushPCSelect => int_pass_pc_not_plus1
     );
 
-  ifid_in.take_interrupt <= hardware_interrupt; 
   ifid_in.override_operation <= int_override_operation;
   ifid_in.override_op <= int_override_type;
   ifid_in.pc <= fetch_out.pc;
   ifid_in.pushed_pc <= fetch_out.pushed_pc;
   ifid_in.instruction <= fetch_out.instruction;
+  isHardware <= hardware_interrupt;
   -- ===== IF/ID register =====
   ifid_inst : ENTITY work.if_id_register
     PORT MAP(
       clk => clk,
       rst => rst,
       enable => ifde_write_enable,
-      flush_instruction => insert_nop_ifde or flush_if,
+      flush => flush_if,
+      is_hardware => isHardware,
+      is_hardware_mem => exmem_ctrl_out.memory_ctrl.IsHardwareInterrupt,
+      flush_instruction => insert_nop_ifde ,
       data_in => ifid_in,
       data_out => ifid_out
     );
