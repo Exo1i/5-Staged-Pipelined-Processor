@@ -16,11 +16,7 @@ entity branch_decision_unit is
         
         -- Outputs
         BranchSelect            : out std_logic;                      -- 0=PC+1, 1=branch target
-        BranchTargetSelect      : out std_logic_vector(1 downto 0);  -- Target mux select
-        FlushDE                 : out std_logic;                      -- Flush decode stage
-        FlushIF                 : out std_logic;                      -- Flush fetch stage
-        FlushEX                 : out std_logic;                      -- Flush execute stage
-        Stall_Branch            : out std_logic                       -- Stall signal for freeze control
+        BranchTargetSelect      : out std_logic_vector(1 downto 0)  -- Target mux select
     );
 end branch_decision_unit;
 
@@ -43,10 +39,6 @@ begin
         -- Default values
         take_branch <= '0';
         BranchTargetSelect <= TARGET_DECODE;
-        FlushDE <= '0';
-        FlushIF <= '0';
-        FlushEX <= '0';
-        Stall_Branch <= '0';
         
         -- Priority-based decision
         if Reset = '1' then
@@ -55,45 +47,22 @@ begin
             -- Don't try to branch to target_reset which may be undefined
             take_branch <= '0';
             BranchTargetSelect <= TARGET_DECODE;
-            FlushDE <= '1';  -- Still flush pipeline
-            FlushIF <= '1';
             
-        elsif IsHardwareInterrupt = '1' then
+        elsif IsHardwareInterrupt = '1' or IsSoftwareInterrupt = '1' or IsRTI = '1' then
             -- Hardware interrupt
             take_branch <= '1';
             BranchTargetSelect <= TARGET_MEMORY;  -- Interrupt vector from memory
-            FlushDE <= '0';
-            FlushIF <= '1';
-            
-        elsif IsSoftwareInterrupt = '1' then
-            -- Software interrupt
-            take_branch <= '1';
-            BranchTargetSelect <= TARGET_MEMORY;  -- Interrupt vector from memory
-            FlushDE <= '0';
-            FlushIF <= '1';
-
-        elsif IsRTI = '1' then
-            -- Return from interrupt
-            take_branch <= '1';
-            BranchTargetSelect <= TARGET_MEMORY;  -- Return address from memory
-            FlushDE <= '1';
-            FlushIF <= '1';
-            FlushEX <= '1';
             
         elsif UnconditionalBranch = '1' then
             -- Unconditional branch (JMP, CALL)
             take_branch <= '1';
             BranchTargetSelect <= TARGET_DECODE;  -- Use immediate from decode
-            FlushDE <= '1';
-            FlushIF <= '1';
             
         -- Static prediction: branch is taken when ActualTaken is true
         -- (we always predicted not-taken, so flush and redirect if actually taken)
         elsif ConditionalBranch = '1' and ActualTaken = '1' then
             take_branch <= '1';
             BranchTargetSelect <= TARGET_EXECUTE;  -- Use target from execute
-            FlushDE <= '1';  -- Flush decode stage (wrong path)
-            FlushIF <= '1';  -- Flush fetch stage (wrong path)
             
         -- Dynamic prediction logic (commented out):
         -- elsif misprediction = '1' then

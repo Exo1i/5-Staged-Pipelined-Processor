@@ -72,12 +72,16 @@ vsim work.processor_top -voptargs=+acc -t 1ps
 
 view wave
 add wave -divider "Top"
+add wave -radix unsigned sim:/processor_top/clk_count
 add wave -radix binary sim:/processor_top/clk
 add wave -radix binary sim:/processor_top/rst
 add wave -radix hexadecimal sim:/processor_top/in_port
 add wave -radix hexadecimal sim:/processor_top/out_port
 add wave -radix binary sim:/processor_top/out_port_en
 add wave -radix binary sim:/processor_top/hardware_interrupt
+add wave -radix binary sim:/processor_top/is_blocking_hardware_interrupts
+add wave -radix binary sim:/processor_top/pending_hw_interrupt
+add wave -radix binary sim:/processor_top/TakeHWInterrupt
 
 
 add wave -divider "Fetch"
@@ -291,17 +295,28 @@ add wave -radix binary sim:/processor_top/mem_read_out
 add wave -radix binary sim:/processor_top/mem_write_out
 add wave -radix hexadecimal sim:/processor_top/mem_data
 
+add wave -divider "Branch Decision Unit"
+add wave -radix binary sim:/processor_top/branch_select
+add wave -radix binary sim:/processor_top/branch_target_select
+add wave -radix binary sim:/processor_top/actual_taken
+add wave -radix binary sim:/processor_top/branch_decision_inst/IsSoftwareInterrupt
+add wave -radix binary sim:/processor_top/branch_decision_inst/IsHardwareInterrupt
+add wave -radix binary sim:/processor_top/branch_decision_inst/IsRTI
+add wave -radix binary sim:/processor_top/branch_decision_inst/UnconditionalBranch
+add wave -radix binary sim:/processor_top/branch_decision_inst/ConditionalBranch
+add wave -radix binary sim:/processor_top/branch_decision_inst/ActualTaken
+
 add wave -divider "Freeze Control"
 add wave -radix binary sim:/processor_top/pc_freeze
 add wave -radix binary sim:/processor_top/ifde_write_enable
 add wave -radix binary sim:/processor_top/insert_nop_ifde
 add wave -radix binary sim:/processor_top/insert_nop_deex
+add wave -radix binary sim:/processor_top/freeze_control_inst/BranchSelect
+add wave -radix binary sim:/processor_top/freeze_control_inst/BranchTargetSelect
 add wave -radix binary sim:/processor_top/freeze_control_inst/is_swap
 add wave -radix binary sim:/processor_top/freeze_control_inst/requireImmediate
-
 add wave -radix binary sim:/processor_top/freeze_control_inst/PassPC_MEM
 add wave -radix binary sim:/processor_top/freeze_control_inst/Stall_Interrupt
-add wave -radix binary sim:/processor_top/freeze_control_inst/Stall_Branch
 add wave -radix binary sim:/processor_top/freeze_control_inst/is_hlt
 add wave -radix binary sim:/processor_top/freeze_control_inst/PC_Freeze
 add wave -radix binary sim:/processor_top/freeze_control_inst/IFDE_WriteEnable
@@ -336,9 +351,6 @@ add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_MEM
 add wave -divider "Branch Decision Unit"
 add wave -radix binary sim:/processor_top/branch_select
 add wave -radix binary sim:/processor_top/branch_target_select
-add wave -radix binary sim:/processor_top/flush_if
-add wave -radix binary sim:/processor_top/flush_de
-add wave -radix binary sim:/processor_top/stall_branch
 add wave -radix binary sim:/processor_top/actual_taken
 add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMP
 add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMPConditional
@@ -391,7 +403,7 @@ force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/processor_top/rst 1 0, 0 {300 ps}
 force -freeze sim:/processor_top/in_port 16#00000000 0
 force -freeze sim:/processor_top/in_port 16#12345678 0
-force -freeze sim:/processor_top/hardware_interrupt 0 0, 1 2600ps, 0 2700ps
+force -freeze sim:/processor_top/hardware_interrupt 0 0, 1 2400ps, 0 2500ps
 
 run 30000 ps
 

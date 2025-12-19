@@ -1,12 +1,14 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
+use work.pkg_opcodes.ALL;
 
 ENTITY freeze_control IS
     PORT (
         -- Inputs: Stall conditions from various sources
         PassPC_MEM : IN STD_LOGIC; -- From Memory Hazard Unit ('0' = stall due to memory conflict)
         Stall_Interrupt : IN STD_LOGIC; -- From Interrupt Unit ('1' = stall for interrupt processing)
-        Stall_Branch : IN STD_LOGIC; -- From Branch Control ('1' = stall for branch misprediction) - Optional
+        BranchSelect : IN STD_LOGIC; -- From Branch Decision Unit ('1' = branch taken)
+        BranchTargetSelect : IN STD_LOGIC_VECTOR(1 DOWNTO 0); -- From Branch Decision Unit (target mux select)
         is_swap : IN STD_LOGIC; -- From Decode Stage ('1' = SWAP operation in progress)
         is_hlt : IN STD_LOGIC; -- From Decode Stage ('1' = HLT instruction)
         requireImmediate : IN STD_LOGIC; -- From Decode Stage ('1' = immediate instruction required)
@@ -23,7 +25,7 @@ ARCHITECTURE Behavioral OF freeze_control IS
 BEGIN
 
     -- Concatenate all stall conditions into a vector for case statement
-    PROCESS(PassPC_MEM, Stall_Interrupt, Stall_Branch, is_swap, is_hlt)
+    PROCESS(PassPC_MEM, Stall_Interrupt, is_swap, is_hlt, BranchSelect, BranchTargetSelect)
     BEGIN
             InsertNOP_DEEX <= '0'; -- Default no NOP in DE/EX
             InsertNOP_IFDE <= '0'; -- Default no NOP in IF/DE
@@ -44,15 +46,16 @@ BEGIN
                     IFDE_WriteEnable <= '0';
                 END IF;
                 
-                IF memory_hazard_int = '1' THEN
-                    IF Stall_Interrupt = '1' THEN
-                        IFDE_WriteEnable <= '1';
-                        InsertNOP_IFDE <= '1';
-                    ELSE 
-                        IFDE_WriteEnable <= '1';
-                        InsertNOP_IFDE <= '1';
+
+                -- Branching flush logic
+                IF BranchSelect = '1' THEN
+                    IFDE_WriteEnable <= '1';
+                    InsertNOP_IFDE <= '1';
+
+                    IF BranchTargetSelect = TARGET_EXECUTE THEN
                         InsertNOP_DEEX <= '1';
                     END IF;
+
                 END IF;
 
                 IF PassPC_MEM = '0' THEN

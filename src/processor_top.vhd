@@ -92,10 +92,6 @@ ARCHITECTURE Structural OF processor_top IS
   -- ===== Branch decision unit =====
   SIGNAL branch_select : STD_LOGIC;
   SIGNAL branch_target_select : STD_LOGIC_VECTOR(1 DOWNTO 0);
-  SIGNAL flush_de : STD_LOGIC;
-  SIGNAL flush_if : STD_LOGIC;
-  SIGNAL flush_ex : STD_LOGIC;
-  SIGNAL stall_branch : STD_LOGIC;
   SIGNAL actual_taken : STD_LOGIC;
 
   -- ===== Interrupt unit =====
@@ -106,7 +102,58 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL int_override_operation : STD_LOGIC;
   SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL memory_hazard_int : STD_LOGIC;
+
+  -- Pending hardware interrupt register
+  SIGNAL pending_hw_interrupt : STD_LOGIC := '0';
+  SIGNAL TakeHWInterrupt : STD_LOGIC;
+  SIGNAL is_blocking_hardware_interrupts : STD_LOGIC;
+
+  -- ===== Debug signals =====
+  SIGNAL clk_count : INTEGER := 0;
 BEGIN
+
+  -- Clock counter for debugging
+  PROCESS(clk)
+  BEGIN
+    IF rising_edge(clk) THEN
+      IF rst = '1' THEN
+        clk_count <= 0;
+      ELSE
+        clk_count <= clk_count + 1;
+      END IF;
+    END IF;
+  END PROCESS;
+
+  is_blocking_hardware_interrupts <= '1' when decode_ctrl_out.decode_ctrl.IsInterrupt = '1' or 
+           decode_ctrl_out.decode_ctrl.IsCall = '1' or 
+           decode_ctrl_out.decode_ctrl.IsReturn = '1' or 
+           decode_ctrl_out.decode_ctrl.IsReti = '1' or 
+           idex_ctrl_out.decode_ctrl.IsInterrupt = '1' or 
+           idex_ctrl_out.decode_ctrl.IsCall = '1' or 
+           idex_ctrl_out.decode_ctrl.IsReturn = '1' or 
+           idex_ctrl_out.decode_ctrl.IsReti = '1' or 
+           decode_ctrl_out.decode_ctrl.IsJMPConditional = '1' else '0';
+
+  -- Pending hardware interrupt logic
+  process(clk, rst)
+  begin
+    if rst = '1' then
+      pending_hw_interrupt <= '0';
+
+    elsif rising_edge(clk) then
+      -- If hardware interrupt is received and any blocking condition is active
+      if hardware_interrupt = '1' then
+        pending_hw_interrupt <= '1';
+      end if;
+
+      if is_blocking_hardware_interrupts = '0' and pending_hw_interrupt = '1' then
+        pending_hw_interrupt <= '0';
+      END IF;
+    end if;
+  end process;
+
+  TakeHWInterrupt <= '1' when pending_hw_interrupt = '1' and is_blocking_hardware_interrupts = '0' else '0';
+
 
   -- Branch targets from different pipeline stages
   branch_targets.target_decode <= decode_out.operand_b; -- Immediate/target from decode
@@ -204,7 +251,7 @@ BEGIN
       IsRet_MEM => exmem_ctrl_out.memory_ctrl.IsReturn,
       IsReti_MEM => exmem_ctrl_out.memory_ctrl.IsReti,
       IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),
-      HardwareInterrupt => hardware_interrupt,
+      HardwareInterrupt => TakeHWInterrupt,
       freeze_fetch => int_stall,
       memory_hazard => memory_hazard_int,
       PassPC_NotPCPlus1 => int_pass_pc_not_plus1,
@@ -228,7 +275,7 @@ BEGIN
       PushPCSelect => int_pass_pc_not_plus1
     );
 
-  ifid_in.take_interrupt <= hardware_interrupt; 
+  ifid_in.take_interrupt <= TakeHWInterrupt; 
   ifid_in.override_operation <= int_override_operation;
   ifid_in.override_op <= int_override_type;
   ifid_in.pc <= fetch_out.pc;
@@ -240,7 +287,7 @@ BEGIN
       clk => clk,
       rst => rst,
       enable => ifde_write_enable,
-      flush_instruction => insert_nop_ifde or flush_if,
+      flush_instruction => insert_nop_ifde,
       data_in => ifid_in,
       data_out => ifid_out
     );
@@ -303,7 +350,7 @@ BEGIN
       clk => clk,
       rst => rst,
       enable => '1',
-      flush => insert_nop_deex OR flush_de,
+      flush => insert_nop_deex,
       data_in => idex_data_in,
       ctrl_in => idex_ctrl_in,
       data_out => idex_data_out,
@@ -314,7 +361,8 @@ BEGIN
         PORT MAP(
           PassPC_MEM => pass_pc,
           Stall_Interrupt => int_stall,
-          Stall_Branch => stall_branch,
+          BranchSelect => branch_select,
+          BranchTargetSelect => branch_target_select,
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
           requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
@@ -415,11 +463,7 @@ BEGIN
       Reset => rst,
       -- Outputs
       BranchSelect => branch_select,
-      BranchTargetSelect => branch_target_select,
-      FlushDE => flush_de,
-      FlushIF => flush_if,
-      FlushEX => flush_ex,
-      Stall_Branch => stall_branch
+      BranchTargetSelect => branch_target_select
     );
 
 

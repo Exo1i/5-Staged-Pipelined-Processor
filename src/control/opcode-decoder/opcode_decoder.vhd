@@ -42,13 +42,7 @@ begin
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
        -- Handle take_interrupt signal (from interrupt unit for hardware interrupt)
-        if take_interrupt = '1' then
-            -- Treat as software interrupt (INT instruction)
-            decode_sig.IsInterrupt      := '1';
-            memory_sig.PassInterrupt    := PASS_INT_HARDWARE;  
-            memory_sig.MemRead          := '1';
-            memory_sig.IsInterrupt    := '1';
-        elsif isSwap_from_execute = '1' then
+        if isSwap_from_execute = '1' then
             -- Second cycle of SWAP: Complete the exchange with another MOV
             decode_sig.OutBSelect       := OUTB_REGFILE;
             execute_sig.ALU_Operation   := ALU_PASS_A;
@@ -91,7 +85,13 @@ begin
                 when others =>
                     null;
             end case;
-            
+
+        elsif take_interrupt = '1' then
+            -- Treat as software interrupt (INT instruction)
+            decode_sig.IsInterrupt      := '1';
+            memory_sig.PassInterrupt    := PASS_INT_HARDWARE;  
+            memory_sig.MemRead          := '1';
+            memory_sig.IsInterrupt    := '1';
         elsif requireImmediate = '1' then
             -- Immediate instruction required but no override - treat as NOP
             null;    
