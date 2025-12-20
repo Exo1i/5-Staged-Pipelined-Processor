@@ -84,6 +84,14 @@ add wave -noupdate -group "System Interface" -color orange /processor_top/pendin
 add wave -noupdate -group "System Interface" -color orange /processor_top/TakeHWInterrupt
 add wave -noupdate -group "System Interface" -radix unsigned /processor_top/clk_count
 
+# --- PC GROUP (inside Fetch) ---
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_reg
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_next
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_out
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_nxt
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_plus_one
+add wave -noupdate -group "PC" -color yellow /processor_top/fetch_inst/pc_inst/reset_pending
+
 # --- FETCH STAGE ---
 add wave -noupdate -group "Fetch Stage" -color cyan -radix hexadecimal -expand /processor_top/fetch_out
 add wave -noupdate -group "Fetch Stage" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_reg
@@ -101,6 +109,15 @@ add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal -expand 
 add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_ctrl_out
 add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_flags
 add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
+# --- REGISTER FILE GROUP (inside Decode) ---
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Ra
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Rb
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Rdst
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/WriteEnable
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/ReadDataA
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/ReadDataB
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/WriteData
 
 # --- DECODE CONTROLLER (OPCODE DECODER) ---
 add wave -noupdate -group "Control Unit" -color yellow /processor_top/opcode_decoder_inst/opcode
@@ -115,6 +132,20 @@ add wave -noupdate -group "ID/EX Reg" -color gold -radix hexadecimal -expand /pr
 add wave -noupdate -group "ID/EX Reg" -color yellow -expand /processor_top/idex_ctrl_out
 add wave -noupdate -group "ID/EX Reg" -color orange /processor_top/idex_inst/flush
 
+# --- FORWARDING UNIT GROUP ---
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemRegWrite
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemRdst
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemIsSwap
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/WBRegWrite
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/WBRdst
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExRsrc1
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExRsrc2
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExOutBSelect
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExIsImm
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardA
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardB
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardSecondary
+
 # --- EXECUTE STAGE ---
 add wave -noupdate -group "Execute Stage" -color cyan -radix hexadecimal -expand /processor_top/execute_out
 add wave -noupdate -group "Execute Stage" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/Result
@@ -123,6 +154,24 @@ add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_i
 add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_inst/ALU_UNIT/Negative
 add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry
 add wave -noupdate -group "Execute Stage" -color orange /processor_top/forwarding
+# --- ALU GROUP (inside Execute) ---
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/OperandA
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/OperandB
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/ALU_Op
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/Result
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Zero
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Negative
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry_In
+# --- CCR GROUP (inside Execute) ---
+add wave -noupdate -group "CCR" -color cyan -radix binary /processor_top/execute_inst/CCR_UNIT/CCR_Out
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Zero
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Negative
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Carry
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/CCRWrEn
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/SetCarry
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/MemToCCR
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/StackFlags
 
 # --- EX/MEM PIPELINE REG ---
 add wave -noupdate -group "EX/MEM Reg" -color gold -radix hexadecimal -expand /processor_top/exmem_data_out
@@ -158,6 +207,26 @@ add wave -noupdate -group "Branch/Intr Unit" -color cyan -radix hexadecimal -exp
 add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/actual_taken
 add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/int_take_interrupt
 add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/int_override_type
+
+# --- INTERRUPT UNIT GROUP ---
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsHardwareInt_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/HardwareInterrupt
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/freeze_fetch
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/memory_hazard
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/PassPC_NotPCPlus1
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/TakeInterrupt
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsHardwareIntMEM_Out
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/OverrideOperation
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/OverrideType
 
 # ==============================================================================
 # SIMULATION STIMULUS
