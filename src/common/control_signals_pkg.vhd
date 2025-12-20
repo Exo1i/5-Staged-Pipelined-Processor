@@ -35,7 +35,7 @@ PACKAGE control_signals_pkg IS
         PassInterrupt : STD_LOGIC_VECTOR(1 DOWNTO 0); -- Pass interrupt address (00=normal, 01=reset, 10=SW int, 11=HW int)
         MemRead : STD_LOGIC; -- Memory read enable
         MemWrite : STD_LOGIC; -- Memory write enable
-        FlagFromMem : STD_LOGIC; -- Load flags from memory (POP FLAGS)
+        MemToCCR : STD_LOGIC; -- Load flags from memory (POP FLAGS)
         IsSwap : STD_LOGIC; -- SWAP in memory (disable forwarding)
     END RECORD;
 
@@ -76,7 +76,7 @@ PACKAGE control_signals_pkg IS
         PassInterrupt => "00",
         MemRead => '0',
         MemWrite => '0',
-        FlagFromMem => '0',
+        MemToCCR => '0',
         IsSwap => '0'
     );
 

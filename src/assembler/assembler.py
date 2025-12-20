@@ -427,7 +427,10 @@ class Assembler:
 
         index = self.parse_number(instr.operands[0])
         opcode = ISA.OPCODES['INT']
-        return [self.pack_header(opcode, r1=index)]
+
+        w1 = self.pack_header(opcode)
+        w2 = self.sign_extend_16bit(index) & 0xFFFFFFFF
+        return [w1, w2]
 
     def encode_instruction(self, instr: Instruction) -> List[int]:
         mnemonic = instr.mnemonic

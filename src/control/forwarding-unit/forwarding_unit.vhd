@@ -47,7 +47,7 @@ BEGIN
     END PROCESS;
 
     -- ForwardB mux control
-    PROCESS (MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, ExRsrc2)
+    PROCESS (ExOutBSelect, ExIsImm, MemRegWrite, MemRdst, MemIsSwap, WBRegWrite, WBRdst, ExRsrc2)
     BEGIN
         ForwardB <= FORWARD_NONE;
         if ExOutBSelect = OUTB_REGFILE AND ExIsImm = '0' then
@@ -61,7 +61,7 @@ BEGIN
         END IF;
     END PROCESS;
 
-    PROCESS (MemRegWrite, MemRdst, WBRegWrite, WBRdst, ExRsrc2)
+    PROCESS (MemRegWrite, ExOutBSelect, MemRdst, WBRegWrite, WBRdst, ExRsrc2)
     BEGIN
         ForwardSecondary <= FORWARD_NONE;
         if ExOutBSelect = OUTB_REGFILE then

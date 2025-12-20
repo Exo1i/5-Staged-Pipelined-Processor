@@ -11,6 +11,7 @@ ENTITY processor_top IS
     clk : IN STD_LOGIC;
     rst : IN STD_LOGIC;
     in_port : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    hardware_interrupt : IN STD_LOGIC;
     out_port : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     out_port_en : OUT STD_LOGIC
   );
@@ -96,6 +97,13 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL stall_branch : STD_LOGIC;
   SIGNAL actual_taken : STD_LOGIC;
 
+  -- ===== Interrupt unit =====
+  SIGNAL int_stall : STD_LOGIC;
+  SIGNAL int_pass_pc_not_plus1 : STD_LOGIC;
+  SIGNAL int_take_interrupt : STD_LOGIC;
+  SIGNAL int_is_hardware_int_mem : STD_LOGIC;
+  SIGNAL int_override_operation : STD_LOGIC;
+  SIGNAL int_override_type : STD_LOGIC_VECTOR(1 DOWNTO 0);
 BEGIN
 
   -- Branch targets from different pipeline stages
@@ -152,9 +160,9 @@ BEGIN
   front_enable <= pass_pc;
 
   -- IF/ID pack
-  ifid_in.take_interrupt <= '0';
-  ifid_in.override_operation <= '0';
-  ifid_in.override_op <= (OTHERS => '0');
+  ifid_in.take_interrupt <= int_take_interrupt;
+  ifid_in.override_operation <= int_override_operation;
+  ifid_in.override_op <= int_override_type;
   ifid_in.pc <= fetch_out.pc;
   ifid_in.pushed_pc <= fetch_out.pushed_pc;
   ifid_in.instruction <= fetch_out.instruction;
@@ -184,6 +192,207 @@ BEGIN
       MemWrite => mem_write_mux
     );
 
+  -- ===== Interrupt unit =====
+  interrupt_unit_inst : ENTITY work.interrupt_unit
+    PORT MAP(
+      IsInterrupt_DE => decoder_ctrl.decode_ctrl.IsInterrupt,
+      IsCall_DE => decoder_ctrl.decode_ctrl.IsCall,
+      IsReturn_DE => decoder_ctrl.decode_ctrl.IsReturn,
+      IsReti_DE => decoder_ctrl.decode_ctrl.IsReti,
+      IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
+      IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
+      IsRet_EX => idex_ctrl_out.decode_ctrl.IsReturn,
+      IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),
+      HardwareInterrupt => hardware_interrupt,
+      Stall => int_stall,
+      PassPC_NotPCPlus1 => int_pass_pc_not_plus1,
+      TakeInterrupt => int_take_interrupt,
+      IsHardwareIntMEM_Out => int_is_hardware_int_mem,
+      OverrideOperation => int_override_operation,
+      OverrideType => int_override_type
+    );
+
+  -- ===== Fetch stage =====
+  fetch_inst : ENTITY work.fetch_stage
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      stall => pc_freeze,
+      BranchSelect => branch_select,
+      BranchTargetSelect => branch_target_select,
+      branch_targets => branch_targets,
+      mem_data => mem_data,
+      fetch_out => fetch_out,
+      PushPCSelect => int_pass_pc_not_plus1
+    );
+
+  -- ===== IF/ID register =====
+  ifid_inst : ENTITY work.if_id_register
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      enable => ifde_write_enable,
+      flush => flush_if,
+      flush_instruction => insert_nop_ifde,
+      data_in => ifid_in,
+      data_out => ifid_out
+    );
+
+  -- ===== Decode stage =====
+  decode_inst : ENTITY work.decode_stage
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      pc_in => ifid_out.pc,
+      pushed_pc_in => ifid_out.pushed_pc,
+      instruction_in => ifid_out.instruction,
+      take_interrupt_in => ifid_out.take_interrupt,
+      ctrl_in => decoder_ctrl,
+      stall_control => '0',
+      in_port => in_port,
+      -- Immediate word comes from memory in the cycle after opcode fetch
+      immediate_from_fetch => mem_data,
+      is_swap_ex => idex_ctrl_out.decode_ctrl.IsSwap,
+      wb_in => wb_out,
+      decode_out => decode_out,
+      ctrl_out => decode_ctrl_out,
+      flags_out => decode_flags
+    );
+    
+    
+    -- ===== Opcode decoder =====
+    opcode_decoder_inst : ENTITY work.opcode_decoder
+      PORT MAP(
+        opcode => decode_out.opcode,
+        override_operation => ifid_out.override_operation,
+        override_type => ifid_out.override_op,
+        isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
+        take_interrupt => ifid_out.take_interrupt,
+        is_hardware_int_mem => int_is_hardware_int_mem,
+        requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
+        decode_ctrl => decoder_ctrl.decode_ctrl,
+        execute_ctrl => decoder_ctrl.execute_ctrl,
+        memory_ctrl => decoder_ctrl.memory_ctrl,
+        writeback_ctrl => decoder_ctrl.writeback_ctrl,
+        is_jmp_out => OPEN,
+        is_jmp_conditional_out => OPEN
+      );
+    -- ===== ID/EX pack =====
+  idex_data_in.pc <= decode_out.pc;
+  idex_data_in.operand_a <= decode_out.operand_a;
+  idex_data_in.operand_b <= decode_out.operand_b;
+  idex_data_in.rsrc1 <= decode_out.rsrc1;
+  idex_data_in.rsrc2 <= decode_out.rsrc2;
+  idex_data_in.rd <= decode_out.rd;
+  
+  idex_ctrl_in.decode_ctrl <= decode_ctrl_out.decode_ctrl;
+  idex_ctrl_in.execute_ctrl <= decode_ctrl_out.execute_ctrl;
+  idex_ctrl_in.memory_ctrl <= decode_ctrl_out.memory_ctrl;
+  idex_ctrl_in.writeback_ctrl <= decode_ctrl_out.writeback_ctrl;
+
+  idex_inst : ENTITY work.id_ex_register
+
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      enable => '1',
+      flush => insert_nop_deex OR flush_de,
+      data_in => idex_data_in,
+      ctrl_in => idex_ctrl_in,
+      data_out => idex_data_out,
+      ctrl_out => idex_ctrl_out
+      );
+      
+      -- Freeze control unit manages pipeline stalls
+      freeze_control_inst : ENTITY work.freeze_control
+        PORT MAP(
+          PassPC_MEM => pass_pc,
+          Stall_Interrupt => int_stall,
+          Stall_Branch => stall_branch,
+          is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
+          is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
+          requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
+          PC_Freeze => pc_freeze,
+          IFDE_WriteEnable => ifde_write_enable,
+          InsertNOP_IFDE => insert_nop_ifde,
+          InsertNOP_DEEX => insert_nop_deex
+        );
+
+  -- ===== Execute stage =====
+  execute_inst : ENTITY work.execute_stage
+    PORT MAP(
+      clk => clk,
+      reset => rst,
+      idex_ctrl_in => idex_ctrl_out,
+      idex_data_in => idex_data_out,
+      immediate => ifid_out.instruction,
+      forwarding => forwarding,
+      Forwarded_EXM => exmem_data_out.primary_data,
+      Forwarded_MWB => wb_out.data,
+      exmem_mem_to_ccr => exmem_ctrl_out.memory_ctrl.MemToCCR,
+      StackFlags => mem_data(2 DOWNTO 0),
+      execute_out => execute_out,
+      ctrl_out => execute_ctrl_out
+    );
+
+  -- ===== EX/MEM pack =====
+  exmem_data_in.primary_data <= execute_out.primary_data;
+  exmem_data_in.secondary_data <= execute_out.secondary_data;
+  exmem_data_in.rdst1 <= execute_out.rdst;
+
+  exmem_ctrl_in.memory_ctrl <= idex_ctrl_out.memory_ctrl;
+  exmem_ctrl_in.writeback_ctrl <= idex_ctrl_out.writeback_ctrl;
+
+  exmem_reg_inst : ENTITY work.ex_mem_register
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      enable => '1',
+      flush => '0',
+      data_in => exmem_data_in,
+      ctrl_in => exmem_ctrl_in,
+      data_out => exmem_data_out,
+      ctrl_out => exmem_ctrl_out
+    );
+
+  -- ===== Memory stage =====
+  memory_stage_inst : ENTITY work.memory_stage
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      ex_mem_ctrl_in => exmem_ctrl_out,
+      ex_mem_data_in => exmem_data_out,
+      mem_wb_data_out => mem_wb_data_comb,
+      mem_wb_ctrl_out => mem_wb_ctrl_comb,
+      MemReadData => mem_data,
+      MemRead => mem_stage_read_req,
+      MemWrite => mem_stage_write_req,
+      MemAddress => mem_stage_addr,
+      MemWriteData => mem_stage_wdata
+    );
+
+  -- ===== MEM/WB register =====
+  mem_wb_reg_inst : ENTITY work.mem_wb_register
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      enable => '1',
+      flush => '0',
+      data_in => mem_wb_data_comb,
+      ctrl_in => mem_wb_ctrl_comb,
+      data_out => memwb_data,
+      ctrl_out => memwb_ctrl
+    );
+
+  -- ===== Writeback stage =====
+  writeback_inst : ENTITY work.writeback_stage
+    PORT MAP(
+      mem_wb_ctrl => memwb_ctrl,
+      mem_wb_data => memwb_data,
+      wb_out => wb_out
+    );
+
+
   -- ===== Branch decision unit =====
   branch_decision_inst : ENTITY work.branch_decision_unit
     PORT MAP
@@ -204,209 +413,6 @@ BEGIN
       Stall_Branch => stall_branch
     );
 
-  -- ===== Fetch stage =====
-  fetch_inst : ENTITY work.fetch_stage
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      stall => pc_freeze,
-      BranchSelect => branch_select,
-      BranchTargetSelect => branch_target_select,
-      branch_targets => branch_targets,
-      mem_data => mem_data,
-      fetch_out => fetch_out,
-      PushPCSelect => '0'
-    );
-
-  -- ===== IF/ID register =====
-  ifid_inst : ENTITY work.if_id_register
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      enable => ifde_write_enable,
-      flush => flush_if,
-      flush_instruction => insert_nop_ifde,
-      data_in => ifid_in,
-      data_out => ifid_out
-    );
-
-  -- ===== Decode stage =====
-  decode_inst : ENTITY work.decode_stage
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      pc_in => ifid_out.pc,
-      pushed_pc_in => ifid_out.pushed_pc,
-      instruction_in => ifid_out.instruction,
-      take_interrupt_in => ifid_out.take_interrupt,
-      ctrl_in => decoder_ctrl,
-      stall_control => '0',
-      in_port => in_port,
-      -- Immediate word comes from memory in the cycle after opcode fetch
-      immediate_from_fetch => mem_data,
-      is_swap_ex => idex_ctrl_out.decode_ctrl.IsSwap,
-      wb_in => wb_out,
-      decode_out => decode_out,
-      ctrl_out => decode_ctrl_out,
-      flags_out => decode_flags
-    );
-  -- ===== Opcode decoder =====
-  opcode_decoder_inst : ENTITY work.opcode_decoder
-    PORT MAP
-    (
-      opcode => decode_out.opcode,
-      override_operation => ifid_out.override_operation,
-      override_type => ifid_out.override_op,
-      isSwap_from_execute => idex_ctrl_out.decode_ctrl.IsSwap,
-      take_interrupt => ifid_out.take_interrupt,
-      is_hardware_int_mem => '0',
-      requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
-      decode_ctrl => decoder_ctrl.decode_ctrl,
-      execute_ctrl => decoder_ctrl.execute_ctrl,
-      memory_ctrl => decoder_ctrl.memory_ctrl,
-      writeback_ctrl => decoder_ctrl.writeback_ctrl,
-      is_interrupt_out => OPEN,
-      is_call_out => OPEN,
-      is_return_out => OPEN,
-      is_reti_out => OPEN,
-      is_jmp_out => OPEN,
-      is_jmp_conditional_out => OPEN,
-      is_swap_out => OPEN
-    );
-  -- ===== ID/EX pack =====
-  idex_data_in.pc <= decode_out.pc;
-  idex_data_in.operand_a <= decode_out.operand_a;
-  idex_data_in.operand_b <= decode_out.operand_b;
-  idex_data_in.rsrc1 <= decode_out.rsrc1;
-  idex_data_in.rsrc2 <= decode_out.rsrc2;
-  idex_data_in.rd <= decode_out.rd;
-
-  idex_ctrl_in.decode_ctrl <= decode_ctrl_out.decode_ctrl;
-  idex_ctrl_in.execute_ctrl <= decode_ctrl_out.execute_ctrl;
-  idex_ctrl_in.memory_ctrl <= decode_ctrl_out.memory_ctrl;
-  idex_ctrl_in.writeback_ctrl <= decode_ctrl_out.writeback_ctrl;
-
-  idex_inst : ENTITY work.id_ex_register
-
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      enable => '1',
-      flush => insert_nop_deex OR flush_de,
-      data_in => idex_data_in,
-      ctrl_in => idex_ctrl_in,
-      data_out => idex_data_out,
-      ctrl_out => idex_ctrl_out
-    );
-
-  -- Freeze control unit manages pipeline stalls
-  freeze_control_inst : ENTITY work.freeze_control
-    PORT MAP
-    (
-      PassPC_MEM => pass_pc,
-      Stall_Interrupt => '0',
-      Stall_Branch => stall_branch,
-      is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
-      is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
-      requireImmediate => decode_ctrl_out.decode_ctrl.RequireImmediate,
-      PC_Freeze => pc_freeze,
-      IFDE_WriteEnable => ifde_write_enable,
-      InsertNOP_IFDE => insert_nop_ifde,
-      InsertNOP_DEEX => insert_nop_deex
-    );
-
-  -- ===== Execute stage =====
-  execute_inst : ENTITY work.execute_stage
-    PORT MAP
-    (
-      clk => clk,
-      reset => rst,
-      idex_ctrl_in => idex_ctrl_out,
-      idex_data_in => idex_data_out,
-      immediate => ifid_out.instruction,
-      forwarding => forwarding,
-      Forwarded_EXM => exmem_data_out.primary_data,
-      Forwarded_MWB => wb_out.data,
-      StackFlags => (OTHERS => '0'),
-      execute_out => execute_out,
-      ctrl_out => execute_ctrl_out
-    );
-
-  -- ===== EX/MEM pack =====
-  exmem_data_in.primary_data <= execute_out.primary_data;
-  exmem_data_in.secondary_data <= execute_out.secondary_data;
-  exmem_data_in.rdst1 <= execute_out.rdst;
-
-  exmem_ctrl_in.memory_ctrl.MemRead <= execute_ctrl_out.m_memread;
-  exmem_ctrl_in.memory_ctrl.MemWrite <= execute_ctrl_out.m_memwrite;
-  exmem_ctrl_in.memory_ctrl.SPtoMem <= execute_ctrl_out.m_sptomem;
-  exmem_ctrl_in.memory_ctrl.PassInterrupt(0) <= execute_ctrl_out.m_passinterrupt;
-  exmem_ctrl_in.memory_ctrl.PassInterrupt(1) <= '0';
-  exmem_ctrl_in.memory_ctrl.SP_Enable <= idex_ctrl_out.memory_ctrl.SP_Enable;
-  exmem_ctrl_in.memory_ctrl.SP_Function <= idex_ctrl_out.memory_ctrl.SP_Function;
-  exmem_ctrl_in.memory_ctrl.FlagFromMem <= idex_ctrl_out.memory_ctrl.FlagFromMem;
-  exmem_ctrl_in.memory_ctrl.IsSwap <= idex_ctrl_out.memory_ctrl.IsSwap;
-
-  exmem_ctrl_in.writeback_ctrl.RegWrite <= execute_ctrl_out.wb_regwrite;
-  exmem_ctrl_in.writeback_ctrl.PassMem <= execute_ctrl_out.wb_memtoreg;
-  exmem_ctrl_in.writeback_ctrl.OutPortWriteEn <= idex_ctrl_out.writeback_ctrl.OutPortWriteEn;
-
-  exmem_reg_inst : ENTITY work.ex_mem_register
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      enable => '1',
-      flush => '0',
-      data_in => exmem_data_in,
-      ctrl_in => exmem_ctrl_in,
-      data_out => exmem_data_out,
-      ctrl_out => exmem_ctrl_out
-    );
-
-  -- ===== Memory stage =====
-  memory_stage_inst : ENTITY work.memory_stage
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      ex_mem_ctrl_in => exmem_ctrl_out,
-      ex_mem_data_in => exmem_data_out,
-      mem_wb_data_out => mem_wb_data_comb,
-      mem_wb_ctrl_out => mem_wb_ctrl_comb,
-      MemReadData => mem_data,
-      MemRead => mem_stage_read_req,
-      MemWrite => mem_stage_write_req,
-      MemAddress => mem_stage_addr,
-      MemWriteData => mem_stage_wdata
-    );
-
-  -- ===== MEM/WB register =====
-  mem_wb_reg_inst : ENTITY work.mem_wb_register
-    PORT MAP
-    (
-      clk => clk,
-      rst => rst,
-      enable => '1',
-      flush => '0',
-      data_in => mem_wb_data_comb,
-      ctrl_in => mem_wb_ctrl_comb,
-      data_out => memwb_data,
-      ctrl_out => memwb_ctrl
-    );
-
-  -- ===== Writeback stage =====
-  writeback_inst : ENTITY work.writeback_stage
-    PORT MAP
-    (
-      mem_wb_ctrl => memwb_ctrl,
-      mem_wb_data => memwb_data,
-      wb_out => wb_out
-    );
 
   -- Expose OUT port behavior for debugging
   out_port_en <= wb_out.port_enable;

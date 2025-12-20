@@ -58,6 +58,9 @@ vcom -2008 ./src/control/forwarding-unit/forwarding_unit.vhd
 # Freezing unit 
 vcom -2008 ./src/control/freeze-control/freeze_control.vhd
 
+# Interrupt unit
+vcom -2008 ./src/control/interrupt-unit/interrupt_unit.vhd
+
 # Branch decision unit
 vcom -2008 ./src/control/branch-control/branch-decision-unit/branch_decision_unit.vhd
 
@@ -131,7 +134,7 @@ add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.SPtoMem
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.PassInterrupt
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemRead
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemWrite
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.FlagFromMem
+add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemToCCR
 add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.IsSwap
 add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.PassMem
 add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.RegWrite
@@ -166,6 +169,15 @@ add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandA
 add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandB
 add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/ALU_Op
 add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/Result
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Zero
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Negative
+add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Carry
+
+add wave -divider "CCR Internal"
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCRWrEn
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/MemToCCR
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/StackFlags
+add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCR_Out
 
 add wave -divider "Forwarding Unit"
 add wave -radix binary sim:/processor_top/forwarding.forward_a
@@ -206,7 +218,7 @@ add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Enable
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Function
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SPtoMem
 add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.PassInterrupt
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.FlagFromMem
+add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.MemToCCR
 
 add wave -divider "Memory Stage"
 add wave -radix binary sim:/processor_top/mem_stage_read_req
@@ -259,6 +271,23 @@ add wave -radix binary sim:/processor_top/freeze_control_inst/is_swap
 add wave -radix binary sim:/processor_top/freeze_control_inst/requireImmediate
 add wave -radix binary sim:/processor_top/freeze_control_inst/stall_condition
 
+add wave -divider "Interrupt Unit"
+add wave -radix binary sim:/processor_top/hardware_interrupt
+add wave -radix binary sim:/processor_top/int_stall
+add wave -radix binary sim:/processor_top/int_pass_pc_not_plus1
+add wave -radix binary sim:/processor_top/int_take_interrupt
+add wave -radix binary sim:/processor_top/int_is_hardware_int_mem
+add wave -radix binary sim:/processor_top/int_override_operation
+add wave -radix binary sim:/processor_top/int_override_type
+
+add wave -divider "Interrupt Unit Internal"
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_DE
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_DE
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReturn_DE
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_DE
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_EX
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_EX
+add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsHardwareInt_MEM
 add wave -divider "Branch Decision Unit"
 add wave -radix binary sim:/processor_top/branch_select
 add wave -radix binary sim:/processor_top/branch_target_select
@@ -281,6 +310,7 @@ force -freeze sim:/processor_top/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/processor_top/rst 1 0, 0 {300 ps}
 force -freeze sim:/processor_top/in_port 16#00000000 0
 force -freeze sim:/processor_top/in_port 16#12345678 0
+force -freeze sim:/processor_top/hardware_interrupt 0 0
 
 run 30000 ps
 

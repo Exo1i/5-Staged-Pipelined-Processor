@@ -96,6 +96,6 @@ BEGIN
 
     -- Output assignments
     pc_out <= pc_reg;
-    pc_plus_one <= STD_LOGIC_VECTOR(UNSIGNED(pc_reg) + 1);
+    pc_plus_one <= STD_LOGIC_VECTOR(UNSIGNED(pc_reg) + 2);
 
 END ARCHITECTURE rtl;

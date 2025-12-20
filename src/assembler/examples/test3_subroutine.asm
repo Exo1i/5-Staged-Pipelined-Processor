@@ -1,8 +1,9 @@
 ; Test 3: Subroutine Call
 ; Tests: CALL, RET, stack operations
 
+; Reset vector
 .ORG 0x0000
-    JMP MAIN
+.DW MAIN                ; Reset vector
 
 .ORG 0x0010
 MAIN:

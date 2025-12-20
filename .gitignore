@@ -9,3 +9,6 @@ wlft*
 
 simulation/scripts/work
 memory_temp
+*.pyc
+
+*.mem

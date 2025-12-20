@@ -278,7 +278,7 @@ BEGIN
         memory_ctrl.SP_Function = '1' AND
         memory_ctrl.SPtoMem = '1' AND
         memory_ctrl.MemRead = '1' AND
-        memory_ctrl.FlagFromMem = '1'
+        memory_ctrl.MemToCCR = '1'
         REPORT "OVERRIDE_POP_FLAGS failed" SEVERITY error;
 
         override_operation <= '0';

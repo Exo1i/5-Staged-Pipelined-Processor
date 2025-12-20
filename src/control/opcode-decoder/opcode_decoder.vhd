@@ -21,20 +21,15 @@ entity opcode_decoder is
         writeback_ctrl      : out writeback_control_t;
         
         -- Instruction Type Outputs (for Interrupt Unit, Branch Predictor, etc.)
-        is_interrupt_out        : out std_logic;  -- INT instruction detected
-        is_call_out             : out std_logic;  -- CALL instruction detected
-        is_return_out           : out std_logic;  -- RET instruction detected
-        is_reti_out             : out std_logic;  -- RTI instruction detected
         is_jmp_out              : out std_logic;  -- JMP instruction detected
-        is_jmp_conditional_out  : out std_logic;  -- Conditional jump (JZ/JN/JC)
-        is_swap_out             : out std_logic   -- SWAP instruction detected
+        is_jmp_conditional_out  : out std_logic  -- Conditional jump (JZ/JN/JC)
     );
 end opcode_decoder;
 
 architecture Behavioral of opcode_decoder is
 begin
 
-    process(opcode, override_operation, override_type, isSwap_from_execute, take_interrupt, is_hardware_int_mem)
+    process(opcode, override_operation, override_type, isSwap_from_execute, take_interrupt, is_hardware_int_mem, requireImmediate)
         variable decode_sig   : decode_control_t;
         variable execute_sig  : execute_control_t;
         variable memory_sig   : memory_control_t;
@@ -46,10 +41,8 @@ begin
         memory_sig   := MEMORY_CTRL_DEFAULT;
         writeback_sig:= WRITEBACK_CTRL_DEFAULT;
         
-        -- Handle SWAP second cycle override FIRST (highest priority)
-        if requireImmediate = '1' then
-            --noop
-        elsif isSwap_from_execute = '1' then
+       
+        if isSwap_from_execute = '1' then
             -- Second cycle of SWAP: Complete the exchange with another MOV
             decode_sig.OutBSelect       := OUTB_REGFILE;
             execute_sig.ALU_Operation   := ALU_PASS_A;
@@ -83,7 +76,7 @@ begin
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
                     memory_sig.MemRead    := '1';
-                    memory_sig.FlagFromMem:= '1';
+                    memory_sig.MemToCCR   := '1';
                     
                 when OVERRIDE_POP_PC =>
                     -- POP PC: PC = MEM[SP], SP++
@@ -98,6 +91,9 @@ begin
                     null;
             end case;
             
+        elsif requireImmediate = '1' then
+            -- Immediate instruction required but no override - treat as NOP
+            null;    
         else
             -- Normal Opcode Decoding
             case opcode is
@@ -273,13 +269,20 @@ begin
                     decode_sig.IsCall           := '1';
                     decode_sig.RequireImmediate := '1';
                     decode_sig.IsJMP            := '1';
-                    decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.PassImm         := '1';
+                    memory_sig.SP_Enable        := '1';
+                    memory_sig.SP_Function      := '0';  -- Decrement
+                    memory_sig.SPtoMem          := '1';
+                    memory_sig.MemWrite         := '1';
+                    decode_sig.OutBSelect       := OUTB_PUSHED_PC;
                     -- PUSH_PC will be handled by InterruptUnit via override
                     
                 when OP_RET =>
                     -- RET: Pop PC
                     decode_sig.IsReturn         := '1';
+                    memory_sig.SP_Enable  := '1';
+                    memory_sig.SP_Function:= '1';  -- Increment
+                    memory_sig.SPtoMem    := '1';
+                    memory_sig.MemRead    := '1';
                     -- POP_PC will be handled by InterruptUnit via override
                     
                 when OP_INT =>
@@ -287,13 +290,17 @@ begin
                     decode_sig.IsInterrupt      := '1';
                     decode_sig.RequireImmediate := '1';
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
-                    execute_sig.PassImm         := '1';
                     memory_sig.PassInterrupt    := PASS_INT_SOFTWARE;  -- Software interrupt address from immediate
+                    execute_sig.ALU_Operation   := ALU_PASS_B;
                     -- Push PC and FLAGS handled by InterruptUnit
                     
                 when OP_RTI =>
                     -- RTI: Return from Interrupt (Pop FLAGS, Pop PC)
-                    decode_sig.IsReti           := '1';
+                    decode_sig.IsReti     := '1';
+                    memory_sig.SP_Enable  := '1';
+                    memory_sig.SP_Function:= '1';  -- Increment
+                    memory_sig.SPtoMem    := '1';
+                    memory_sig.MemRead    := '1';
                     -- POP_FLAGS and POP_PC handled by InterruptUnit via override
                     
                 when others =>
@@ -331,12 +338,7 @@ begin
     -- ========== INSTRUCTION TYPE DETECTION (Combinational) ==========
     -- These outputs go to Interrupt Unit, Branch Predictor, Freeze Control
     
-    is_interrupt_out <= '1' when opcode = OP_INT else '0';
-    is_call_out <= '1' when opcode = OP_CALL else '0';
-    is_return_out <= '1' when opcode = OP_RET else '0';
-    is_reti_out <= '1' when opcode = OP_RTI else '0';
     is_jmp_out <= '1' when opcode = OP_JMP else '0';
-    is_swap_out <= '1' when opcode = OP_SWAP else '0';
     -- Conditional jump detection
     is_jmp_conditional_out <= '1' when (opcode = OP_JZ or opcode = OP_JN or opcode = OP_JC) else '0';
 

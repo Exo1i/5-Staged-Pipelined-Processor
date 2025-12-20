@@ -55,7 +55,7 @@ class ISA:
         'NOP': 1, 'HLT': 1, 'SETC': 1, 'NOT': 1, 'INC': 1, 'OUT': 1, 'IN': 1,
         'MOV': 1, 'SWAP': 1, 'ADD': 1, 'SUB': 1, 'AND': 1,
         'PUSH': 1, 'POP': 1,
-        'RET': 1, 'RTI': 1, 'INT': 1,
+        'RET': 1, 'RTI': 1, 'INT': 2,
 
         # 2 Words (Instruction + Immediate/Offset)
         'IADD': 2, 'LDM': 2,

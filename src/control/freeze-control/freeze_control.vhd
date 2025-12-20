@@ -57,7 +57,7 @@ BEGIN
                     WHEN "0100" | "0101" | "0110" | "0111" =>
                         PC_Freeze <= '1';
                         IFDE_WriteEnable <= '0';
-                        InsertNOP_IFDE <= '1';
+                        InsertNOP_IFDE <= '0' when stall_condition = "0110" else '1';
 
                     -- Branch misprediction: Full stall with NOP
                     WHEN "1000" | "1001" | "1010" | "1011" | "1100" | "1101" | "1110" | "1111" =>
