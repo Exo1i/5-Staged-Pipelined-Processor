@@ -302,6 +302,8 @@ add wave -radix binary sim:/processor_top/actual_taken
 add wave -radix binary sim:/processor_top/branch_decision_inst/IsSoftwareInterrupt
 add wave -radix binary sim:/processor_top/branch_decision_inst/IsHardwareInterrupt
 add wave -radix binary sim:/processor_top/branch_decision_inst/IsRTI
+add wave -radix binary sim:/processor_top/branch_decision_inst/IsReturn
+add wave -radix binary sim:/processor_top/branch_decision_inst/IsCall
 add wave -radix binary sim:/processor_top/branch_decision_inst/UnconditionalBranch
 add wave -radix binary sim:/processor_top/branch_decision_inst/ConditionalBranch
 add wave -radix binary sim:/processor_top/branch_decision_inst/ActualTaken

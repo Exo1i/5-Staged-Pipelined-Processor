@@ -278,13 +278,13 @@ begin
                     -- PUSH_PC will be handled by InterruptUnit via override
                     
                 when OP_RET =>
-                    -- RET: Pop PC
-                    decode_sig.IsReturn         := '1';
+                    -- RET: SP++, PC <- MEM[SP]
+                    decode_sig.IsReturn   := '1';
+                    memory_sig.IsReturn   := '1';  -- Propagate to branch_decision_unit
                     memory_sig.SP_Enable  := '1';
                     memory_sig.SP_Function:= '1';  -- Increment
                     memory_sig.SPtoMem    := '1';
                     memory_sig.MemRead    := '1';
-                    -- POP_PC will be handled by InterruptUnit via override
                     
                 when OP_INT =>
                     -- INT index: Software Interrupt

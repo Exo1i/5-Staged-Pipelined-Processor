@@ -156,7 +156,7 @@ BEGIN
 
 
   -- Branch targets from different pipeline stages
-  branch_targets.target_decode <= decode_out.operand_b; -- Immediate/target from decode
+  branch_targets.target_decode <= decode_out.immediate; -- Immediate from decode (for JMP/CALL target)
   branch_targets.target_execute <= idex_data_out.operand_b; -- Target computed in execute
   branch_targets.target_memory <= mem_data;
 
@@ -456,7 +456,9 @@ BEGIN
       IsSoftwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and not exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Software interrupt from EX/MEM
       IsHardwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and  exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Hardware interrupt from EX/MEM
       IsRTI => exmem_ctrl_out.memory_ctrl.IsRetI, -- Return from interrupt
-      UnconditionalBranch => decode_ctrl_out.decode_ctrl.IsJMP, -- JMP/CALL from decode (early detection)
+      IsReturn => exmem_ctrl_out.memory_ctrl.IsReturn, -- RET instruction from EX/MEM
+      IsCall => decode_flags.is_call, -- CALL from opcode detection (not affected by override)
+      UnconditionalBranch => decode_ctrl_out.decode_ctrl.IsJMP, -- JMP from decode (early detection)
       ConditionalBranch => idex_ctrl_out.decode_ctrl.IsJMPConditional, -- Conditional branch from ID/EX (needs CCR)
       PredictedTaken => '0', -- Static prediction: always not-taken
       ActualTaken => actual_taken, -- Actual outcome computed from CCR flags

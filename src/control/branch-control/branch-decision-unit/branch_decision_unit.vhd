@@ -8,7 +8,9 @@ entity branch_decision_unit is
         IsSoftwareInterrupt     : in  std_logic;                      -- Software interrupt
         IsHardwareInterrupt     : in  std_logic;                      -- Hardware interrupt
         IsRTI                   : in  std_logic;                      -- Return from interrupt 
-        UnconditionalBranch     : in  std_logic;                      -- Unconditional branch (JMP/CALL)
+        IsReturn                : in  std_logic;                      -- RET instruction (PC from stack)
+        IsCall                  : in  std_logic;                      -- CALL instruction (jump to immediate)
+        UnconditionalBranch     : in  std_logic;                      -- Unconditional branch (JMP)
         ConditionalBranch       : in  std_logic;                      -- Conditional branch in execute
         PredictedTaken          : in  std_logic;                      -- Prediction from predictor
         ActualTaken             : in  std_logic;                      -- Actual outcome from execute
@@ -33,7 +35,7 @@ begin
     
     -- Determine if we should take a branch
     -- Static prediction: Always predict not-taken, resolve in execute stage
-    process(Reset, IsHardwareInterrupt, IsSoftwareInterrupt, IsRTI, UnconditionalBranch, 
+    process(Reset, IsHardwareInterrupt, IsSoftwareInterrupt, IsRTI, IsReturn, IsCall, UnconditionalBranch, 
             ConditionalBranch, ActualTaken)
     begin
         -- Default values
@@ -48,13 +50,13 @@ begin
             take_branch <= '0';
             BranchTargetSelect <= TARGET_DECODE;
             
-        elsif IsHardwareInterrupt = '1' or IsSoftwareInterrupt = '1' or IsRTI = '1' then
-            -- Hardware interrupt
+        elsif IsHardwareInterrupt = '1' or IsSoftwareInterrupt = '1' or IsRTI = '1' or IsReturn = '1' then
+            -- Interrupt/RTI/RET: PC comes from memory (interrupt vector or popped return address)
             take_branch <= '1';
-            BranchTargetSelect <= TARGET_MEMORY;  -- Interrupt vector from memory
+            BranchTargetSelect <= TARGET_MEMORY;
             
-        elsif UnconditionalBranch = '1' then
-            -- Unconditional branch (JMP, CALL)
+        elsif IsCall = '1' or UnconditionalBranch = '1' then
+            -- CALL or JMP: jump to immediate from decode stage
             take_branch <= '1';
             BranchTargetSelect <= TARGET_DECODE;  -- Use immediate from decode
             
