@@ -93,6 +93,14 @@ ARCHITECTURE Structural OF processor_top IS
   SIGNAL branch_select : STD_LOGIC;
   SIGNAL branch_target_select : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL actual_taken : STD_LOGIC;
+  SIGNAL misprediction : STD_LOGIC;
+  SIGNAL update_predictor : STD_LOGIC;
+  SIGNAL flush_if : STD_LOGIC;
+  SIGNAL flush_de : STD_LOGIC;
+
+  -- ===== Branch predictor =====
+  SIGNAL predicted_taken : STD_LOGIC;
+  SIGNAL treat_conditional_as_unconditional : STD_LOGIC;
 
   -- ===== Interrupt unit =====
   SIGNAL int_stall : STD_LOGIC;
@@ -367,6 +375,10 @@ BEGIN
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
           requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
           memory_hazard_int => memory_hazard_int,
+          -- Flush signals from branch decision unit (for dynamic prediction)
+          FlushIF => flush_if,
+          FlushDE => flush_de,
+          -- Outputs
           PC_Freeze => pc_freeze,
           IFDE_WriteEnable => ifde_write_enable,
           InsertNOP_IFDE => insert_nop_ifde,
@@ -448,10 +460,30 @@ BEGIN
     );
 
 
+  -- ===== Branch predictor =====
+  branch_predictor_inst : ENTITY work.branch_predictor
+    PORT MAP(
+      clk => clk,
+      rst => rst,
+      -- Inputs from DECODE stage
+      IsJMP => decode_ctrl_out.decode_ctrl.IsJMP,
+      IsCall => decode_ctrl_out.decode_ctrl.IsCall,
+      IsJMPConditional => decode_ctrl_out.decode_ctrl.IsJMPConditional,
+      ConditionalType => decode_ctrl_out.execute_ctrl.ConditionalType,
+      PC_DE => decode_out.pc,
+      -- Inputs from EXECUTE stage
+      CCR_Flags => execute_out.ccr_flags,
+      ActualTaken => actual_taken,
+      UpdatePredictor => update_predictor,
+      PC_EX => idex_data_out.pc,
+      -- Outputs
+      PredictedTaken => predicted_taken,
+      TreatConditionalAsUnconditional => treat_conditional_as_unconditional
+    );
+
   -- ===== Branch decision unit =====
   branch_decision_inst : ENTITY work.branch_decision_unit
-    PORT MAP
-    (
+    PORT MAP(
       -- Inputs
       IsSoftwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and not exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Software interrupt from EX/MEM
       IsHardwareInterrupt => exmem_ctrl_out.memory_ctrl.PassInterrupt(1) and  exmem_ctrl_out.memory_ctrl.PassInterrupt(0), -- Hardware interrupt from EX/MEM
@@ -460,12 +492,16 @@ BEGIN
       IsCall => decode_flags.is_call, -- CALL from opcode detection (not affected by override)
       UnconditionalBranch => decode_ctrl_out.decode_ctrl.IsJMP, -- JMP from decode (early detection)
       ConditionalBranch => idex_ctrl_out.decode_ctrl.IsJMPConditional, -- Conditional branch from ID/EX (needs CCR)
-      PredictedTaken => '0', -- Static prediction: always not-taken
+      PredictedTaken => predicted_taken, -- Dynamic prediction from branch predictor
       ActualTaken => actual_taken, -- Actual outcome computed from CCR flags
       Reset => rst,
       -- Outputs
       BranchSelect => branch_select,
-      BranchTargetSelect => branch_target_select
+      BranchTargetSelect => branch_target_select,
+      Misprediction => misprediction,
+      UpdatePredictor => update_predictor,
+      FlushIF => flush_if,
+      FlushDE => flush_de
     );
 
 
