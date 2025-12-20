@@ -43,17 +43,16 @@ BEGIN
 
     -- Stall signal: active during any interrupt processing
     -- This goes to Freeze Control to freeze fetch and PC
-    freeze_fetch <= IsCall_EX  OR IsInterrupt_EX    OR
+    freeze_fetch <= IsInterrupt_EX    OR
                 IsReti_MEM     OR IsReti_EX         OR
                 IsRet_MEM      OR IsRet_EX          OR
-                IsCall_MEM     OR  IsInterrupt_MEM  OR
+                IsInterrupt_MEM  OR
                 IsInterrupt_DE OR IsReti_DE         OR  
                 IsRet_DE       OR IsCall_DE         OR
                 HardwareInterrupt;
 
     memory_hazard <=  IsInterrupt_MEM   OR
                       IsReti_MEM        OR
-                      IsCall_MEM        OR
                       IsRet_MEM;
         
     -- Hardware interrupt handling
@@ -73,7 +72,6 @@ BEGIN
              IsReti_EX,
              IsReti_MEM,
              IsCall_EX,
-             IsCall_MEM,
              IsRet_EX,
              IsRet_MEM)
     BEGIN
@@ -106,10 +104,6 @@ BEGIN
 
         ELSIF IsCall_EX = '1' THEN
             -- CALL instruction: Only push PC (single cycle)
-            OverrideType <= OVERRIDE_PUSH_PC;
-            OverrideOperation <= '1';
-        ELSIF IsCall_MEM = '1' THEN
-            -- CALL instruction in execute: Only push PC (single cycle)
             OverrideType <= OVERRIDE_NOP;
             OverrideOperation <= '1';
 

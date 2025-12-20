@@ -16,4 +16,5 @@ MAIN:
 .ORG 0x0050
 ADD_FUNC:
     ADD R3, R1, R2
+    JMP 0x00016
     RET
