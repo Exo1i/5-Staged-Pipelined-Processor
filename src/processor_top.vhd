@@ -362,7 +362,7 @@ BEGIN
           BranchTargetSelect => branch_target_select,
           is_swap => decode_ctrl_out.decode_ctrl.IsSwap,
           is_hlt => decode_ctrl_out.decode_ctrl.IsHLT,
-          requireImmediate => idex_ctrl_out.decode_ctrl.RequireImmediate,
+          requireImmediate => decoder_ctrl.decode_ctrl.RequireImmediate,
           memory_hazard_int => memory_hazard_int,
           PC_Freeze => pc_freeze,
           IFDE_WriteEnable => ifde_write_enable,

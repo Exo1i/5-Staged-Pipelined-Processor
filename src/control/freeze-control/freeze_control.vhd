@@ -25,7 +25,7 @@ ARCHITECTURE Behavioral OF freeze_control IS
 BEGIN
 
     -- Concatenate all stall conditions into a vector for case statement
-    PROCESS(PassPC_MEM, Stall_Interrupt, is_swap, is_hlt, BranchSelect, BranchTargetSelect)
+    PROCESS(PassPC_MEM, Stall_Interrupt, is_swap, is_hlt, BranchSelect, BranchTargetSelect, requireImmediate)
     BEGIN
             InsertNOP_DEEX <= '0'; -- Default no NOP in DE/EX
             InsertNOP_IFDE <= '0'; -- Default no NOP in IF/DE
@@ -61,6 +61,11 @@ BEGIN
                 IF PassPC_MEM = '0' THEN
                     PC_Freeze <= '1';
                     InsertNOP_IFDE <= '1';
+
+                    IF requireImmediate = '1' THEN
+                        IFDE_WriteEnable <= '0';
+                        InsertNOP_DEEX <= '1';
+                    END IF;
                 END IF;     
 
             END IF;
