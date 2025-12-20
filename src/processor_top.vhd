@@ -471,6 +471,6 @@ BEGIN
 
   -- Expose OUT port behavior for debugging
   out_port_en <= wb_out.port_enable;
-  out_port <= wb_out.data;
+  out_port <= wb_out.data when wb_out.port_enable = '1' else (others => '0');
 
 END ARCHITECTURE Structural;

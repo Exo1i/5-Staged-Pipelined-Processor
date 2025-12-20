@@ -16,6 +16,7 @@
 ; ============================================================
 .ORG 0x0100
 MAIN:
+    CALL FIBONACCI
     ; Initialize registers
     LDM R0, 0       ; R0 = 0 (counter)
     LDM R1, 10      ; R1 = 10 (limit)
@@ -185,8 +186,8 @@ FIB_LOOP:
     
     ; Calculate next fibonacci
     ADD R4, R1, R2  ; R4 = R1 + R2 (next fib)
-    MOV R2, R1      ; Move current to previous
-    MOV R1, R4      ; Move next to current
+    MOV R1, R2      ; R2 = R1 (copy current to previous)
+    MOV R4, R1      ; R1 = R4 (copy next to current)
     
     ; Increment counter and check
     INC R3
