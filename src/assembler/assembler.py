@@ -26,8 +26,9 @@ class Instruction:
 
 
 class Assembler:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, hex_mode=False):
         self.verbose = verbose
+        self.hex_mode = hex_mode
         self.symbol_table: Dict[str, int] = {}
         self.instructions: List[Instruction] = []
         self.current_address = 0
@@ -71,6 +72,8 @@ class Assembler:
             elif num_str.lower().endswith('b'):
                 return int(num_str[:-1], 2)
             else:
+                if self.hex_mode:
+                    return int(num_str, 16)
                 return int(num_str)
         except ValueError:
             return None
@@ -103,6 +106,10 @@ class Assembler:
     def tokenize_line(self, line: str) -> Tuple[Optional[str], str, List[str]]:
         if ';' in line:
             line = line[:line.index(';')]
+        if '#' in line:
+            line = line[:line.index('#')]
+        if '//' in line:
+            line = line[:line.index('//')]
         line = line.strip()
         if not line:
             return None, '', []
@@ -147,10 +154,10 @@ class Assembler:
                     f".ORG address {new_address:05X} exceeds memory size (18-bit limit: {ISA.MEMORY_WORDS:05X})", line_num)
                 return True
 
-            if new_address < self.current_address:
-                self.error(
-                    f".ORG address {new_address} is before current {self.current_address}", line_num)
-                return True
+#            if new_address < self.current_address:
+#                self.error(
+#                    f".ORG address {new_address} is before current {self.current_address}", line_num)
+#                return True
 
             self.current_address = new_address
             self.log(f".ORG directive: set address to {new_address:05X}")
@@ -208,9 +215,61 @@ class Assembler:
                     continue
 
             if mnemonic:
+                # Handle INTx alias
+                if mnemonic.startswith('INT') and len(mnemonic) > 3 and mnemonic[3:].isdigit():
+                    val = mnemonic[3:]
+                    mnemonic = 'INT'
+                    operands = [val]
+
+                # Handle numeric constants as .DW
                 if mnemonic not in ISA.OPCODES:
+                    # Check if it is a number
+                    num_val = self.parse_number(mnemonic)
+                    if num_val is not None:
+                         # Treat as .DW
+                         instr = Instruction(
+                            label=label,
+                            mnemonic='.DW',
+                            operands=[mnemonic],
+                            line_num=line_num,
+                            address=self.current_address
+                         )
+                         self.instructions.append(instr)
+                         self.log(f"Parsed {instr.address:05X}: .DW (implicit) {mnemonic}")
+                         self.current_address += 1
+                         continue
+                        
                     self.error(f"Unknown instruction '{mnemonic}'", line_num)
                     continue
+
+                if mnemonic == 'JMP' and len(operands) == 1:
+                    reg = self.parse_register(operands[0])
+                    if reg is not None:
+                        # Macro expansion: JMP Rx -> PUSH Rx; RET
+                        # PUSH Rx
+                        instr1 = Instruction(
+                            label=label,
+                            mnemonic='PUSH',
+                            operands=operands,
+                            line_num=line_num,
+                            address=self.current_address
+                        )
+                        self.instructions.append(instr1)
+                        self.log(f"Parsed {instr1.address:05X}: PUSH {operands[0]} (Macro JMP {operands[0]})")
+                        self.current_address += 1
+                        
+                        # RET
+                        instr2 = Instruction(
+                            label=None,
+                            mnemonic='RET',
+                            operands=[],
+                            line_num=line_num,
+                            address=self.current_address
+                        )
+                        self.instructions.append(instr2)
+                        self.log(f"Parsed {instr2.address:05X}: RET (Macro JMP {operands[0]})")
+                        self.current_address += 1
+                        continue
 
                 instr = Instruction(
                     label=label,
@@ -317,6 +376,18 @@ class Assembler:
         # e.g., -5 (Python) -> ...11111011 & 0xFFFF -> 0xFFFB
         return val & 0xFFFF
 
+    def _validate_and_mask_32bit(self, val: int, line_num: int) -> int:
+        """
+        Validates that val fits in 32 bits (signed or unsigned)
+        and returns the 32-bit mask.
+        """
+        # Range check for 32-bit signed/unsigned
+        if not (-2147483648 <= val <= 4294967295):
+            self.error(f"Immediate value {val} out of 32-bit range", line_num)
+            return 0
+
+        return val & 0xFFFFFFFF
+
     def encode_immediate_instruction(self, instr: Instruction) -> List[int]:
         opcode = ISA.OPCODES[instr.mnemonic]
 
@@ -349,10 +420,14 @@ class Assembler:
                 self.error("Invalid operands for LDM", instr.line_num)
                 return [0, 0]
 
-            imm_masked = self._validate_and_mask_16bit(imm, instr.line_num)
+            if rdst is None or imm is None:
+                self.error("Invalid operands for LDM", instr.line_num)
+                return [0, 0]
+
+            imm_masked = self._validate_and_mask_32bit(imm, instr.line_num)
 
             w1 = self.pack_header(opcode, r1=rdst)
-            w2 = self.sign_extend_16bit(imm_masked) & 0xFFFFFFFF
+            w2 = imm_masked
             return [w1, w2]
 
         return [0, 0]
@@ -552,15 +627,16 @@ def main():
                         action='store_true', help='Verbose output')
     parser.add_argument('--start-address', type=lambda x: int(x,
                         0), default=0, help='Starting address')
+    parser.add_argument('--hex', action='store_true', help='Treat all numbers as Hex by default')
 
     args = parser.parse_args()
-    assembler = Assembler(verbose=args.verbose)
+    assembler = Assembler(verbose=args.verbose, hex_mode=args.hex)
 
     if assembler.assemble(args.input_file):
         assembler.generate_output(args.output, args.format, args.start_address)
         if args.verbose:
             assembler.print_symbol_table()
-        print(f"\n✓ Assembly successful!")
+        print(f"\n[SUCCESS] Assembly successful!")
         print(f"  Input:  {args.input_file}")
         print(f"  Output: {args.output}")
         print(f"  Instructions: {len(assembler.instructions)}")
