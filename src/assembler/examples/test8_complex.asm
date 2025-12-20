@@ -175,7 +175,6 @@ FIBONACCI:
     ; R0 = N (count)
     ; R1 = current fibonacci number
     ; R2 = previous fibonacci number
-    
     LDM R0, 10      ; Calculate 10 fibonacci numbers
     LDM R1, 1       ; fib(1) = 1
     LDM R2, 0       ; fib(0) = 0
@@ -196,7 +195,7 @@ FIB_LOOP:
     JMP FIB_LOOP
     
 FIB_END:
-    RET
+    HLT
 
 ; ============================================================
 ; End of Program

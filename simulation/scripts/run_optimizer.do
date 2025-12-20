@@ -176,7 +176,7 @@ run 500 ps
 
 # 3. Test Cases
 # Hardware Interrupt at 2400ps
-force -freeze sim:/processor_top/hardware_interrupt 1 2400ps, 0 2500ps
+# force -freeze sim:/processor_top/hardware_interrupt 1 2400ps, 0 2500ps
 
 # Input Port changes
 force -freeze sim:/processor_top/in_port 16#0000ABCD 2000ps

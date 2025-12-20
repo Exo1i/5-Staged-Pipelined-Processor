@@ -337,15 +337,12 @@ add wave -radix binary sim:/processor_top/int_override_type
 
 add wave -divider "Interrupt Unit Internal"
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_DE
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_DE
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_EX
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_EX
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_MEM
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsCall_MEM
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_MEM
 add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_MEM
 

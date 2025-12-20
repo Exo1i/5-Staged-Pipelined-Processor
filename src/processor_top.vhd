@@ -239,15 +239,12 @@ BEGIN
   interrupt_unit_inst : ENTITY work.interrupt_unit
     PORT MAP(
       IsInterrupt_DE => decode_ctrl_out.decode_ctrl.IsInterrupt,
-      IsCall_DE => decode_ctrl_out.decode_ctrl.IsCall,
       IsRet_DE => decode_ctrl_out.decode_ctrl.IsReturn, 
       IsReti_DE => decode_ctrl_out.decode_ctrl.IsReti,
       IsInterrupt_EX => idex_ctrl_out.decode_ctrl.IsInterrupt,
       IsReti_EX => idex_ctrl_out.decode_ctrl.IsReti,
       IsRet_EX => idex_ctrl_out.decode_ctrl.IsReturn,
-      IsCall_EX => idex_ctrl_out.decode_ctrl.IsCall,
       IsInterrupt_MEM => exmem_ctrl_out.memory_ctrl.IsInterrupt,
-      IsCall_MEM => exmem_ctrl_out.memory_ctrl.IsCall,
       IsRet_MEM => exmem_ctrl_out.memory_ctrl.IsReturn,
       IsReti_MEM => exmem_ctrl_out.memory_ctrl.IsReti,
       IsHardwareInt_MEM => exmem_ctrl_out.memory_ctrl.PassInterrupt(0),

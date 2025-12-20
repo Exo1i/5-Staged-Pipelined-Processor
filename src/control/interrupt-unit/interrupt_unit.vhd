@@ -6,18 +6,15 @@ ENTITY interrupt_unit IS
     PORT (
         -- Inputs from DECODE stage
         IsInterrupt_DE : IN STD_LOGIC; -- Software/Hardware interrupt in fetch
-        IsCall_DE : IN STD_LOGIC; -- CALL instruction in fetch
         IsRet_DE : IN STD_LOGIC; -- RET instruction in fetch
         IsReti_DE : IN STD_LOGIC; -- RTI instruction in fetch
 
         IsInterrupt_EX : IN STD_LOGIC; -- Software/Hardware interrupt in decode
-        IsCall_EX : IN STD_LOGIC; -- CALL instruction in decode
         IsRet_EX : IN STD_LOGIC; -- RET instruction in decode
         IsReti_EX : IN STD_LOGIC; -- RTI instruction in decode
 
         -- Inputs from DE/EX pipeline register (signals in EXECUTE stage)
         IsInterrupt_MEM : IN STD_LOGIC; -- Software/Hardware interrupt in execute
-        IsCall_MEM : IN STD_LOGIC; -- CALL instruction in execute
         IsReti_MEM : IN STD_LOGIC; -- RTI instruction in execute
         IsRet_MEM : IN STD_LOGIC; -- RET instruction in execute
 
@@ -48,8 +45,7 @@ BEGIN
                 IsRet_MEM      OR IsRet_EX          OR
                 IsInterrupt_MEM  OR
                 IsInterrupt_DE OR IsReti_DE         OR  
-                IsRet_DE       OR IsCall_DE         OR
-                HardwareInterrupt;
+                IsRet_DE       OR   HardwareInterrupt;
 
     memory_hazard <=  IsInterrupt_MEM   OR
                       IsReti_MEM        OR
@@ -71,7 +67,6 @@ BEGIN
              IsInterrupt_MEM,
              IsReti_EX,
              IsReti_MEM,
-             IsCall_EX,
              IsRet_EX,
              IsRet_MEM)
     BEGIN
@@ -99,11 +94,6 @@ BEGIN
 
         ElSIF IsReti_MEM = '1' THEN
             -- Return from interrupt in execute: Second cycle - pop PC
-            OverrideType <= OVERRIDE_NOP;
-            OverrideOperation <= '1';
-
-        ELSIF IsCall_EX = '1' THEN
-            -- CALL instruction: Only push PC (single cycle)
             OverrideType <= OVERRIDE_NOP;
             OverrideOperation <= '1';
 
