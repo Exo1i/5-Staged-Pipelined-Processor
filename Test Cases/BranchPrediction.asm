@@ -29,7 +29,7 @@ LDM R0,0 #R0=0
 LDM R2,8 #R2=8
 LDM R3,60 #R3=60
 LDM R4,3  #R4=3
-JMP R3 #jump to 60
+JMP 60 #jump to 60
 
 .ORG 60
 ADD R4,R4,R4 #R4 = R4*2

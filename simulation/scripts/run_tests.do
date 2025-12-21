@@ -338,7 +338,7 @@ proc run_test {asm_file} {
 
     # 4. Run Simulation
     # Run long enough for the program to execute
-    run 10000 ps
+    run 4us
     
     echo "Finished running $asm_file"
 }
