@@ -241,6 +241,7 @@ begin
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_ZERO;
+                    execute_sig.CCR_WriteEnable := '1';
                     
                 when OP_JN =>
                     -- JN Imm: Jump if Negative
@@ -249,6 +250,7 @@ begin
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_NEGATIVE;
+                    execute_sig.CCR_WriteEnable := '1';
                     
                 when OP_JC =>
                     -- JC Imm: Jump if Carry
@@ -257,7 +259,8 @@ begin
                     decode_sig.OutBSelect       := OUTB_IMMEDIATE;
                     execute_sig.PassImm         := '1';
                     execute_sig.ConditionalType := COND_CARRY;
-                    
+                    execute_sig.CCR_WriteEnable := '1';
+   
                 when OP_JMP =>
                     -- JMP Imm: Unconditional Jump
                     decode_sig.IsJMP            := '1';

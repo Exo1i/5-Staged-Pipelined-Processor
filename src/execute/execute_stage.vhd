@@ -26,6 +26,10 @@ ENTITY execute_stage IS
         -- Stack flags input
         StackFlags : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
 
+        isJZ : IN STD_LOGIC;
+        isJN : IN STD_LOGIC;
+        isJC : IN STD_LOGIC;
+
         -- Data outputs (as record)
         execute_out : OUT execute_outputs_t;
 
@@ -70,6 +74,10 @@ ARCHITECTURE Behavioral OF execute_stage IS
     SIGNAL ccr_write_enable : STD_LOGIC;
     SIGNAL set_carry_in_ccr : STD_LOGIC;
     SIGNAL forward_secondary : STD_LOGIC_VECTOR(31 DOWNTO 0);
+
+    SIGNAL zero_flag : STD_LOGIC;
+    SIGNAL neg_flag : STD_LOGIC;
+    SIGNAL zero_carry : STD_LOGIC;
 BEGIN
 
     -- CCR write enable logic (XOR with IsReturn)
@@ -135,9 +143,13 @@ BEGIN
         Carry => alu_carry
     );
 
+    zero_flag <= alu_zero when isJZ = '0' else '0';
+    neg_flag <= alu_neg when isJN = '0' else '0';
+    zero_carry <= alu_carry when isJC = '0' else '0';
+
     -- =====================================================
     -- CCR Flags Register Instantiation
-    -- =====================================================
+    -- ===========================================  ==========
     CCR_UNIT : ENTITY work.ccr PORT MAP(
         clk => clk,
         reset => reset,

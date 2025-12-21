@@ -201,6 +201,17 @@ add wave -noupdate -group "Memory Stage" -color yellow /processor_top/mem_stage_
 add wave -noupdate -group "Memory Stage" -color yellow /processor_top/mem_stage_write_req
 add wave -noupdate -group "Memory Stage" -color violet -radix hexadecimal /processor_top/memory_stage_inst/sp_unit/Data
 
+# --- STACK POINTER ---
+add wave -noupdate -group "Stack Pointer" -color violet -radix hexadecimal /processor_top/memory_stage_inst/sp_unit/Data
+add wave -noupdate -group "Stack Pointer" -color violet -radix unsigned /processor_top/memory_stage_inst/sp_unit/sp
+add wave -noupdate -group "Stack Pointer" -color violet -radix unsigned /processor_top/memory_stage_inst/sp_unit/incremented_sp
+add wave -noupdate -group "Stack Pointer" -color violet -radix unsigned /processor_top/memory_stage_inst/sp_unit/sp_out
+add wave -noupdate -group "Stack Pointer" -color yellow /processor_top/memory_stage_inst/sp_unit/Increment
+add wave -noupdate -group "Stack Pointer" -color yellow /processor_top/memory_stage_inst/sp_unit/Decrement
+add wave -noupdate -group "Stack Pointer" -color yellow /processor_top/memory_stage_inst/sp_unit/enb
+add wave -noupdate -group "Stack Pointer" -color white /processor_top/memory_stage_inst/sp_unit/clk
+add wave -noupdate -group "Stack Pointer" -color white /processor_top/memory_stage_inst/sp_unit/rst
+
 # --- MEM/WB PIPELINE REG ---
 add wave -noupdate -group "MEM/WB Reg" -color gold -radix hexadecimal -expand /processor_top/memwb_data
 add wave -noupdate -group "MEM/WB Reg" -color yellow -expand /processor_top/memwb_ctrl

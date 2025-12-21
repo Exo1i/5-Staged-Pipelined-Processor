@@ -42,6 +42,9 @@ ARCHITECTURE Structural OF processor_top IS
   -- ===== Execute =====
   SIGNAL execute_out : execute_outputs_t;
   SIGNAL execute_ctrl_out : execute_ctrl_outputs_t;
+  SIGNAL isjz : STD_LOGIC;
+  SIGNAL isjn : STD_LOGIC;
+  SIGNAL isjc : STD_LOGIC;
 
   -- Forwarding disabled for now
   SIGNAL forwarding : forwarding_ctrl_t;
@@ -370,6 +373,10 @@ BEGIN
           InsertNOP_DEEX => insert_nop_deex
         );
 
+
+  isjz <= '1' when (actual_taken = '1' and idex_ctrl_out.execute_ctrl.ConditionalType = COND_ZERO) else '0';
+  isjn <= '1' when (actual_taken = '1' and idex_ctrl_out.execute_ctrl.ConditionalType = COND_NEGATIVE) else '0';
+  isjc <= '1' when (actual_taken = '1' and idex_ctrl_out.execute_ctrl.ConditionalType = COND_CARRY) else '0';
   -- ===== Execute stage =====
   execute_inst : ENTITY work.execute_stage
     PORT MAP(
@@ -382,6 +389,9 @@ BEGIN
       Forwarded_EXM => exmem_data_out.primary_data,
       Forwarded_MWB => wb_out.data,
       exmem_mem_to_ccr => exmem_ctrl_out.memory_ctrl.MemToCCR,
+      isJZ => isjz,
+      isJN => isjn,
+      isJC => isjc,
       StackFlags => mem_data(2 DOWNTO 0),
       execute_out => execute_out,
       ctrl_out => execute_ctrl_out
