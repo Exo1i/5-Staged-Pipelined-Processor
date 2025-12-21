@@ -321,6 +321,11 @@ proc run_test {asm_file} {
         force -freeze sim:/processor_top/in_port 16#00000400 3.5ns
         force -freeze sim:/processor_top/in_port 16#00000000 3.6ns
 
+    } elseif {$asm_file == "Memory.asm"} {
+        echo "Applying specific stimulus for Memory.asm..."
+        # User requested: 0.7us -> E, 0.8us -> 10
+        force -freeze sim:/processor_top/in_port 16#0000FFF5 1ns
+        force -freeze sim:/processor_top/in_port 16#00000000 1.1ns
     } else {
         echo "No specific stimulus for $asm_file"
     }
