@@ -27,8 +27,8 @@ SIGNAL inc_result : STD_LOGIC_VECTOR(32 DOWNTO 0);
 BEGIN
 
   -- Extended arithmetic operations for carry detection (using Carry_In)
-  add_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + UNSIGNED('0' & OperandB) + ("" & Carry_In));
-  sub_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) - UNSIGNED('0' & OperandB) - ("" & Carry_In));
+  add_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + UNSIGNED('0' & OperandB) );
+  sub_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) - UNSIGNED('0' & OperandB) );
   inc_result <= STD_LOGIC_VECTOR(UNSIGNED('0' & OperandA) + 1);
 
   -- ALU operation process

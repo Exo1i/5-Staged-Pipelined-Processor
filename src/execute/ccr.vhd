@@ -5,6 +5,9 @@ entity ccr is
     Port (
         clk          : in  STD_LOGIC;
         reset        : in  STD_LOGIC;
+        reset_n      : in  STD_LOGIC;
+        reset_c      : in  STD_LOGIC;
+        reset_z      : in  STD_LOGIC;
         
         -- ALU flags input
         ALU_Zero     : in  STD_LOGIC;
@@ -28,7 +31,7 @@ architecture Behavioral of ccr is
     signal ccr_reg : STD_LOGIC_VECTOR(2 downto 0) := "000";  -- [Z, N, C]
     
 begin
-    process(clk, reset)
+    process(clk, reset,reset_n,reset_c,reset_z)
     begin
         if reset = '1' then
             ccr_reg <= "000";  -- Clear all flags on reset
@@ -37,6 +40,12 @@ begin
                 if MemToCCR = '1' then
                     -- RTI instruction: restore flags from stack
                     ccr_reg <= StackFlags;
+                elsif reset_n = '1' then
+                    ccr_reg(1) <= '0';  -- Clear Negative flag only
+                elsif reset_c = '1' then
+                    ccr_reg(0) <= '0';  -- Clear Carry flag only
+                elsif reset_z = '1' then
+                    ccr_reg(2) <= '0';  -- Clear Zero flag only 
                 else
                     if SetCarry = '1' then
                         -- Set Carry flag

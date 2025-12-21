@@ -75,9 +75,9 @@ ARCHITECTURE Behavioral OF execute_stage IS
     SIGNAL set_carry_in_ccr : STD_LOGIC;
     SIGNAL forward_secondary : STD_LOGIC_VECTOR(31 DOWNTO 0);
 
-    SIGNAL zero_flag : STD_LOGIC;
-    SIGNAL neg_flag : STD_LOGIC;
-    SIGNAL zero_carry : STD_LOGIC;
+    SIGNAL reset_z : STD_LOGIC;
+    SIGNAL reset_n : STD_LOGIC;
+    SIGNAL reset_c : STD_LOGIC;
 BEGIN
 
     -- CCR write enable logic (XOR with IsReturn)
@@ -143,9 +143,9 @@ BEGIN
         Carry => alu_carry
     );
 
-    zero_flag <= alu_zero when isJZ = '0' else '0';
-    neg_flag <= alu_neg when isJN = '0' else '0';
-    zero_carry <= alu_carry when isJC = '0' else '0';
+    reset_z <= '1' when isJZ = '1' else '0';
+    reset_n <= '1' when isJN = '1' else '0';
+    reset_c <= '1' when isJC = '1' else '0';
 
     -- =====================================================
     -- CCR Flags Register Instantiation
@@ -153,6 +153,9 @@ BEGIN
     CCR_UNIT : ENTITY work.ccr PORT MAP(
         clk => clk,
         reset => reset,
+        reset_n => reset_n,
+        reset_c => reset_c,
+        reset_z => reset_z,
         ALU_Zero =>  alu_zero,
         ALU_Negative => alu_neg,
         ALU_Carry => alu_carry,

@@ -189,6 +189,9 @@ add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UN
 add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/SetCarry
 add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/MemToCCR
 add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/StackFlags
+add wave -noupdate -group "CCR" -color orange /processor_top/execute_inst/CCR_UNIT/reset_n
+add wave -noupdate -group "CCR" -color orange /processor_top/execute_inst/CCR_UNIT/reset_c
+add wave -noupdate -group "CCR" -color orange /processor_top/execute_inst/CCR_UNIT/reset_z
 
 # --- EX/MEM PIPELINE REG ---
 add wave -noupdate -group "EX/MEM Reg" -color gold -radix hexadecimal -expand /processor_top/exmem_data_out
