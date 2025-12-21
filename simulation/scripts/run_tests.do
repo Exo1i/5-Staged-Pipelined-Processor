@@ -1,422 +1,253 @@
 
-# ----------------------------------------------------------------------
-# Run Tests Do File
-# ----------------------------------------------------------------------
-# This script:
-# 1. Compiles the processor design.
-# 2. Sets up the wave window.
-# 3. Defines a 'run_test <asm_file>' procedure to easily run specific test cases.
+# ==============================================================================
+# Processor Simulation Script - Corrected Resolution
+# ==============================================================================
+
+# 1. Environment Setup
+if {[file exists work]} {
+    vdel -lib work -all
+}
+vlib work
+vmap work work
 
 if {![file exists memory_temp]} {
     mkdir memory_temp
 }
 
-# ----------------------------------------------------------------------
-# Compilation
-# ----------------------------------------------------------------------
-vlib ./simulation/work
-vmap work ./simulation/work
+# 2. Compilation (Order: Packages -> Commons -> Stages -> Top)
 
-# Packages
-vcom -2008 ./src/common/control_signals_pkg.vhd
-vcom -2008 ./src/common/pipeline_data_pkg.vhd
-vcom -2008 ./src/common/pkg_opcodes.vhd
+# --- Packages ---
+vcom -2008 -work work ./src/common/control_signals_pkg.vhd
+vcom -2008 -work work ./src/common/pipeline_data_pkg.vhd
+vcom -2008 -work work ./src/common/pkg_opcodes.vhd
+vcom -2008 -work work ./src/common/processor_interface_pkg.vhd
 
-# Memory (entity + simulation architecture)
-vcom -2008 ./src/common/memory.vhd
-vcom -2008 ./src/common/simulation_memory.vhd
+# --- Common & Memory ---
+vcom -2008 -work work ./src/common/memory.vhd
+vcom -2008 -work work ./src/common/simulation_memory.vhd
 
-# Fetch stage
-vcom -2008 ./src/fetch/pc.vhd
-vcom -2008 ./src/fetch/fetch_stage.vhd
+# --- Fetch Stage ---
+vcom -2008 -work work ./src/fetch/pc.vhd
+vcom -2008 -work work ./src/fetch/fetch_stage.vhd
+vcom -2008 -work work ./src/fetch/if_id_register.vhd
 
-# IF/ID
-vcom -2008 ./src/fetch/if_id_register.vhd
+# --- Decode Stage ---
+vcom -2008 -work work ./src/decode/register_file.vhd
+vcom -2008 -work work ./src/decode/decode_stage.vhd
+vcom -2008 -work work ./src/control/opcode-decoder/opcode_decoder.vhd
+vcom -2008 -work work ./src/decode/id_ex_register.vhd
 
-# Decode stage deps
-vcom -2008 ./src/decode/register_file.vhd
-vcom -2008 ./src/decode/decode_stage.vhd
+# --- Execute Stage ---
+vcom -2008 -work work ./src/execute/alu.vhd
+vcom -2008 -work work ./src/execute/ccr.vhd
+vcom -2008 -work work ./src/execute/execute_stage.vhd
+vcom -2008 -work work ./src/execute/ex_mem_register.vhd
 
-# Opcode decoder
-vcom -2008 ./src/control/opcode-decoder/opcode_decoder.vhd
+# --- Memory Stage ---
+vcom -2008 -work work ./src/memory/stack_pointer.vhd
+vcom -2008 -work work ./src/memory/memory_stage.vhd
+vcom -2008 -work work ./src/memory/mem_wb_register.vhd
 
-# ID/EX
-vcom -2008 ./src/decode/id_ex_register.vhd
+# --- Writeback Stage ---
+vcom -2008 -work work ./src/writeback/writeback_stage.vhd
 
-# Execute stage deps
-vcom -2008 ./src/execute/alu.vhd
-vcom -2008 ./src/execute/ccr.vhd
-vcom -2008 ./src/execute/execute_stage.vhd
+# --- Control Units ---
+vcom -2008 -work work ./src/control/memory-hazard-unit/memory_hazard_unit.vhd
+vcom -2008 -work work ./src/control/forwarding-unit/forwarding_unit.vhd
+vcom -2008 -work work ./src/control/freeze-control/freeze_control.vhd
+vcom -2008 -work work ./src/control/interrupt-unit/interrupt_unit.vhd
+vcom -2008 -work work ./src/control/branch-control/branch-decision-unit/branch_decision_unit.vhd
+vcom -2008 -work work ./src/control/branch-control/branch-predictor/branch_predictor.vhd
 
-# EX/MEM
-vcom -2008 ./src/execute/ex_mem_register.vhd
+# --- Top Level ---
+vcom -2008 -work work ./src/processor_top.vhd
 
-# Memory stage deps
-vcom -2008 ./src/memory/stack_pointer.vhd
-vcom -2008 ./src/memory/memory_stage.vhd
+# 3. Simulation Start (FIXED: Added -t 1ps to set resolution to picoseconds)
+vsim -voptargs=+acc -t 1ps work.processor_top
 
-# MEM/WB + writeback
-vcom -2008 ./src/memory/mem_wb_register.vhd
-vcom -2008 ./src/writeback/writeback_stage.vhd
+# 4. Waveform Configuration
+configure wave -signalnamewidth 1
+configure wave -timelineunits ps
 
-# Hazard unit
-vcom -2008 ./src/control/memory-hazard-unit/memory_hazard_unit.vhd
+# ==============================================================================
+# SIGNAL GROUPING AND COLORING
+# Colors: White(Clk), Gold(Top), Cyan(Data), Yellow(Ctrl), Orange(Hazards), Green(Mem)
+# ==============================================================================
 
-# Forwarding unit
-vcom -2008 ./src/control/forwarding-unit/forwarding_unit.vhd
+# --- TOP LEVEL INTERFACE ---
+add wave -noupdate -group "System Interface" -color white /processor_top/clk
+add wave -noupdate -group "System Interface" -color white /processor_top/rst
+add wave -noupdate -group "System Interface" -color cyan -radix hexadecimal /processor_top/in_port
+add wave -noupdate -group "System Interface" -color cyan -radix hexadecimal /processor_top/out_port
+add wave -noupdate -group "System Interface" -color yellow /processor_top/out_port_en
+add wave -noupdate -group "System Interface" -color orange /processor_top/hardware_interrupt
+add wave -noupdate -group "System Interface" -color orange /processor_top/pending_hw_interrupt
+add wave -noupdate -group "System Interface" -color orange /processor_top/TakeHWInterrupt
+add wave -noupdate -group "System Interface" -radix unsigned /processor_top/clk_count
 
-# Freezing unit 
-vcom -2008 ./src/control/freeze-control/freeze_control.vhd
+# --- PC GROUP (inside Fetch) ---
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_reg
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_next
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_out
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_nxt
+add wave -noupdate -group "PC" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_plus_one
+add wave -noupdate -group "PC" -color yellow /processor_top/fetch_inst/pc_inst/reset_pending
 
-# Interrupt unit
-vcom -2008 ./src/control/interrupt-unit/interrupt_unit.vhd
+# --- FETCH STAGE ---
+add wave -noupdate -group "Fetch Stage" -color cyan -radix hexadecimal -expand /processor_top/fetch_out
+add wave -noupdate -group "Fetch Stage" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_reg
+add wave -noupdate -group "Fetch Stage" -color violet -radix hexadecimal /processor_top/fetch_inst/pc_inst/pc_next
+add wave -noupdate -group "Fetch Stage" -color yellow /processor_top/fetch_inst/stall
+add wave -noupdate -group "Fetch Stage" -color yellow /processor_top/fetch_inst/BranchSelect
 
-# Branch decision unit
-vcom -2008 ./src/control/branch-control/branch-decision-unit/branch_decision_unit.vhd
+# --- IF/ID PIPELINE REG ---
+add wave -noupdate -group "IF/ID Reg" -color gold -radix hexadecimal -expand /processor_top/ifid_out
+add wave -noupdate -group "IF/ID Reg" -color yellow /processor_top/ifid_inst/enable
+add wave -noupdate -group "IF/ID Reg" -color yellow /processor_top/ifid_inst/flush_instruction
 
-# Branch Predictor
-vcom -2008 ./src/control/branch-control/branch-predictor/branch_predictor.vhd
+# --- DECODE STAGE ---
+add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal -expand /processor_top/decode_out
+add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_ctrl_out
+add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_flags
+add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
+# --- OPCODE DECODER ---
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/opcode
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/decode_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/execute_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/memory_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/writeback_ctrl
+add wave -noupdate -group "Opcode Decoder" -color orange /processor_top/opcode_decoder_inst/override_operation
+# All opcode_decoder inputs
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/override_type
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/isSwap_from_execute
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/take_interrupt
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_hardware_int_mem
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/requireImmediate
+# All opcode_decoder outputs
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_jmp_out
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_jmp_conditional_out
+# --- REGISTER FILE GROUP (inside Decode) ---
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Ra
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Rb
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Rdst
+add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/WriteEnable
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/ReadDataA
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/ReadDataB
+add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/WriteData
 
-# Top
-vcom -2008 ./src/processor_top.vhd
+# --- DECODE CONTROLLER (OPCODE DECODER) ---
+add wave -noupdate -group "Control Unit" -color yellow /processor_top/opcode_decoder_inst/opcode
+add wave -noupdate -group "Control Unit" -color yellow -expand /processor_top/opcode_decoder_inst/decode_ctrl
+add wave -noupdate -group "Control Unit" -color yellow -expand /processor_top/opcode_decoder_inst/execute_ctrl
+add wave -noupdate -group "Control Unit" -color yellow -expand /processor_top/opcode_decoder_inst/memory_ctrl
+add wave -noupdate -group "Control Unit" -color yellow -expand /processor_top/opcode_decoder_inst/writeback_ctrl
+add wave -noupdate -group "Control Unit" -color orange /processor_top/opcode_decoder_inst/override_operation
 
-# ----------------------------------------------------------------------
-# Simulation Start
-# ----------------------------------------------------------------------
-# Note: we don't start vsim yet because we might want to run the assembler first.
-# Actually, vsim needs to be running to define the waves. 
-# We will start it, but we expect the memory file to potentially change and need a restart.
-# To handle the first load safely, we ensure a dummy or previous memory file exists, 
-# or we just let it load whatever and then we restart in run_test.
+# --- ID/EX PIPELINE REG ---
+add wave -noupdate -group "ID/EX Reg" -color gold -radix hexadecimal -expand /processor_top/idex_data_out
+add wave -noupdate -group "ID/EX Reg" -color yellow -expand /processor_top/idex_ctrl_out
+add wave -noupdate -group "ID/EX Reg" -color orange /processor_top/idex_inst/flush
 
-vsim work.processor_top -voptargs=+acc -t 1ps
+# --- FORWARDING UNIT GROUP ---
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemRegWrite
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemRdst
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/MemIsSwap
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/WBRegWrite
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/WBRdst
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExRsrc1
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExRsrc2
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExOutBSelect
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ExIsImm
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardA
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardB
+add wave -noupdate -group "Forwarding Unit" -color orange /processor_top/forwarding_unit_inst/ForwardSecondary
 
-# ----------------------------------------------------------------------
-# Wave Setup
-# ----------------------------------------------------------------------
-view wave
-add wave -divider "Top"
-add wave -radix unsigned sim:/processor_top/clk_count
-add wave -radix binary sim:/processor_top/clk
-add wave -radix binary sim:/processor_top/rst
-add wave -radix hexadecimal sim:/processor_top/in_port
-add wave -radix hexadecimal sim:/processor_top/out_port
-add wave -radix binary sim:/processor_top/out_port_en
-add wave -radix binary sim:/processor_top/hardware_interrupt
-add wave -radix binary sim:/processor_top/is_blocking_hardware_interrupts
-add wave -radix binary sim:/processor_top/pending_hw_interrupt
-add wave -radix binary sim:/processor_top/TakeHWInterrupt
+# --- EXECUTE STAGE ---
+add wave -noupdate -group "Execute Stage" -color cyan -radix hexadecimal -expand /processor_top/execute_out
+add wave -noupdate -group "Execute Stage" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/Result
+add wave -noupdate -group "Execute Stage" -color cyan -radix binary /processor_top/execute_inst/CCR_UNIT/CCR_Out
+add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_inst/ALU_UNIT/Zero
+add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_inst/ALU_UNIT/Negative
+add wave -noupdate -group "Execute Stage" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry
+add wave -noupdate -group "Execute Stage" -color orange /processor_top/forwarding
+# --- ALU GROUP (inside Execute) ---
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/OperandA
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/OperandB
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/ALU_Op
+add wave -noupdate -group "ALU" -color cyan -radix hexadecimal /processor_top/execute_inst/ALU_UNIT/Result
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Zero
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Negative
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry
+add wave -noupdate -group "ALU" -color yellow /processor_top/execute_inst/ALU_UNIT/Carry_In
+# --- CCR GROUP (inside Execute) ---
+add wave -noupdate -group "CCR" -color cyan -radix binary /processor_top/execute_inst/CCR_UNIT/CCR_Out
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Zero
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Negative
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/ALU_Carry
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/CCRWrEn
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/SetCarry
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/MemToCCR
+add wave -noupdate -group "CCR" -color yellow /processor_top/execute_inst/CCR_UNIT/StackFlags
 
+# --- EX/MEM PIPELINE REG ---
+add wave -noupdate -group "EX/MEM Reg" -color gold -radix hexadecimal -expand /processor_top/exmem_data_out
+add wave -noupdate -group "EX/MEM Reg" -color yellow -expand /processor_top/exmem_ctrl_out
 
-add wave -divider "Fetch"
-add wave -radix hexadecimal sim:/processor_top/fetch_out.pc
-add wave -radix hexadecimal sim:/processor_top/fetch_out.pushed_pc
-add wave -radix hexadecimal sim:/processor_top/fetch_out.instruction
+# --- MEMORY STAGE ---
+add wave -noupdate -group "Memory Stage" -color green -radix hexadecimal /processor_top/mem_stage_addr
+add wave -noupdate -group "Memory Stage" -color green -radix hexadecimal /processor_top/mem_stage_wdata
+add wave -noupdate -group "Memory Stage" -color green -radix hexadecimal /processor_top/mem_data
+add wave -noupdate -group "Memory Stage" -color yellow /processor_top/mem_stage_read_req
+add wave -noupdate -group "Memory Stage" -color yellow /processor_top/mem_stage_write_req
+add wave -noupdate -group "Memory Stage" -color violet -radix hexadecimal /processor_top/memory_stage_inst/sp_unit/Data
 
-add wave -divider "IF/ID"
-add wave -radix binary sim:/processor_top/ifid_out.take_interrupt
-add wave -radix binary sim:/processor_top/ifid_out.override_operation
-add wave -radix binary sim:/processor_top/ifid_out.override_op
-add wave -radix hexadecimal sim:/processor_top/ifid_out.pc
-add wave -radix hexadecimal sim:/processor_top/ifid_out.pushed_pc
-add wave -radix hexadecimal sim:/processor_top/ifid_out.instruction
+# --- MEM/WB PIPELINE REG ---
+add wave -noupdate -group "MEM/WB Reg" -color gold -radix hexadecimal -expand /processor_top/memwb_data
+add wave -noupdate -group "MEM/WB Reg" -color yellow -expand /processor_top/memwb_ctrl
 
-# IF/ID Register internals
-add wave -divider "IF/ID Register Internals"
-add wave -radix binary sim:/processor_top/ifid_inst/flush_instruction
-add wave -radix binary sim:/processor_top/ifid_inst/enable
-add wave -radix binary sim:/processor_top/ifid_inst/data_reg.take_interrupt
-add wave -radix binary sim:/processor_top/ifid_inst/data_reg.override_operation
-add wave -radix binary sim:/processor_top/ifid_inst/data_reg.override_op
-add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.pc
-add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.pushed_pc
-add wave -radix hexadecimal sim:/processor_top/ifid_inst/data_reg.instruction
+# --- WRITEBACK STAGE ---
+add wave -noupdate -group "Writeback Stage" -color cyan -radix hexadecimal -expand /processor_top/wb_out
 
-add wave -divider "Decode"
-add wave -radix hexadecimal sim:/processor_top/decode_out.pc
-add wave -radix hexadecimal sim:/processor_top/decode_out.pushed_pc
-add wave -radix hexadecimal sim:/processor_top/decode_out.opcode
-add wave -radix hexadecimal sim:/processor_top/decode_out.operand_a
-add wave -radix hexadecimal sim:/processor_top/decode_out.operand_b
-add wave -radix hexadecimal sim:/processor_top/decode_out.immediate
-add wave -radix unsigned sim:/processor_top/decode_out.rsrc1
-add wave -radix unsigned sim:/processor_top/decode_out.rsrc2
-add wave -radix unsigned sim:/processor_top/decode_out.rd
+# --- HAZARD & FREEZE CONTROL ---
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/pc_freeze
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/ifde_write_enable
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/insert_nop_ifde
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/insert_nop_deex
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/int_stall
+add wave -noupdate -group "Freeze/Stall" -color orange /processor_top/freeze_control_inst/is_hlt
 
-# Divider for opcode_decoder signals
-add wave -divider "Opcode Decoder"
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/opcode
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/override_operation
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/override_type
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/isSwap_from_execute
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/take_interrupt
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_hardware_int_mem
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/requireImmediate
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/decode_ctrl
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/execute_ctrl
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/memory_ctrl
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/writeback_ctrl
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_jmp_out
-add wave -radix binary sim:/processor_top/opcode_decoder_inst/is_jmp_conditional_out
+# --- BRANCHING & INTERRUPTS ---
+add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/branch_select
+add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/branch_target_select
+add wave -noupdate -group "Branch/Intr Unit" -color cyan -radix hexadecimal -expand /processor_top/branch_targets
+add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/actual_taken
+add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/int_take_interrupt
+add wave -noupdate -group "Branch/Intr Unit" -color orange /processor_top/int_override_type
 
-add wave -divider "Register File"
-add wave -radix unsigned sim:/processor_top/decode_inst/reg_file_inst/Ra
-add wave -radix unsigned sim:/processor_top/decode_inst/reg_file_inst/Rb
-add wave -radix hexadecimal sim:/processor_top/decode_inst/reg_file_inst/ReadDataA
-add wave -radix hexadecimal sim:/processor_top/decode_inst/reg_file_inst/ReadDataB
-add wave -radix unsigned sim:/processor_top/decode_inst/reg_file_inst/Rdst
-add wave -radix hexadecimal sim:/processor_top/decode_inst/reg_file_inst/WriteData
-add wave -radix binary sim:/processor_top/decode_inst/reg_file_inst/WriteEnable
-add wave -radix hexadecimal sim:/processor_top/decode_inst/reg_file_inst/registers
+# --- INTERRUPT UNIT GROUP ---
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_DE
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_EX
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsInterrupt_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsRet_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsReti_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsHardwareInt_MEM
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/HardwareInterrupt
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/freeze_fetch
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/memory_hazard
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/PassPC_NotPCPlus1
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/TakeInterrupt
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/IsHardwareIntMEM_Out
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/OverrideOperation
+add wave -noupdate -group "Interrupt Unit" -color orange /processor_top/interrupt_unit_inst/OverrideType
 
-add wave -divider "Decode Ctrl"
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.OutBSelect
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsInterrupt
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsHardwareInterrupt
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsCall
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsReturn
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsReti
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsJMP
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsJMPConditional
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.IsSwap
-add wave -radix binary sim:/processor_top/decode_ctrl_out.decode_ctrl.RequireImmediate
-add wave -radix binary sim:/processor_top/decode_ctrl_out.execute_ctrl.CCR_WriteEnable
-add wave -radix binary sim:/processor_top/decode_ctrl_out.execute_ctrl.PassCCR
-add wave -radix binary sim:/processor_top/decode_ctrl_out.execute_ctrl.PassImm
-add wave -radix binary sim:/processor_top/decode_ctrl_out.execute_ctrl.ALU_Operation
-add wave -radix binary sim:/processor_top/decode_ctrl_out.execute_ctrl.ConditionalType
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.SP_Enable
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.SP_Function
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.SPtoMem
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.PassInterrupt
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemRead
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemWrite
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.MemToCCR
-add wave -radix binary sim:/processor_top/decode_ctrl_out.memory_ctrl.IsSwap
-add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.PassMem
-add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/processor_top/decode_ctrl_out.writeback_ctrl.OutPortWriteEn
-
-add wave -divider "ID/EX"
-add wave -radix hexadecimal sim:/processor_top/idex_data_out.pc
-add wave -radix hexadecimal sim:/processor_top/idex_data_out.operand_a
-add wave -radix hexadecimal sim:/processor_top/idex_data_out.operand_b
-add wave -radix unsigned sim:/processor_top/idex_data_out.rsrc1
-add wave -radix unsigned sim:/processor_top/idex_data_out.rsrc2
-add wave -radix unsigned sim:/processor_top/idex_data_out.rd
-add wave -radix binary sim:/processor_top/idex_ctrl_out.execute_ctrl.ALU_Operation
-add wave -radix binary sim:/processor_top/idex_ctrl_out.memory_ctrl.MemRead
-add wave -radix binary sim:/processor_top/idex_ctrl_out.memory_ctrl.MemWrite
-add wave -radix binary sim:/processor_top/idex_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/processor_top/idex_ctrl_out.writeback_ctrl.PassMem
-
-add wave -divider "Execute"
-add wave -radix hexadecimal sim:/processor_top/execute_out.primary_data
-add wave -radix hexadecimal sim:/processor_top/execute_out.secondary_data
-add wave -radix hexadecimal  sim:/processor_top/execute_inst/immediate
-add wave -radix unsigned sim:/processor_top/execute_out.rdst
-add wave -radix binary sim:/processor_top/execute_out.ccr_flags
-add wave -radix binary  sim:/processor_top/execute_inst/In_A
-add wave -radix binary  sim:/processor_top/execute_inst/In_B
-add wave -radix binary  sim:/processor_top/execute_inst/forwarded_B
-add wave -radix binary  sim:/processor_top/execute_inst/forwarding
-
-add wave -divider "ALU Internal state"
-add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandA
-add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/OperandB
-add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/ALU_Op
-add wave -radix hexadecimal sim:/processor_top/execute_inst/ALU_UNIT/Result
-add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Zero
-add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Negative
-add wave -radix binary sim:/processor_top/execute_inst/ALU_UNIT/Carry
-
-add wave -divider "CCR Internal"
-add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCRWrEn
-add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/MemToCCR
-add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/StackFlags
-add wave -radix binary sim:/processor_top/execute_inst/CCR_UNIT/CCR_Out
-
-add wave -divider "Forwarding Unit"
-add wave -radix binary sim:/processor_top/forwarding.forward_a
-add wave -radix binary sim:/processor_top/forwarding.forward_b
-add wave -radix binary sim:/processor_top/forwarding.forward_secondary
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/MemRegWrite
-add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/MemRdst
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/MemIsSwap
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/WBRegWrite
-add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/WBRdst
-add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/ExRsrc1
-add wave -radix unsigned sim:/processor_top/forwarding_unit_inst/ExRsrc2
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/ExOutBSelect
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/ExIsImm
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardA
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardB
-add wave -radix binary sim:/processor_top/forwarding_unit_inst/ForwardSecondary
-
-add wave -divider "Execute Ctrl"
-add wave -radix binary sim:/processor_top/execute_inst/idex_ctrl_in.execute_ctrl
-add wave -radix binary sim:/processor_top/execute_ctrl_out.wb_regwrite
-add wave -radix binary sim:/processor_top/execute_ctrl_out.wb_memtoreg
-add wave -radix binary sim:/processor_top/execute_ctrl_out.m_memread
-add wave -radix binary sim:/processor_top/execute_ctrl_out.m_memwrite
-add wave -radix binary sim:/processor_top/execute_ctrl_out.m_sptomem
-add wave -radix binary sim:/processor_top/execute_ctrl_out.m_passinterrupt
-
-add wave -divider "EX/MEM"
-add wave -radix hexadecimal sim:/processor_top/exmem_data_out.primary_data
-add wave -radix hexadecimal sim:/processor_top/exmem_data_out.secondary_data
-add wave -radix unsigned sim:/processor_top/exmem_data_out.rdst1
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.writeback_ctrl.RegWrite
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.writeback_ctrl.PassMem
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.writeback_ctrl.OutPortWriteEn
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.MemRead
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.MemWrite
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Enable
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SP_Function
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.SPtoMem
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.PassInterrupt
-add wave -radix binary sim:/processor_top/exmem_ctrl_out.memory_ctrl.MemToCCR
-
-add wave -divider "Memory Stage"
-add wave -radix binary sim:/processor_top/mem_stage_read_req
-add wave -radix binary sim:/processor_top/mem_stage_write_req
-add wave -radix hexadecimal sim:/processor_top/mem_stage_addr
-add wave -radix hexadecimal sim:/processor_top/mem_stage_wdata
-add wave -radix hexadecimal sim:/processor_top/mem_wb_data_comb.memory_data
-add wave -radix hexadecimal sim:/processor_top/mem_wb_data_comb.alu_data
-add wave -radix unsigned sim:/processor_top/mem_wb_data_comb.rdst
-add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.RegWrite
-add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.PassMem
-add wave -radix binary sim:/processor_top/mem_wb_ctrl_comb.writeback_ctrl.OutPortWriteEn
-
-add wave -divider "Stack Pointer"
-add wave -radix hexadecimal sim:/processor_top/memory_stage_inst/sp_unit/Data
-add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/enb
-add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/Increment
-add wave -radix binary sim:/processor_top/memory_stage_inst/sp_unit/Decrement
-
-add wave -divider "WB"
-add wave -radix binary sim:/processor_top/wb_out.reg_we
-add wave -radix unsigned sim:/processor_top/wb_out.rdst
-add wave -radix hexadecimal sim:/processor_top/wb_out.data
-
-add wave -divider "MEM/WB"
-add wave -radix hexadecimal sim:/processor_top/memwb_data.memory_data
-add wave -radix hexadecimal sim:/processor_top/memwb_data.alu_data
-add wave -radix unsigned sim:/processor_top/memwb_data.rdst
-add wave -radix binary sim:/processor_top/memwb_ctrl.writeback_ctrl.RegWrite
-add wave -radix binary sim:/processor_top/memwb_ctrl.writeback_ctrl.PassMem
-add wave -radix binary sim:/processor_top/memwb_ctrl.writeback_ctrl.OutPortWriteEn
-
-add wave -divider "Arb / Memory"
-add wave -radix binary sim:/processor_top/pass_pc
-add wave -radix binary sim:/processor_top/front_enable
-add wave -radix hexadecimal sim:/processor_top/mem_addr_mux
-add wave -radix hexadecimal sim:/processor_top/mem_wdata_mux
-add wave -radix binary sim:/processor_top/mem_read_mux
-add wave -radix binary sim:/processor_top/mem_write_mux
-add wave -radix binary sim:/processor_top/mem_read_out
-add wave -radix binary sim:/processor_top/mem_write_out
-add wave -radix hexadecimal sim:/processor_top/mem_data
-
-add wave -divider "Branch Decision Unit"
-add wave -radix binary sim:/processor_top/branch_select
-add wave -radix binary sim:/processor_top/branch_target_select
-add wave -radix binary sim:/processor_top/actual_taken
-add wave -radix binary sim:/processor_top/branch_decision_inst/IsSoftwareInterrupt
-add wave -radix binary sim:/processor_top/branch_decision_inst/IsHardwareInterrupt
-add wave -radix binary sim:/processor_top/branch_decision_inst/IsRTI
-add wave -radix binary sim:/processor_top/branch_decision_inst/IsReturn
-add wave -radix binary sim:/processor_top/branch_decision_inst/IsCall
-add wave -radix binary sim:/processor_top/branch_decision_inst/UnconditionalBranch
-add wave -radix binary sim:/processor_top/branch_decision_inst/ConditionalBranch
-add wave -radix binary sim:/processor_top/branch_decision_inst/ActualTaken
-
-add wave -divider "Freeze Control"
-add wave -radix binary sim:/processor_top/pc_freeze
-add wave -radix binary sim:/processor_top/ifde_write_enable
-add wave -radix binary sim:/processor_top/insert_nop_ifde
-add wave -radix binary sim:/processor_top/insert_nop_deex
-add wave -radix binary sim:/processor_top/freeze_control_inst/BranchSelect
-add wave -radix binary sim:/processor_top/freeze_control_inst/BranchTargetSelect
-add wave -radix binary sim:/processor_top/freeze_control_inst/is_swap
-add wave -radix binary sim:/processor_top/freeze_control_inst/requireImmediate
-add wave -radix binary sim:/processor_top/freeze_control_inst/PassPC_MEM
-add wave -radix binary sim:/processor_top/freeze_control_inst/Stall_Interrupt
-add wave -radix binary sim:/processor_top/freeze_control_inst/is_hlt
-add wave -radix binary sim:/processor_top/freeze_control_inst/PC_Freeze
-add wave -radix binary sim:/processor_top/freeze_control_inst/IFDE_WriteEnable
-add wave -radix binary sim:/processor_top/freeze_control_inst/InsertNOP_IFDE
-add wave -radix binary sim:/processor_top/freeze_control_inst/InsertNOP_DEEX
-
-add wave -divider "Interrupt Unit"
-add wave -radix binary sim:/processor_top/hardware_interrupt
-add wave -radix binary sim:/processor_top/int_stall
-add wave -radix binary sim:/processor_top/memory_hazard_int
-add wave -radix binary sim:/processor_top/int_pass_pc_not_plus1
-add wave -radix binary sim:/processor_top/int_take_interrupt
-add wave -radix binary sim:/processor_top/int_is_hardware_int_mem
-add wave -radix binary sim:/processor_top/int_override_operation
-add wave -radix binary sim:/processor_top/int_override_type
-
-add wave -divider "Interrupt Unit Internal"
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_DE
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_DE
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_DE
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_EX
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_EX
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_EX
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsInterrupt_MEM
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsRet_MEM
-add wave -radix binary sim:/processor_top/interrupt_unit_inst/IsReti_MEM
-
-
-add wave -divider "Branch Decision Unit"
-add wave -radix binary sim:/processor_top/branch_select
-add wave -radix binary sim:/processor_top/branch_target_select
-add wave -radix binary sim:/processor_top/actual_taken
-add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMP
-add wave -radix binary sim:/processor_top/idex_ctrl_out.decode_ctrl.IsJMPConditional
-add wave -radix binary sim:/processor_top/idex_ctrl_out.execute_ctrl.ConditionalType
-
-add wave -divider "Branch Targets"
-add wave -radix hexadecimal sim:/processor_top/branch_targets.target_decode
-add wave -radix hexadecimal sim:/processor_top/branch_targets.target_execute
-add wave -radix hexadecimal sim:/processor_top/branch_targets.target_memory
-
-
-# Divider for fetch_stage signals
-add wave -divider "fetch_stage Signals"
-add wave -radix binary sim:/processor_top/fetch_inst/clk
-add wave -radix binary sim:/processor_top/fetch_inst/rst
-add wave -radix binary sim:/processor_top/fetch_inst/stall
-add wave -radix binary sim:/processor_top/fetch_inst/BranchSelect
-add wave -radix binary sim:/processor_top/fetch_inst/BranchTargetSelect
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/branch_targets
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/mem_data
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/fetch_out
-add wave -radix binary sim:/processor_top/fetch_inst/PushPCSelect
-add wave -radix binary sim:/processor_top/fetch_inst/pc_enable
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/current_pc
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_plus_one
-
-# Divider for pc signals (internal to fetch_stage)
-add wave -divider "pc Signals"
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/clk
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/rst
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/BranchSelect
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/BranchTargetSelect
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/enable
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_decode
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_execute
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_memory
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/target_reset
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_out
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_plus_one
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_reg
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/pc_next
-add wave -radix hexadecimal sim:/processor_top/fetch_inst/pc_inst/selected_branch_target
-add wave -radix binary sim:/processor_top/fetch_inst/pc_inst/reset_pending
+# ==============================================================================
+# SIMULATION STIMULUS
+# ==============================================================================
 
 # ----------------------------------------------------------------------
 # Run Test Procedure
@@ -431,14 +262,14 @@ proc run_test {asm_file} {
     # Uses python to convert .asm to .mem.
     # Note: Assumes python is in PATH.
     # We wrap the filename in quotes to handle spaces.
-    if {[catch {exec python src/assembler/assembler.py "Test Cases/$asm_file" -o memory_data.mem --hex} result]} {
+    echo "Running assembler on Test Cases/$asm_file..."
+    if {[catch {exec python src/assembler/assembler.py "Test Cases/$asm_file" -o memory_data.mem --hex 2>@1} result]} {
         echo "Error running assembler:"
         echo $result
         return
-    } else {
-        echo "Assembler Output:"
-        echo $result
     }
+    echo "Assembler output:"
+    echo $result
 
     # 2. Restart Simulation
     # This re-initializes signals and memory.
@@ -460,6 +291,22 @@ proc run_test {asm_file} {
         force -freeze sim:/processor_top/in_port 16#0000000E 0.7ns
         force -freeze sim:/processor_top/in_port 16#00000010 0.8ns
         force -freeze sim:/processor_top/in_port 16#00000000 0.9ns
+    } elseif {$asm_file == "TwoOperand.asm"} {
+        echo "Applying specific stimulus for TwoOperand.asm..."
+        # User requested: 0.7us -> E, 0.8us -> 10
+        force -freeze sim:/processor_top/in_port 16#00000006 0.4ns
+        force -freeze sim:/processor_top/in_port 16#00000020 0.5ns
+        force -freeze sim:/processor_top/in_port 16#00000000 0.6ns
+    } elseif {$asm_file == "Branch.asm"} {
+        echo "Applying specific stimulus for Branch.asm..."
+        # User requested: 0.7us -> E, 0.8us -> 10
+        force -freeze sim:/processor_top/in_port 16#00000030 0.4ns
+        force -freeze sim:/processor_top/in_port 16#00000050 0.5ns
+        force -freeze sim:/processor_top/in_port 16#00000100 0.6ns
+        force -freeze sim:/processor_top/in_port 16#00000300 0.7ns
+        force -freeze sim:/processor_top/in_port 16#0000FFFF 0.8ns
+        force -freeze sim:/processor_top/in_port 16#0000FFFF 0.9ns
+        force -freeze sim:/processor_top/in_port 16#00000000 1ns
     } else {
         echo "No specific stimulus for $asm_file"
     }
@@ -469,7 +316,7 @@ proc run_test {asm_file} {
 
     # 4. Run Simulation
     # Run long enough for the program to execute
-    run 5 us
+    run 10000 ps
     
     echo "Finished running $asm_file"
 }

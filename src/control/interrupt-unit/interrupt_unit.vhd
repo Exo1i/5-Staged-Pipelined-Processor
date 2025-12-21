@@ -45,7 +45,7 @@ BEGIN
                 IsRet_MEM      OR IsRet_EX          OR
                 IsInterrupt_MEM  OR
                 IsInterrupt_DE OR IsReti_DE         OR  
-                IsRet_DE       OR   HardwareInterrupt;
+                IsRet_DE;
 
     memory_hazard <=  IsInterrupt_MEM   OR
                       IsReti_MEM        OR

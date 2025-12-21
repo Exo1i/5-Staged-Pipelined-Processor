@@ -109,6 +109,22 @@ add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal -expand 
 add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_ctrl_out
 add wave -noupdate -group "Decode Stage" -color yellow -expand /processor_top/decode_flags
 add wave -noupdate -group "Decode Stage" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
+# --- OPCODE DECODER ---
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/opcode
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/decode_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/execute_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/memory_ctrl
+add wave -noupdate -group "Opcode Decoder" -color yellow -expand /processor_top/opcode_decoder_inst/writeback_ctrl
+add wave -noupdate -group "Opcode Decoder" -color orange /processor_top/opcode_decoder_inst/override_operation
+# All opcode_decoder inputs
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/override_type
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/isSwap_from_execute
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/take_interrupt
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_hardware_int_mem
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/requireImmediate
+# All opcode_decoder outputs
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_jmp_out
+add wave -noupdate -group "Opcode Decoder" -color yellow /processor_top/opcode_decoder_inst/is_jmp_conditional_out
 # --- REGISTER FILE GROUP (inside Decode) ---
 add wave -noupdate -group "Register File" -color cyan -radix hexadecimal /processor_top/decode_inst/reg_file_inst/registers
 add wave -noupdate -group "Register File" -color yellow /processor_top/decode_inst/reg_file_inst/Ra
@@ -245,7 +261,7 @@ run 500 ps
 
 # 3. Test Cases
 # Hardware Interrupt at 2400ps
-# force -freeze sim:/processor_top/hardware_interrupt 1 2400ps, 0 2500ps
+force -freeze sim:/processor_top/hardware_interrupt 1 2360ps, 0 2540ps
 
 # Input Port changes
 force -freeze sim:/processor_top/in_port 16#0000ABCD 2000ps
