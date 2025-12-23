@@ -2,15 +2,14 @@
 
 ## Overview
 
-The Branch Decision Unit makes final branch decisions, handles mispredictions, manages pipeline flushes, and coordinates branch target selection with proper priority handling.
+The Branch Decision Unit makes final branch decisions, handles pipeline flushes, and coordinates branch target selection with proper priority handling for interrupts, returns, and branches.
 
 ## Purpose
 
 - Make final branch/no-branch decision
-- Detect branch mispredictions
-- Generate flush signals for pipeline stages
-- Select appropriate branch target address
-- Handle priority between interrupts, resets, and branches
+- Determine correct branch target source
+- Handle priority between reset, interrupts, returns, and branches
+- Generate appropriate pipeline flush signals
 
 ## Architecture
 
@@ -19,43 +18,40 @@ The Branch Decision Unit makes final branch decisions, handles mispredictions, m
 ```
 Priority (Highest to Lowest):
 1. Reset
-2. Hardware Interrupt
-3. Software Interrupt
-4. Unconditional Branch (JMP, CALL)
-5. Conditional Branch Misprediction
-6. Conditional Branch (correct prediction)
+2. Hardware Interrupt / Software Interrupt / RTI / RET
+3. CALL / Unconditional Branch (JMP)
+4. Conditional Branch (when condition is true)
 ```
 
 ### Inputs
 
-| Signal                | Source           | Description                        |
-| --------------------- | ---------------- | ---------------------------------- |
-| `Reset`               | System           | Reset signal (highest priority)    |
-| `IsHardwareInterrupt` | Interrupt Unit   | Hardware interrupt active          |
-| `IsSoftwareInterrupt` | Interrupt Unit   | Software interrupt (INT) active    |
-| `UnconditionalBranch` | Branch Predictor | Unconditional jump (JMP/CALL)      |
-| `ConditionalBranch`   | Execute Stage    | Conditional branch being resolved  |
-| `PredictedTaken`      | Branch Predictor | Predicted outcome                  |
-| `ActualTaken`         | Execute Stage    | Actual condition evaluation result |
+| Signal                | Width | Source           | Description                          |
+| --------------------- | ----- | ---------------- | ------------------------------------ |
+| `Reset`               | 1     | System           | Reset signal (highest priority)      |
+| `IsHardwareInterrupt` | 1     | Interrupt Unit   | Hardware interrupt active            |
+| `IsSoftwareInterrupt` | 1     | Decode Stage     | Software interrupt (INT) active      |
+| `IsRTI`               | 1     | Memory Stage     | Return from interrupt                |
+| `IsReturn`            | 1     | Memory Stage     | RET instruction (PC from stack)      |
+| `IsCall`              | 1     | Decode Stage     | CALL instruction                     |
+| `UnconditionalBranch` | 1     | Decode Stage     | Unconditional jump (JMP)             |
+| `ConditionalBranch`   | 1     | Execute Stage    | Conditional branch being resolved    |
+| `PredictedTaken`      | 1     | Branch Predictor | Predicted outcome (unused in static) |
+| `ActualTaken`         | 1     | Execute Stage    | Actual condition evaluation result   |
 
 ### Outputs
 
-| Signal                     | Destination    | Description                                  |
-| -------------------------- | -------------- | -------------------------------------------- |
-| `BranchSelect`             | PC Mux         | '0' = PC+1 (sequential), '1' = branch target |
-| `BranchTargetSelect [1:0]` | Target Mux     | Select branch target source                  |
-| `FlushDE`                  | Decode Stage   | '1' = insert NOP in decode stage             |
-| `FlushIF`                  | Fetch Stage    | '1' = insert NOP in fetch stage              |
-| `Stall_Branch`             | Freeze Control | Stall signal for branch handling             |
+| Signal                     | Width | Destination | Description                                  |
+| -------------------------- | ----- | ----------- | -------------------------------------------- |
+| `BranchSelect`             | 1     | PC Mux      | '0' = PC+1 (sequential), '1' = branch target |
+| `BranchTargetSelect [1:0]` | 2     | Target Mux  | Select branch target source                  |
 
 ### Branch Target Select Encoding
 
-| Value | Constant       | Source                       | Usage                                         |
-| ----- | -------------- | ---------------------------- | --------------------------------------------- |
-| 00    | TARGET_DECODE  | Immediate from DECODE        | Predicted branches, unconditional branches    |
-| 01    | TARGET_EXECUTE | Immediate from EXECUTE       | Resolved conditional branches, mispredictions |
-| 10    | TARGET_MEMORY  | Interrupt vector from MEMORY | Interrupts (SW/HW)                            |
-| 11    | TARGET_RESET   | Reset address (0)            | Reset                                         |
+| Value | Constant       | Source                 | Usage                                     |
+| ----- | -------------- | ---------------------- | ----------------------------------------- |
+| 00    | TARGET_DECODE  | Immediate from DECODE  | CALL, JMP (unconditional branches)        |
+| 01    | TARGET_EXECUTE | Immediate from EXECUTE | Resolved conditional branches             |
+| 10    | TARGET_MEMORY  | Address from MEMORY    | Interrupts, RET, RTI (address from stack) |
 
 ## Operation Scenarios
 
@@ -65,244 +61,107 @@ Priority (Highest to Lowest):
 
 ```
 Input:  Reset = '1'
-Output: BranchSelect = '1'
-        BranchTargetSelect = "11" (TARGET_RESET)
-        FlushDE = '1'
-        FlushIF = '1'
+Output: BranchSelect = '0' (neutral during reset)
+        BranchTargetSelect = TARGET_DECODE
+        (PC module handles reset internally)
 ```
 
-- Branch to address 0
-- Flush entire pipeline
-
-### 2. Hardware Interrupt
+### 2. Hardware/Software Interrupt, RTI, or RET
 
 **Priority**: 2nd highest
 
 ```
-Input:  IsHardwareInterrupt = '1'
+Input:  IsHardwareInterrupt = '1' OR IsSoftwareInterrupt = '1'
+        OR IsRTI = '1' OR IsReturn = '1'
 Output: BranchSelect = '1'
-        BranchTargetSelect = "10" (TARGET_MEMORY)
-        FlushDE = '1'
-        FlushIF = '1'
+        BranchTargetSelect = TARGET_MEMORY ("10")
 ```
 
-- Branch to hardware interrupt vector
-- Fetch handler address from memory
+- Branch to address from memory stage (interrupt vector or return address)
 
-### 3. Software Interrupt
+### 3. CALL or Unconditional Branch (JMP)
 
 **Priority**: 3rd
 
 ```
-Input:  IsSoftwareInterrupt = '1'
+Input:  IsCall = '1' OR UnconditionalBranch = '1'
 Output: BranchSelect = '1'
-        BranchTargetSelect = "10" (TARGET_MEMORY)
-        FlushDE = '1'
-        FlushIF = '1'
+        BranchTargetSelect = TARGET_DECODE ("00")
 ```
 
-- Branch to software interrupt vector
-- Fetch handler address from memory
+- Branch to immediate address from decode stage
 
-### 4. Unconditional Branch (JMP, CALL)
+### 4. Conditional Branch (when actually taken)
 
-**Priority**: 4th
+**Priority**: 4th (static prediction - always predict not-taken)
 
 ```
-Input:  UnconditionalBranch = '1'
+Input:  ConditionalBranch = '1' AND ActualTaken = '1'
 Output: BranchSelect = '1'
-        BranchTargetSelect = "00" (TARGET_DECODE)
-        FlushDE = '1'
-        FlushIF = '1'
+        BranchTargetSelect = TARGET_EXECUTE ("01")
 ```
 
-- Always branch
-- Use immediate from decode stage
-- Flush IF and DE stages
+- Static prediction: always predict not-taken
+- When actually taken, flush and redirect
 
-### 5. Branch Misprediction
-
-**Priority**: 5th
+### 5. No Branch
 
 ```
-Input:  ConditionalBranch = '1'
-        PredictedTaken ≠ ActualTaken
-Output: BranchSelect = ActualTaken
-        BranchTargetSelect = "01" (TARGET_EXECUTE)
-        FlushDE = '1'
-        FlushIF = '1'
-```
-
-- Detect misprediction: `misprediction = PredictedTaken XOR ActualTaken`
-- Correct the pipeline
-- Use immediate from execute stage
-- Flush IF and DE stages
-
-### 6. Correctly Predicted Branch (Taken)
-
-```
-Input:  ConditionalBranch = '1'
-        PredictedTaken = '1'
-        ActualTaken = '1'
-Output: BranchSelect = '1'
-        BranchTargetSelect = "01" (TARGET_EXECUTE)
-        FlushDE = '0'
-        FlushIF = '0'
-```
-
-- Continue with branch
-- No flush needed (prediction was correct)
-
-### 7. Correctly Predicted Branch (Not Taken)
-
-```
-Input:  ConditionalBranch = '1'
-        PredictedTaken = '0'
-        ActualTaken = '0'
+Input:  No branch conditions active
+        OR ConditionalBranch = '1' AND ActualTaken = '0'
 Output: BranchSelect = '0'
-        FlushDE = '0'
-        FlushIF = '0'
+        BranchTargetSelect = TARGET_DECODE (don't care)
 ```
 
-- Continue sequentially (PC+1)
-- No flush needed
+## Static vs Dynamic Prediction
 
-## Misprediction Handling
+The current implementation uses **static prediction** (always predict not-taken):
 
-### Detection
-
-```vhdl
-misprediction = ConditionalBranch AND (PredictedTaken XOR ActualTaken)
-```
-
-### Four Misprediction Cases
-
-#### Case 1: Predicted Taken, Actually Not Taken
-
-- **Action**: Don't branch, flush pipeline
-- **Penalty**: 2-3 cycles (wasted fetch/decode of wrong path)
-
-#### Case 2: Predicted Not Taken, Actually Taken
-
-- **Action**: Branch, flush pipeline
-- **Penalty**: 2-3 cycles (need to fetch from branch target)
-
-#### Case 3: Predicted Taken, Actually Taken
-
-- **No misprediction**: Continue normally
-
-#### Case 4: Predicted Not Taken, Actually Not Taken
-
-- **No misprediction**: Continue normally
-
-## Flush Signal Usage
-
-### FlushIF (Fetch Stage)
-
-- Insert NOP into IF/DE register
-- Discard fetched instruction
-- Used when: Branch taken, misprediction, interrupt, reset
-
-### FlushDE (Decode Stage)
-
-- Insert NOP into DE/EX register
-- Discard decoded instruction
-- Used when: Branch taken, misprediction, interrupt, reset
-
-### Why Flush Both Stages?
-
-When branch is taken or mispredicted:
-
-- **IF stage**: Already fetched wrong instruction (PC+1)
-- **DE stage**: Already decoding wrong instruction
-- Both must be flushed and replaced with NOPs
-
-## Performance Impact
-
-### Branch Penalty Summary
-
-| Scenario                        | Penalty (cycles) | Frequency     |
-| ------------------------------- | ---------------- | ------------- |
-| Unconditional branch            | 2-3              | Low-Medium    |
-| Correctly predicted conditional | 0                | High (80-90%) |
-| Mispredicted conditional        | 2-3              | Low (10-20%)  |
-| Interrupt                       | 2-3 + handler    | Very Low      |
-
-### CPI Impact
-
-For a program with 20% branches, 85% prediction accuracy:
-
-- Base CPI: 1.0
-- Misprediction penalty: 0.20 × 0.15 × 2.5 = 0.075
-- **Effective CPI**: ~1.075
+- Simpler implementation
+- Conditional branches resolved in execute stage
+- Dynamic prediction code is commented but available for future use
 
 ## Integration
 
 ### Signal Flow
 
 ```
-Branch Predictor → PredictedTaken ──────┐
-                                         ↓
-Execute Stage → ActualTaken ──→ Branch Decision Unit
-Interrupt Unit → Interrupts ───────────→ ↓
-                                    Decision Logic
-                                         ↓
-                    ┌────────────────────┴────────────────┐
-                    ↓                    ↓                 ↓
-              BranchSelect        BranchTargetSelect   Flush signals
-                    ↓                    ↓                 ↓
-                 PC Mux           Target Address Mux   Pipeline
+Interrupt Unit → IsHardwareInterrupt/IsSoftwareInterrupt ─┐
+Memory Stage → IsRTI/IsReturn ────────────────────────────┤
+Decode Stage → IsCall/UnconditionalBranch ────────────────┼──→ Branch Decision Unit
+Execute Stage → ConditionalBranch/ActualTaken ────────────┤               ↓
+Branch Predictor → PredictedTaken ────────────────────────┘        Decision Logic
+                                                                         ↓
+                                                         ┌───────────────┴────────────────┐
+                                                         ↓                                ↓
+                                                   BranchSelect                  BranchTargetSelect
+                                                         ↓                                ↓
+                                                      PC Mux                       Target Address Mux
 ```
-
-### With Other Control Units
-
-- **Freeze Control**: Receives `Stall_Branch` signal
-- **Interrupt Unit**: Provides interrupt flags
-- **Branch Predictor**: Provides prediction, receives update signal
 
 ## Design Decisions
 
 ### Why Priority-Based?
 
-- **Clear precedence**: Reset > Interrupts > Branches
+- **Clear precedence**: Reset > Interrupts/Returns > Branches
 - **Deterministic**: No ambiguity when multiple conditions occur
 - **Simple logic**: Priority encoder, easy to verify
 
-### Why Separate Target Select?
+### Static Prediction Strategy
 
-- **Flexibility**: Different sources for different branch types
-- **Timing**: Some targets available earlier than others
-- **Correctness**: Interrupts need special address handling
-
-### Flush Strategy
-
-- **Aggressive flushing**: Flush on any branch/misprediction
-- **Alternative**: Speculative execution (more complex)
-- **Tradeoff**: Correctness vs performance
-
-## Testing
-
-Testbench verifies:
-
-1. No branch (normal operation)
-2. Reset priority
-3. Hardware/software interrupt handling
-4. Unconditional branch
-5. Correct prediction (taken and not taken)
-6. Misprediction handling (both directions)
-7. Priority enforcement
-8. Proper flush signal generation
-9. Correct target selection
+- Always predict not-taken for conditional branches
+- Branch resolution happens in execute stage
+- If taken, flush IF and DE stages
+- Simpler than dynamic prediction with good performance for short backward loops
 
 ## Files
 
 - `branch_decision_unit.vhd` - Main decision logic
-- `tb_branch_decision_unit.vhd` - Comprehensive testbench
 - `README.md` - This documentation
 
 ## Notes
 
-- Pure combinational logic (except `Stall_Branch` might need timing)
+- Pure combinational logic
 - Critical path: Priority logic → output generation
-- Must coordinate with interrupt unit for proper interrupt handling
-- Flush signals are critical for correctness
+- Coordinates with interrupt unit for proper interrupt/return handling
+- Reset handled internally by PC module (this unit outputs neutral signals)

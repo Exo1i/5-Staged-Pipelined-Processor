@@ -2,54 +2,81 @@
 
 ## Overview
 
-The Freeze Control Unit manages pipeline stalls by combining multiple stall conditions from different sources and generating appropriate freeze signals for the fetch stage and PC register.
+The Freeze Control Unit manages pipeline stalls by combining multiple stall conditions from different sources and generating appropriate freeze signals for the fetch stage, PC register, and decode stage.
 
 ## Purpose
 
 - Coordinates pipeline freezing across multiple hazard sources
 - Prevents PC from advancing during stalls
 - Inserts NOP bubbles into the pipeline when necessary
-- Ensures fetch stage waits until hazards are resolved
+- Handles branch flushing with appropriate pipeline stage NOPs
+- Supports HLT instruction by freezing the pipeline
 
 ## Architecture
 
 ### Inputs
 
-| Signal            | Source             | Description                                                       |
-| ----------------- | ------------------ | ----------------------------------------------------------------- |
-| `PassPC_MEM`      | Memory Hazard Unit | '1' = fetch allowed, '0' = memory conflict, stall fetch           |
-| `Stall_Interrupt` | Interrupt Unit     | '1' = freeze during interrupt processing until new PC from memory |
-| `Stall_Branch`    | Branch Control     | '1' = stall for branch misprediction (optional)                   |
+| Signal               | Width | Source             | Description                                |
+| -------------------- | ----- | ------------------ | ------------------------------------------ |
+| `PassPC_MEM`         | 1     | Memory Hazard Unit | '0' = memory conflict, stall fetch         |
+| `Stall_Interrupt`    | 1     | Interrupt Unit     | '1' = freeze during interrupt processing   |
+| `BranchSelect`       | 1     | Branch Decision    | '1' = branch taken, need to flush          |
+| `BranchTargetSelect` | 2     | Branch Decision    | Target mux select (determines flush depth) |
+| `is_swap`            | 1     | Decode Stage       | '1' = SWAP operation in progress           |
+| `is_hlt`             | 1     | Decode Stage       | '1' = HLT instruction, halt pipeline       |
+| `requireImmediate`   | 1     | Decode Stage       | '1' = instruction needs immediate value    |
+| `memory_hazard_int`  | 1     | Interrupt Unit     | '1' = memory hazard due to interrupt       |
 
 ### Outputs
 
 | Signal             | Destination             | Description                                     |
 | ------------------ | ----------------------- | ----------------------------------------------- |
-| `PC_WriteEnable`   | PC Register             | '1' = allow PC update, '0' = freeze PC          |
+| `PC_Freeze`        | PC Register             | '1' = freeze PC, '0' = allow PC update          |
 | `IFDE_WriteEnable` | IF/DE Pipeline Register | '1' = update register, '0' = hold current value |
 | `InsertNOP_IFDE`   | IF/DE Stage Mux         | '1' = insert NOP bubble, '0' = pass instruction |
+| `InsertNOP_DEEX`   | DE/EX Stage Mux         | '1' = insert NOP in DE/EX stage                 |
 
 ## Logic
 
-### Stall Combination
+### HLT Instruction Handling (Highest Priority)
 
-```
-any_stall = (NOT PassPC_MEM) OR Stall_Interrupt OR Stall_Branch
-```
+When `is_hlt = '1'`:
 
-### Output Generation
-
-When **any stall is active**:
-
-- `PC_WriteEnable = '0'` → PC frozen
+- `PC_Freeze = '1'` → PC frozen
 - `IFDE_WriteEnable = '0'` → IF/DE register frozen
-- `InsertNOP_IFDE = '1'` → Bubble inserted
+- `InsertNOP_DEEX = '1'` → NOP inserted in DE/EX stage
 
-When **no stalls**:
+### Interrupt Stall Handling
 
-- `PC_WriteEnable = '1'` → PC updates normally
-- `IFDE_WriteEnable = '1'` → IF/DE register updates
-- `InsertNOP_IFDE = '0'` → Normal instruction passes
+When `Stall_Interrupt = '1'`:
+
+- `IFDE_WriteEnable = '0'` → IF/DE register frozen
+
+### SWAP Instruction Handling
+
+When `is_swap = '1'`:
+
+- `PC_Freeze = '1'` → PC frozen for second cycle
+- `IFDE_WriteEnable = '0'` → Hold current instruction
+
+### Branch Flush Handling
+
+When `BranchSelect = '1'`:
+
+- `IFDE_WriteEnable = '1'` → Allow IF/DE update
+- `InsertNOP_IFDE = '1'` → Flush IF stage with NOP
+- If `BranchTargetSelect = TARGET_EXECUTE`:
+  - `InsertNOP_DEEX = '1'` → Also flush DE stage
+
+### Memory Hazard Handling
+
+When `PassPC_MEM = '0'`:
+
+- `PC_Freeze = '1'` → PC frozen
+- `InsertNOP_IFDE = '1'` → Insert bubble
+- If `requireImmediate = '1'`:
+  - `IFDE_WriteEnable = '0'` → Hold immediate instruction
+  - `InsertNOP_DEEX = '1'` → Insert NOP in DE/EX
 
 ## Stall Scenarios
 
@@ -65,11 +92,23 @@ When **no stalls**:
 - **Effect**: Freeze fetch until new PC value arrives from memory stage
 - **Duration**: Multiple cycles for interrupt handler address fetch
 
-### 3. Branch Stall (Optional)
+### 3. SWAP Stall
 
-- **Cause**: Branch misprediction or branch resolution
-- **Effect**: Freeze fetch until correct branch target known
-- **Duration**: Depends on branch prediction mechanism
+- **Cause**: SWAP instruction requires two cycles
+- **Effect**: Freeze PC and IF/DE for second swap cycle
+- **Duration**: 1 cycle
+
+### 4. HLT Stall
+
+- **Cause**: HLT instruction executed
+- **Effect**: Complete pipeline freeze until reset
+- **Duration**: Until system reset
+
+### 5. Branch Flush
+
+- **Cause**: Branch taken or misprediction
+- **Effect**: Flush pipeline stages with NOPs
+- **Duration**: 1-2 cycles (depends on branch type)
 
 ## Integration
 
@@ -78,36 +117,36 @@ When **no stalls**:
 ```
 Memory Hazard Unit → PassPC_MEM → Freeze Control
 Interrupt Unit → Stall_Interrupt → Freeze Control
-Branch Control → Stall_Branch → Freeze Control
+Branch Decision → BranchSelect/BranchTargetSelect → Freeze Control
+Decode Stage → is_swap, is_hlt, requireImmediate → Freeze Control
 
-Freeze Control → PC_WriteEnable → PC Register
+Freeze Control → PC_Freeze → PC Register
 Freeze Control → IFDE_WriteEnable → IF/DE Pipeline Register
 Freeze Control → InsertNOP_IFDE → IF/DE Stage Mux
+Freeze Control → InsertNOP_DEEX → DE/EX Stage Mux
 ```
-
-### Usage in Control Unit
-
-The Freeze Control sits between hazard detection units and the pipeline registers, acting as a central coordinator for all pipeline stalls.
 
 ## Testing
 
-The testbench (`tb_freeze_control.vhd`) verifies:
+The testbench verifies:
 
 1. Normal operation (no stalls)
-2. Individual stall sources
-3. Multiple simultaneous stalls
-4. Return to normal operation
-5. Rapid transitions between states
+2. HLT instruction freeze behavior
+3. SWAP two-cycle operation
+4. Memory hazard stalling
+5. Interrupt stalling
+6. Branch flushing (IF only vs IF+DE)
+7. Immediate instruction handling with memory hazard
+8. Priority handling between conditions
 
 ## Files
 
 - `freeze_control.vhd` - Main freeze control logic
-- `tb_freeze_control.vhd` - Comprehensive testbench
 - `README.md` - This documentation
 
 ## Notes
 
-- Simple combinational logic (no state machine needed)
-- All stall sources are OR'd together
-- Any single stall source can freeze the entire fetch stage
-- Critical path for pipeline performance
+- Combinational logic with conditional priority
+- HLT has highest priority (halts everything)
+- Branch flushing respects target select for proper flush depth
+- Memory hazard with immediate instructions requires special handling

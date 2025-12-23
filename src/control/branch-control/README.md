@@ -7,29 +7,26 @@ The Branch Control unit manages all branch-related operations in the 5-stage pip
 ## Purpose
 
 - Predict branch outcomes to reduce pipeline stalls
-- Detect and correct branch mispredictions
 - Handle unconditional and conditional branches
 - Coordinate with interrupt unit for control flow changes
-- Generate flush signals for pipeline control
+- Select appropriate branch target addresses
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Branch Control Unit                      │
-│                                                              │
-│  ┌──────────────────────┐      ┌──────────────────────┐   │
-│  │  Branch Predictor    │      │  Branch Decision     │   │
-│  │                      │      │       Unit           │   │
-│  │  - 2-bit counters    │──────→  - Priority logic    │   │
-│  │  - Prediction table  │      │  - Misprediction     │   │
-│  │  - Strong/weak pred  │      │  - Target selection  │   │
-│  └──────────────────────┘      │  - Flush control     │   │
-│            ↓                    └──────────────────────┘   │
-│      PredictedTaken                       ↓                 │
-│                                     BranchSelect             │
-│                                  BranchTargetSelect          │
-│                                    FlushIF, FlushDE          │
+│                     Branch Control Unit                     │
+│                                                             │
+│  ┌──────────────────────┐      ┌──────────────────────┐     │
+│  │  Branch Predictor    │      │  Branch Decision     │     │
+│  │                      │      │       Unit           │     │
+│  │  - 2-bit counters    │──────→  - Priority logic    │     │
+│  │  - Prediction table  │      │  - Target selection  │     │
+│  │  - Strong/weak pred  │      │  - Static prediction │     │
+│  └──────────────────────┘      └──────────────────────┘     │
+│            ↓                            ↓                   │
+│      PredictedTaken              BranchSelect               │
+│                                BranchTargetSelect           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -39,21 +36,13 @@ The Branch Control unit manages all branch-related operations in the 5-stage pip
 
 **File**: `branch-predictor/branch_predictor.vhd`
 
-**Function**: Dynamic branch prediction using 2-bit saturating counters
+**Function**: Dynamic branch prediction using 2-bit saturating counters (currently not fully utilized - static prediction is used)
 
 **Key Features**:
 
 - 2-bit counter per branch (4-entry table)
 - States: Strongly Not Taken, Weakly Not Taken, Weakly Taken, Strongly Taken
-- Strong predictions can be treated as unconditional
-- Updates based on actual outcomes
-
-**Inputs**:
-
-- Branch type (JMP, CALL, conditional)
-- Condition type and CCR flags
-- PC (for table indexing)
-- Actual outcome (for training)
+- CCR flag evaluation for condition types
 
 **Outputs**:
 
@@ -64,51 +53,25 @@ The Branch Control unit manages all branch-related operations in the 5-stage pip
 
 **File**: `branch-decision-unit/branch_decision_unit.vhd`
 
-**Function**: Final branch decision with priority handling and misprediction detection
+**Function**: Final branch decision with priority handling
 
 **Key Features**:
 
-- Priority-based decision (Reset > HW Int > SW Int > Branch)
-- Misprediction detection (Predicted XOR Actual)
+- Priority-based decision (Reset > Interrupts/Returns > Branches)
+- Static prediction for conditional branches (always predict not-taken)
 - Multi-source target selection
-- Pipeline flush generation
 
 **Inputs**:
 
-- Interrupt signals
-- Predicted and actual branch outcomes
-- Branch types
+- Interrupt signals (hardware/software)
+- Return signals (RET, RTI)
+- Branch types (unconditional, conditional)
+- Actual branch outcome
 
 **Outputs**:
 
 - `BranchSelect`: Take branch or not
 - `BranchTargetSelect`: Which target address to use
-- `FlushIF`, `FlushDE`: Pipeline flush signals
-
-## Operation Flow
-
-### Prediction Phase (Early - DECODE Stage)
-
-1. Branch detected in decode stage
-2. Branch Predictor generates prediction
-3. If strongly predicted or unconditional:
-   - Speculatively fetch from target
-   - Continue pipeline
-
-### Resolution Phase (Late - EXECUTE Stage)
-
-1. Condition evaluated with actual CCR flags
-2. Actual outcome determined
-3. Compare with prediction
-4. Branch Decision Unit decides:
-   - **Correct prediction**: Continue normally
-   - **Misprediction**: Flush IF/DE, fetch correct path
-
-### Update Phase (After Resolution)
-
-1. Predictor table updated based on actual outcome
-2. 2-bit counter incremented (taken) or decremented (not taken)
-3. Adapts to program behavior
 
 ## Branch Types Handled
 
@@ -116,132 +79,62 @@ The Branch Control unit manages all branch-related operations in the 5-stage pip
 
 - **JMP**: Always branch to immediate address
 - **CALL**: Always branch and push return address
-- **Always predicted taken**
+- **Always taken, target from decode stage**
 
 ### Conditional Branches
 
 - **JZ**: Jump if Zero flag set
 - **JN**: Jump if Negative flag set
 - **JC**: Jump if Carry flag set
-- **Use 2-bit predictor**
+- **Static prediction: always predict not-taken**
+- **Target from execute stage when taken**
 
 ### Special Control Flow
 
 - **INT**: Software interrupt (via interrupt unit)
 - **Hardware Interrupt**: External interrupt
 - **RET/RTI**: Return from subroutine/interrupt
-- **Handled by interrupt unit, coordinated with branch control**
+- **Target from memory stage**
 
 ## Branch Target Selection
 
-### Four Target Sources
+| Code | Source                  | Usage                           |
+| ---- | ----------------------- | ------------------------------- |
+| 00   | Decode Stage Immediate  | JMP, CALL (unconditional)       |
+| 01   | Execute Stage Immediate | Conditional branches when taken |
+| 10   | Memory Stage Address    | Interrupts, RET, RTI            |
 
-| Code | Source                   | Usage                                |
-| ---- | ------------------------ | ------------------------------------ |
-| 00   | Decode Stage Immediate   | Predicted/unconditional branches     |
-| 01   | Execute Stage Immediate  | Resolved conditional, mispredictions |
-| 10   | Memory Stage (Interrupt) | Interrupt handlers                   |
-| 11   | Reset Address (0)        | System reset                         |
+## Static Prediction Strategy
 
-## Performance Optimization
+The processor uses **static prediction** (always predict not-taken):
 
-### Prediction Benefits
+1. Conditional branches initially continue sequential fetch
+2. In execute stage, actual condition is evaluated
+3. If taken, pipeline is flushed and redirected
 
-- **Without prediction**: 2-3 cycle penalty per branch
-- **With prediction** (85% accuracy):
-  - Correct: 0 cycle penalty
-  - Incorrect: 2-3 cycle penalty
-  - **Average**: 0.45 cycles per branch
+**Benefits**:
 
-### Example: Loop with 100 iterations
+- Simple implementation
+- No misprediction penalty for not-taken branches
+- Good performance for short forward branches
 
-```
-Loop:
-    ADD R1, R2, R3
-    SUB R4, R5, R6
-    JZ Loop          ; 99 times taken, 1 time not taken
-```
+**Penalty**:
 
-**Without prediction**: 300 cycles wasted (3 per iteration)
-**With prediction**: ~6 cycles wasted (2 mispredictions × 3)
-**Speedup**: 50x improvement for branch overhead
+- 2-3 cycles when conditional branch is actually taken
 
 ## Integration with Control Unit
 
 ### Inputs from Other Units
 
-- **Opcode Decoder**: IsJMP, IsCall, IsJMPConditional, ConditionalType
-- **Execute Stage**: CCR flags, actual condition evaluation
-- **Interrupt Unit**: Software/hardware interrupt signals
-- **System**: Reset signal
+- **Opcode Decoder**: IsJMP, IsCall, IsJMPConditional
+- **Execute Stage**: ConditionalBranch, ActualTaken
+- **Memory Stage**: IsRTI, IsReturn
+- **Interrupt Unit**: IsHardwareInterrupt, IsSoftwareInterrupt
 
 ### Outputs to Other Units
 
-- **Freeze Control**: Stall signal (optional)
-- **PC Logic**: BranchSelect, target address
-- **Pipeline Registers**: FlushIF, FlushDE
-
-### Signal Flow
-
-```
-Decode → Branch Predictor → Predicted outcome
-           ↓
-Execute → Actual outcome → Branch Decision Unit
-           ↓                        ↓
-      Update predictor         BranchSelect
-                                    ↓
-                                 PC Mux
-```
-
-## Pipeline Interaction
-
-### Normal Branch (Predicted Correctly)
-
-```
-Cycle 1 (IF):  Fetch branch instruction
-Cycle 2 (DE):  Decode, predict taken, fetch target
-Cycle 3 (EX):  Execute, verify prediction correct
-Cycle 4+:      Continue from target (no penalty)
-```
-
-### Mispredicted Branch
-
-```
-Cycle 1 (IF):  Fetch branch instruction
-Cycle 2 (DE):  Decode, predict not taken, fetch PC+1
-Cycle 3 (EX):  Execute, detect misprediction
-               Flush IF & DE, fetch correct target
-Cycle 4 (IF):  Fetch from correct target
-Cycle 5 (DE):  Decode correct instruction
-Penalty: 2 cycles
-```
-
-## Design Decisions
-
-### Why 2-Bit Predictor?
-
-- 1-bit: Too sensitive (one miss changes prediction)
-- 2-bit: Requires two misses to change direction
-- **Balances** accuracy vs hardware cost
-
-### Why Separate Predictor and Decision?
-
-- **Modularity**: Clear separation of concerns
-- **Timing**: Prediction early, decision late
-- **Flexibility**: Easy to upgrade predictor without changing decision logic
-
-### Flush Strategy
-
-- **Aggressive**: Flush on any uncertainty
-- **Safe**: Ensures correctness
-- **Simple**: Easy to verify and debug
-
-## Testing
-
-Each sub-module has comprehensive testbenches:
-
-- Branch Predictor: Tests state transitions, predictions
-- Branch Decision: Tests priority, mispredictions, flushes
+- **PC Logic**: BranchSelect, BranchTargetSelect
+- **Freeze Control**: (via branch signals for flush handling)
 
 ## Files Structure
 
@@ -249,26 +142,14 @@ Each sub-module has comprehensive testbenches:
 branch-control/
 ├── branch-predictor/
 │   ├── branch_predictor.vhd
-│   ├── tb_branch_predictor.vhd
 │   └── README.md
 ├── branch-decision-unit/
 │   ├── branch_decision_unit.vhd
-│   ├── tb_branch_decision_unit.vhd
 │   └── README.md
 └── README.md (this file)
 ```
-
-## Future Enhancements
-
-1. **Larger prediction table** (512+ entries)
-2. **Two-level adaptive predictor** (global + local history)
-3. **Branch Target Buffer (BTB)** to cache target addresses
-4. **Return Address Stack (RAS)** for function returns
-5. **Hybrid predictors** combining multiple prediction schemes
 
 ## References
 
 - Branch Predictor README: `branch-predictor/README.md`
 - Branch Decision Unit README: `branch-decision-unit/README.md`
-- Opcode Decoder: `../../opcode-decoder/`
-- Interrupt Unit: `../../interrupt-unit/`

@@ -56,13 +56,13 @@ A fully functional 5-stage pipelined RISC processor implemented in VHDL. The pro
 ### Pipeline Stages
 
 ```
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌───────── ┐    ┌─────────┐
 │  FETCH  │───▶│ DECODE  │───▶│ EXECUTE │───▶│ MEMORY  │───▶│WRITEBACK│
-│  (IF)   │    │  (ID)   │    │  (EX)   │    │  (MEM)  │    │  (WB)   │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
-     │              │              │              │              │
-   PC+1         Decode         ALU/Branch      Load/Store    Register
- Instruction    Registers       Execute        Stack Ops      Update
+│  (IF)   │     │  (ID)   │     │  (EX)   │     │  (MEM)  │     │  (WB)   │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘     └─────────┘
+     │              │               │                │               │
+   PC+1           Decode         ALU/Branch      Load/Store       Register
+ Instruction     Registers         Execute        Stack Ops        Update
 ```
 
 | Stage         | Components                 | Function                         |
