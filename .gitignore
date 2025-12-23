@@ -12,3 +12,5 @@ memory_temp
 *.pyc
 
 *.mem
+
+work/
